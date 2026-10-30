@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using PokeHub.Core.Hub;
 using PokeHub.Core.Processes;
 using PokeHub.Core.Projects;
+using PokeHub.Core.Runtimes;
 
 namespace PokeHub.Core.Plugins;
 
@@ -10,6 +11,8 @@ namespace PokeHub.Core.Plugins;
 public sealed class PluginInstaller(HubPaths hub, HubConfig config)
 {
     private readonly GitHubReleaseClient _github = new();
+
+    public RuntimeManager Runtimes { get; } = new(hub, config);
 
     public InstalledTool? GetInstalled(PluginManifest m, Project? project) =>
         m.Scope == PluginScope.Project
@@ -23,6 +26,7 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
 
     public async Task<InstalledTool> InstallAsync(PluginManifest m, Project? project, IProgress<string> log, CancellationToken ct = default)
     {
+        await Runtimes.EnsureAsync(m.Requires, log, ct);
         var tool = m.Source.Type switch
         {
             SourceType.GitHubRelease => await InstallFromReleaseAsync(m, project, log, ct),

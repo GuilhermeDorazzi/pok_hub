@@ -113,7 +113,7 @@ public sealed partial class MainViewModel : ObservableObject
         _config = config;
         _catalog = catalog;
         _installer = new PluginInstaller(paths, config);
-        _launcher = new ToolLauncher(paths);
+        _launcher = new ToolLauncher(paths, _installer.Runtimes);
         _projects = new ProjectService(paths);
 
         _launcher.Output += (rt, line) => Log($"[{rt.PluginId}] {line}");

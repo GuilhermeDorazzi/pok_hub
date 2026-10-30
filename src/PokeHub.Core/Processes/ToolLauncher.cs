@@ -2,6 +2,7 @@ using System.Diagnostics;
 using PokeHub.Core.Hub;
 using PokeHub.Core.Plugins;
 using PokeHub.Core.Projects;
+using PokeHub.Core.Runtimes;
 
 namespace PokeHub.Core.Processes;
 
@@ -16,7 +17,7 @@ public sealed class RunningTool : IDisposable
 }
 
 /// <summary>Resolve argumentos com variáveis do projeto e abre a ferramenta como processo filho.</summary>
-public sealed class ToolLauncher(HubPaths hub)
+public sealed class ToolLauncher(HubPaths hub, RuntimeManager runtimes)
 {
     private readonly List<RunningTool> _running = [];
     public IReadOnlyList<RunningTool> Running => _running;
@@ -41,7 +42,7 @@ public sealed class ToolLauncher(HubPaths hub)
 
         if (launch.Runtime == "java")
         {
-            psi.FileName = "java";
+            psi.FileName = runtimes.ResolveJava(m.Requires);
             psi.ArgumentList.Add("-jar");
             psi.ArgumentList.Add(exe);
         }

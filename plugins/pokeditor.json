@@ -14,5 +14,5 @@
   },
   "launch": { "runtime": "java", "args": [] },
   "requires": ["java21"],
-  "notes": "Precisa de Java 20+ no PATH. Fase posterior: JRE gerenciado em runtimes/."
+  "notes": "Precisa de Java 20+. O hub instala o Temurin JRE 21 em runtimes/ junto com a ferramenta."
 }

@@ -8,6 +8,7 @@ using PokeHub.Core.Hub;
 using PokeHub.Core.Plugins;
 using PokeHub.Core.Processes;
 using PokeHub.Core.Projects;
+using PokeHub.Core.Runtimes;
 
 namespace PokeHub.App.ViewModels;
 
@@ -39,7 +40,12 @@ public sealed partial class ToolItemViewModel : ObservableObject
     public string Name => Manifest.Name;
     public string Description => Manifest.Description;
     public string LicenseText => Manifest.License is { } l ? $"Licença: {l}" : "";
-    public string RequiresText => Manifest.Requires.Count > 0 ? $"Requer: {string.Join(", ", Manifest.Requires)}" : "";
+    public string RequiresText => Manifest.Requires.Count > 0
+        ? "Requer: " + string.Join(", ", Manifest.Requires.Select(r =>
+            !RuntimeManager.IsManaged(r) ? r
+            : _installer.Runtimes.GetInstalled(r) is { } t ? $"{r} (instalado: {t.Version})"
+            : $"{r} (o hub instala junto)"))
+        : "";
     public string? Notes => Manifest.Notes;
     public bool HasNotes => !string.IsNullOrWhiteSpace(Manifest.Notes);
     public bool IsInstalled => Installed is not null;
@@ -59,6 +65,7 @@ public sealed partial class ToolItemViewModel : ObservableObject
     private void NotifyAll()
     {
         OnPropertyChanged(nameof(IsInstalled));
+        OnPropertyChanged(nameof(RequiresText));
         OnPropertyChanged(nameof(CanLaunch));
         OnPropertyChanged(nameof(InstallButtonText));
         InstallCommand.NotifyCanExecuteChanged();

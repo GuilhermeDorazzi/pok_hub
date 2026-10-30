@@ -61,9 +61,9 @@ Feito em 2026-10-30:
    - Novo projeto extrai automaticamente. Botões: Extrair ROM, Empacotar, Empacotar e rodar.
 2. "Empacotar e rodar" abre a ROM recém-gerada no melonDS, se instalado.
 
-Pendente:
+3. JRE gerenciado (`Runtimes/RuntimeManager`): requisitos `java21`/`java17` nos manifestos são instalados em `runtimes/<id>` a partir da API do Adoptium (Temurin JRE, Windows x64) junto com a ferramenta. O lançador usa esse java.exe; sem ele, cai no `java` do PATH. Registrado em `hub.json` → `installedRuntimes`.
 
-3. JRE gerenciado em `runtimes/` para PokEditor.
+Pendente:
 4. Build das decomps: detectar WSL2/MSYS2, pedir caminho do mwcc, rodar `make` com log.
 5. git automático no `workspace/` a cada salvamento.
 6. Verificação de dependências declaradas em `requires` (.NET Framework 4.8, Java).
