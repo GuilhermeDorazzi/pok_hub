@@ -25,6 +25,10 @@
                           DisplayMemberPath="Name" VerticalAlignment="Center" />
                 <Button DockPanel.Dock="Left" Content="Novo projeto" Command="{Binding NewProjectCommand}" Margin="8,0,0,0" />
                 <Button DockPanel.Dock="Left" Content="Pasta do projeto" Command="{Binding OpenProjectFolderCommand}" />
+                <Separator DockPanel.Dock="Left" Width="12" Background="Transparent" />
+                <Button DockPanel.Dock="Left" Content="Extrair ROM" Command="{Binding ExtractRomCommand}" />
+                <Button DockPanel.Dock="Left" Content="Empacotar" Command="{Binding PackRomCommand}" />
+                <Button DockPanel.Dock="Left" Content="Empacotar e rodar" Command="{Binding PackAndRunCommand}" FontWeight="Bold" />
                 <Button DockPanel.Dock="Right" Content="Pasta do hub" Command="{Binding OpenRootFolderCommand}" />
                 <TextBlock DockPanel.Dock="Right" Text="{Binding RootPath}" Foreground="#AAB" VerticalAlignment="Center" Margin="0,0,12,0" />
                 <TextBlock Text="{Binding ProjectSummary}" Foreground="White" VerticalAlignment="Center" Margin="16,0,0,0" />

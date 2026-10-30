@@ -29,11 +29,83 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private ContextItem _selectedContext = ContextItem.All[0];
     [ObservableProperty] private Project? _currentProject;
     [ObservableProperty] private string _logText = "";
+    [ObservableProperty] private bool _isBusy;
 
     public string RootPath => _paths.Root;
     public string ProjectSummary => CurrentProject is { } p
-        ? $"{p.Name}  ·  {p.Config.BaseGame} ({p.Config.GameCode})  ·  Gen {p.Config.Generation}"
+        ? $"{p.Name}  ·  {p.Config.BaseGame} ({p.Config.GameCode})  ·  Gen {p.Config.Generation}  ·  {(WorkspaceService.IsExtracted(p) ? "workspace extraído" : "workspace vazio")}"
         : "Nenhum projeto aberto";
+
+    private bool HasProjectAndIdle => CurrentProject is not null && !IsBusy;
+
+    partial void OnIsBusyChanged(bool value) => NotifyProjectCommands();
+
+    private void NotifyProjectCommands()
+    {
+        ExtractRomCommand.NotifyCanExecuteChanged();
+        PackRomCommand.NotifyCanExecuteChanged();
+        PackAndRunCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(ProjectSummary));
+    }
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private async Task ExtractRomAsync()
+    {
+        var p = CurrentProject!;
+        if (WorkspaceService.IsExtracted(p))
+        {
+            var r = MessageBox.Show("workspace/ já contém uma ROM extraída. Extrair de novo apaga TODAS as alterações feitas nele.\n\nContinuar?",
+                "Sobrescrever workspace", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (r != MessageBoxResult.Yes) return;
+        }
+        await RunBusy($"Extraindo {p.Name}...", () => WorkspaceService.ExtractAsync(p, new Progress<string>(Log), overwrite: true));
+    }
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private Task PackRomAsync() => PackInternalAsync(run: false);
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private Task PackAndRunAsync() => PackInternalAsync(run: true);
+
+    private async Task PackInternalAsync(bool run)
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log("workspace/ vazio: extraia a ROM primeiro."); return; }
+        var output = await RunBusy($"Empacotando {p.Name}...", () => WorkspaceService.PackAsync(p, new Progress<string>(Log)));
+        if (output is null || !run) return;
+
+        var melon = _catalog.Get("melonds");
+        var installed = melon is null ? null : _installer.GetInstalled(melon, p);
+        if (melon is null || installed is null)
+        {
+            Log("melonDS não está instalado: instale em Emulador para rodar a ROM.");
+            MessageBox.Show("melonDS não está instalado. Instale na aba Emulador.", "Emulador", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        var rt = _launcher.Launch(melon, installed, p);
+        Log($"melonDS aberto com {output} (pid {rt.Process.Id})");
+    }
+
+    private async Task<T?> RunBusy<T>(string what, Func<Task<T>> work)
+    {
+        try
+        {
+            IsBusy = true;
+            Log(what);
+            return await work();
+        }
+        catch (Exception ex)
+        {
+            Log($"ERRO: {ex.Message}");
+            MessageBox.Show(ex.Message, "Falha", MessageBoxButton.OK, MessageBoxImage.Error);
+            return default;
+        }
+        finally
+        {
+            IsBusy = false;
+            NotifyProjectCommands();
+        }
+    }
 
     public MainViewModel(HubPaths paths, HubConfig config, PluginCatalog catalog)
     {
@@ -65,7 +137,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _config.LastProject = value?.Name;
         _config.Save(_paths.ConfigFile);
-        OnPropertyChanged(nameof(ProjectSummary));
+        NotifyProjectCommands();
         RebuildTools();
     }
 
@@ -90,7 +162,7 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void NewProject()
+    private async Task NewProjectAsync()
     {
         var win = new NewProjectWindow(_projects) { Owner = Application.Current.MainWindow };
         if (win.ShowDialog() == true && win.Created is { } created)
@@ -98,6 +170,7 @@ public sealed partial class MainViewModel : ObservableObject
             Log($"Projeto '{created.Name}' criado: {created.Config.BaseGame} ({created.Config.GameCode}) em {created.Paths.Dir}");
             ReloadProjects();
             CurrentProject = Projects.First(p => p.Name == created.Name);
+            await RunBusy("Extraindo a ROM base para workspace/...", () => WorkspaceService.ExtractAsync(CurrentProject!, new Progress<string>(Log)));
         }
     }
 

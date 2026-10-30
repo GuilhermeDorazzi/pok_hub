@@ -50,10 +50,19 @@ O caminho da raiz fica em `%AppData%\PokeHub\settings.json`.
 - Abrir ferramentas como processo filho, com log de stdout/stderr e indicador de execução.
 - 11 testes no Core (header, catálogo, layout de projeto, configuração).
 
-## Próximos passos (fase 2)
+## Fase 2 (em andamento)
 
-1. Extrair `base.nds` para `workspace/` e empacotar `workspace/` em `builds/` em C# puro (substitui ndstool).
-2. Botão "Empacotar e rodar no melonDS".
+Feito em 2026-10-30:
+
+1. Extração de `base.nds` para `workspace/` e empacotamento em `builds/` em C# puro (`Rom/NdsExtractor`, `Rom/NdsPacker`, `Rom/NdsFileSystem`). Layout igual ao do ndstool: `header.bin`, `arm9.bin` (com nitro footer), `arm7.bin`, `y9.bin`, `y7.bin`, `overlay/overlay_NNNN.bin`, `banner.bin`, `data/`. Extras do hub: `fnt.bin` (FNT original) e `nds-layout.json` (árvore ordenada e ids).
+   - Árvore de `data/` inalterada: a FNT original é reaproveitada, ids idênticos aos da ROM.
+   - Árvore alterada: FNT reconstruída preservando a ordem conhecida; arquivos novos entram no fim da própria pasta.
+   - Secure area do arm9 copiada sem decifrar (nenhuma chave da BIOS no projeto). Fica válida enquanto os primeiros 0x800 bytes do arm9 não mudarem.
+   - Novo projeto extrai automaticamente. Botões: Extrair ROM, Empacotar, Empacotar e rodar.
+2. "Empacotar e rodar" abre a ROM recém-gerada no melonDS, se instalado.
+
+Pendente:
+
 3. JRE gerenciado em `runtimes/` para PokEditor.
 4. Build das decomps: detectar WSL2/MSYS2, pedir caminho do mwcc, rodar `make` com log.
 5. git automático no `workspace/` a cada salvamento.
