@@ -25,9 +25,10 @@ public sealed class ToolLauncher(HubPaths hub, RuntimeManager runtimes)
     public event Action<RunningTool, string>? Output;
     public event Action<RunningTool>? Exited;
 
-    public RunningTool Launch(PluginManifest m, InstalledTool tool, Project? project)
+    public RunningTool Launch(PluginManifest m, InstalledTool tool, Project? project, IProgress<string>? log = null)
     {
         var launch = m.Launch ?? new LaunchSpec();
+        LaunchHooks.Run(launch.Hook, m, project, log ?? new Progress<string>(_ => { }));
         var exe = tool.ExecutablePath;
         var vars = BuildVariables(project, exe);
 

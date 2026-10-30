@@ -21,6 +21,7 @@ public sealed record RuntimeSpec(
 public sealed class RuntimeManager(HubPaths hub, HubConfig config)
 {
     public const string GitId = "git";
+    public const string DsRomId = "dsrom";
 
     public static readonly IReadOnlyDictionary<string, RuntimeSpec> Known = new Dictionary<string, RuntimeSpec>(StringComparer.OrdinalIgnoreCase)
     {
@@ -28,6 +29,8 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
         ["java17"] = new("java17", "Eclipse Temurin JRE 17", RuntimeSource.Adoptium, "java.exe", JavaFeatureVersion: 17),
         [GitId] = new(GitId, "Git for Windows (MinGit portátil)", RuntimeSource.GitHubRelease, "git.exe",
             Repo: "git-for-windows/git", AssetPattern: @"^MinGit-[\d.]+-64-bit\.zip$", ExecutableRelativePath: @"cmd\git.exe"),
+        [DsRomId] = new(DsRomId, "ds-rom (extrai e monta ROMs, formato do DSPRE)", RuntimeSource.GitHubRelease, "dsrom.exe",
+            Repo: "AetiasHax/ds-rom", AssetPattern: @"^dsrom-windows-x86_64\.exe$"),
     };
 
     public static bool IsManaged(string requirement) => Known.ContainsKey(requirement);
@@ -69,11 +72,15 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
         var target = Path.Combine(hub.Runtimes, id);
         if (Directory.Exists(target)) Directory.Delete(target, recursive: true);
         Directory.CreateDirectory(target);
-        log.Report($"Extraindo para {target}...");
-        ZipFile.ExtractToDirectory(cacheFile, target, overwriteFiles: true);
 
         string exe;
-        if (spec.ExecutableRelativePath is { } rel && File.Exists(Path.Combine(target, rel)))
+        if (!cacheFile.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            // asset é o próprio executável
+            exe = Path.Combine(target, spec.ExecutableName);
+            File.Copy(cacheFile, exe, overwrite: true);
+        }
+        else if (ZipExtract(cacheFile, target, log) && spec.ExecutableRelativePath is { } rel && File.Exists(Path.Combine(target, rel)))
             exe = Path.Combine(target, rel);
         else
             exe = Directory.EnumerateFiles(target, spec.ExecutableName, SearchOption.AllDirectories)
@@ -86,6 +93,16 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
         log.Report($"{spec.Name} instalado: {version}");
         return tool;
     }
+
+    private static bool ZipExtract(string zip, string target, IProgress<string> log)
+    {
+        log.Report($"Extraindo para {target}...");
+        ZipFile.ExtractToDirectory(zip, target, overwriteFiles: true);
+        return true;
+    }
+
+    /// <summary>dsrom.exe gerenciado, ou null se ainda não instalado.</summary>
+    public string? ResolveDsRom() => GetInstalled(DsRomId)?.ExecutablePath;
 
     /// <summary>Caminho do java.exe a usar: runtime gerenciado se houver, senão "java" do PATH.</summary>
     public string ResolveJava(IEnumerable<string> requirements)

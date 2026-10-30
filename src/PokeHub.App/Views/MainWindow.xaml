@@ -9,11 +9,12 @@
         Title="PokeHub" Height="720" Width="1100" MinHeight="500" MinWidth="800"
         FontSize="13" Background="#F4F4F6">
     <Grid>
+    <Grid x:Name="MainContent">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="5" />
-            <RowDefinition Height="180" />
+            <RowDefinition x:Name="LogRow" Height="180" MinHeight="80" />
         </Grid.RowDefinitions>
 
         <!-- Barra superior: projeto -->
@@ -129,17 +130,38 @@
             </ScrollViewer>
         </Grid>
 
-        <GridSplitter Grid.Row="2" HorizontalAlignment="Stretch" Background="#CCC" />
+        <GridSplitter x:Name="LogSplitter" Grid.Row="2" HorizontalAlignment="Stretch" Background="#CCC" />
 
         <!-- Log -->
         <DockPanel Grid.Row="3" Background="#1E1E1E">
             <DockPanel DockPanel.Dock="Top" Margin="8,4">
                 <TextBlock Text="Log" Foreground="#AAA" FontWeight="Bold" VerticalAlignment="Center" />
-                <Button DockPanel.Dock="Right" Content="Limpar" Command="{Binding ClearLogCommand}" HorizontalAlignment="Right" MinWidth="60" Padding="6,2" />
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="CopyLogButton" Content="Copiar tudo" Click="CopyLog_Click" MinWidth="90" Padding="6,2" />
+                    <Button Content="Limpar" Command="{Binding ClearLogCommand}" MinWidth="60" Padding="6,2" />
+                    <Button x:Name="ToggleLogButton" Content="Ocultar" Click="ToggleLog_Click" MinWidth="70" Padding="6,2" Margin="0" />
+                </StackPanel>
             </DockPanel>
-            <TextBox Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True" Background="#1E1E1E" Foreground="#DDD" BorderThickness="0"
+            <TextBox x:Name="LogBody" Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True" Background="#1E1E1E" Foreground="#DDD" BorderThickness="0"
                      FontFamily="Consolas" FontSize="12" VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" Padding="8,0"
                      TextChanged="Log_TextChanged" />
         </DockPanel>
+    </Grid>
+
+    <!-- Primeira execução: escolha da pasta raiz com a janela já aberta -->
+    <Border x:Name="FirstRunOverlay" Visibility="Collapsed" Background="#CC2B2D42">
+        <Border Background="White" CornerRadius="8" Padding="28" MaxWidth="560" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <StackPanel>
+                <TextBlock Text="Bem-vindo ao PokeHub" FontSize="22" FontWeight="Bold" Margin="0,0,0,12" />
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,8"
+                           Text="Escolha a pasta onde o hub vai guardar as ferramentas, os runtimes e os seus projetos. Tudo fica dentro dela, organizado assim:" />
+                <TextBlock FontFamily="Consolas" FontSize="12" Foreground="#444" Margin="12,0,0,12"
+                           Text="tools/      ferramentas (DSPRE, melonDS, ...)&#10;runtimes/   Java, Git portátil&#10;projects/   seus hacks, cada um com base.nds, workspace/ e builds/&#10;cache/      downloads reaproveitados" />
+                <TextBlock TextWrapping="Wrap" Foreground="Gray" FontSize="12" Margin="0,0,0,16"
+                           Text="Sugestão: uma pasta vazia num disco com espaço, por exemplo D:\PokeHub. Você pode mudar depois apagando %AppData%\PokeHub\settings.json." />
+                <Button Content="Escolher pasta..." Click="ChooseRoot_Click" HorizontalAlignment="Right" FontWeight="Bold" Padding="16,6" />
+            </StackPanel>
+        </Border>
+    </Border>
     </Grid>
 </Window>

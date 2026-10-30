@@ -72,7 +72,15 @@ Feito em 2026-10-30:
 
 7. Janela "Versões" (`Views/HistoryWindow`): lista os commits do workspace e restaura o selecionado. O estado atual é commitado antes de restaurar e de novo depois, então o histórico nunca perde nada. A versão mais recente não é restaurável por ser o estado atual.
 
-Fase 2 concluída em 2026-10-30. Próximas fases: mais plugins (Nitro Studio 2, DeSmuME), sincronização exportar/reimportar para ferramentas que só abrem .nds, e editores próprios (treinadores, encontros, texto).
+Fase 2 concluída em 2026-10-30.
+
+## Fase 3 (em andamento)
+
+1. **Workspace no formato ds-rom** (2026-10-30). O DSPRE 2.x abandonou o layout ndstool: usa o ds-rom (AetiasHax/ds-rom, MIT, Rust) e oferece converter pastas antigas. Para o DSPRE abrir o workspace sem conversão, o hub passou a extrair com o ds-rom (`Rom/DsRomTool`, runtime `dsrom` instalado da release do GitHub, 5 MB). Layout: `config.yaml`, `header.yaml`, `arm9/` (descomprimido, itcm/dtcm separados), `arm9_overlays/` (descomprimidos), `arm7/`, `banner/`, `files/`, `path_order.txt`. O hub grava ao lado um `pokehub-workspace.json` com SHA-1 do dump e o CRC original da área segura: o `dsrom build` zera esse CRC, e o hub o restaura quando a área segura não mudou. Validado: reconstrução byte a byte idêntica ao dump de SoulSilver (teste opcional com `POKEHUB_REAL_ROM` + `POKEHUB_DSROM`). O extrator/empacotador em C# continua como reserva (formato "ndstool legado") se o ds-rom não puder ser baixado.
+2. **Hooks de lançamento** (`Plugins/LaunchHooks`, campo `launch.hook` no manifesto). `dspre-open-workspace`: antes de abrir o DSPRE, grava `openDefaultRom` em `%AppData%\DSPRE\userSettings.json` apontando para o workspace do projeto, preservando as outras chaves. O DSPRE pergunta se reabre o projeto ao iniciar (ele não aceita argumentos de linha de comando; verificado em `Program.cs`).
+3. UI: escolha da pasta raiz num painel dentro da janela principal; log ocultável com "Copiar tudo".
+
+Próximos: mais plugins (Nitro Studio 2, DeSmuME), editores próprios (treinadores, encontros, texto), publicar no GitHub.
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)
 

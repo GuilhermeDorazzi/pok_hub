@@ -24,6 +24,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly DecompBuildService _builds;
     private readonly WorkspaceGit _git;
     private readonly DependencyChecker _deps;
+    private readonly WorkspaceService _workspace;
     private readonly ProjectService _projects;
     private readonly StringBuilder _log = new();
 
@@ -38,7 +39,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string RootPath => _paths.Root;
     public string ProjectSummary => CurrentProject is { } p
-        ? $"{p.Name}  ·  {p.Config.BaseGame} ({p.Config.GameCode})  ·  Gen {p.Config.Generation}  ·  {(WorkspaceService.IsExtracted(p) ? "workspace extraído" : "workspace vazio")}"
+        ? $"{p.Name}  ·  {p.Config.BaseGame} ({p.Config.GameCode})  ·  Gen {p.Config.Generation}  ·  {WorkspaceService.FormatLabel(p)}"
         : "Nenhum projeto aberto";
 
     private bool HasProjectAndIdle => CurrentProject is not null && !IsBusy;
@@ -65,8 +66,8 @@ public sealed partial class MainViewModel : ObservableObject
                 "Sobrescrever workspace", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (r != MessageBoxResult.Yes) return;
         }
-        var m = await RunBusy($"Extraindo {p.Name}...", () => WorkspaceService.ExtractAsync(p, new Progress<string>(Log), overwrite: true));
-        if (m is not null) await EnsureWorkspaceRepoAsync(p);
+        var ok = await RunBusy($"Extraindo {p.Name}...", () => _workspace.ExtractAsync(p, new Progress<string>(Log), overwrite: true));
+        if (ok) await EnsureWorkspaceRepoAsync(p);
     }
 
     [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
@@ -84,7 +85,7 @@ public sealed partial class MainViewModel : ObservableObject
             try { await _git.SnapshotAsync(p, "Antes de empacotar", new Progress<string>(Log)); }
             catch (Exception ex) { Log($"Falha ao salvar versão: {ex.Message}"); }
         }
-        var output = await RunBusy($"Empacotando {p.Name}...", () => WorkspaceService.PackAsync(p, new Progress<string>(Log)));
+        var output = await RunBusy($"Empacotando {p.Name}...", () => _workspace.PackAsync(p, new Progress<string>(Log)));
         if (output is null || !run) return;
 
         var melon = _catalog.Get("melonds");
@@ -95,7 +96,7 @@ public sealed partial class MainViewModel : ObservableObject
             MessageBox.Show("melonDS não está instalado. Instale na aba Emulador.", "Emulador", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        var rt = _launcher.Launch(melon, installed, p);
+        var rt = _launcher.Launch(melon, installed, p, new Progress<string>(Log));
         Log($"melonDS aberto com {output} (pid {rt.Process.Id})");
     }
 
@@ -130,6 +131,7 @@ public sealed partial class MainViewModel : ObservableObject
         _builds = new DecompBuildService(config, paths);
         _git = new WorkspaceGit(_installer.Runtimes);
         _deps = new DependencyChecker(_installer.Runtimes, _builds);
+        _workspace = new WorkspaceService(_installer.Runtimes);
         _projects = new ProjectService(paths);
 
         _launcher.Output += (rt, line) => Log($"[{rt.PluginId}] {line}");
@@ -284,8 +286,8 @@ public sealed partial class MainViewModel : ObservableObject
             Log($"Projeto '{created.Name}' criado: {created.Config.BaseGame} ({created.Config.GameCode}) em {created.Paths.Dir}");
             ReloadProjects();
             CurrentProject = Projects.First(p => p.Name == created.Name);
-            var m = await RunBusy("Extraindo a ROM base para workspace/...", () => WorkspaceService.ExtractAsync(CurrentProject!, new Progress<string>(Log)));
-            if (m is not null) await EnsureWorkspaceRepoAsync(CurrentProject!);
+            var ok = await RunBusy("Extraindo a ROM base para workspace/...", () => _workspace.ExtractAsync(CurrentProject!, new Progress<string>(Log)));
+            if (ok) await EnsureWorkspaceRepoAsync(CurrentProject!);
         }
     }
 

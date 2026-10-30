@@ -65,6 +65,8 @@ public sealed class LaunchSpec
 {
     /// <summary>null = executa o binário direto; "java" = java -jar.</summary>
     public string? Runtime { get; set; }
+    /// <summary>Preparação feita pelo hub antes de abrir (ver <see cref="LaunchHooks"/>), ex.: "dspre-open-workspace".</summary>
+    public string? Hook { get; set; }
     /// <summary>Argumentos com variáveis: ${project} ${workspace} ${baseRom} ${rom} ${builds} ${decomp} ${tool} ${hub}.</summary>
     public List<string> Args { get; set; } = [];
     public string? WorkingDirectory { get; set; }

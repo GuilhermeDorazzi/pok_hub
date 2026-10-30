@@ -177,7 +177,7 @@ public sealed partial class ToolItemViewModel : ObservableObject
         if (!ConfirmDependencies("abrir")) return;
         try
         {
-            var rt = _launcher.Launch(Manifest, Installed, _currentProject());
+            var rt = _launcher.Launch(Manifest, Installed, _currentProject(), new Progress<string>(_log));
             IsRunning = true;
             _log($"{Manifest.Name} aberto (pid {rt.Process.Id})");
             rt.Process.Exited += (_, _) => Application.Current.Dispatcher.Invoke(() =>

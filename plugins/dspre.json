@@ -13,7 +13,7 @@
     "assetPattern": "^DSPRE-win-Portable\\.zip$",
     "executable": "DSPRE.exe"
   },
-  "launch": { "args": [] },
+  "launch": { "args": [], "hook": "dspre-open-workspace" },
   "requires": ["dotnet-framework-4.8"],
-  "notes": "Sem argumentos de linha de comando documentados. Abra a pasta workspace/ pelo menu (Load extracted data from directory)."
+  "notes": "Ao abrir, o hub aponta o DSPRE para o workspace/ do projeto (formato ds-rom); confirme a reabertura na janela do DSPRE. Salve no DSPRE antes de empacotar."
 }
