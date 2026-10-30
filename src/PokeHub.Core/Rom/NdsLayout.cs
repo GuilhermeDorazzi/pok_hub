@@ -16,6 +16,8 @@ public static class NdsHeader
     public const int OverlayEntrySize = 32, OverlayFileIdField = 0x18;
     public const uint NitroFooterMagic = 0xDEC00621;
     public const int SecureAreaStart = 0x4000, SecureAreaLength = 0x4000;
+    /// <summary>header.bin guarda os 0x4000 bytes iniciais (header + região reservada), não só os 0x200 do ndstool.</summary>
+    public const int FullHeaderSize = 0x4000;
 }
 
 /// <summary>Nomes de arquivos dentro de workspace/ (mesma convenção do ndstool, que o DSPRE também usa).</summary>
@@ -46,6 +48,12 @@ public sealed class WorkspaceManifest
     public string SourceRomSha1 { get; set; } = "";
     public int FirstDataFileId { get; set; }
     public bool Arm9HasNitroFooter { get; set; }
+    /// <summary>CRC da área segura como veio no header original. Dumps de cartucho têm os 8 primeiros bytes destruídos, então recalcular nunca bate.</summary>
+    public ushort OriginalSecureAreaCrc { get; set; }
+    /// <summary>SHA-1 dos bytes 0x4000..0x7FFF originais; se não mudaram, o CRC original é mantido.</summary>
+    public string? SecureAreaSha1 { get; set; }
+    /// <summary>Ids dos arquivos de data/ na ordem física da ROM original, para reproduzir o layout.</summary>
+    public List<int>? FileOrder { get; set; }
     public List<FntEntry> Tree { get; set; } = [];
 
     public static WorkspaceManifest? Load(string file) =>

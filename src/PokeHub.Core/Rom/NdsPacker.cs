@@ -16,9 +16,12 @@ public static class NdsPacker
         if (!layout.IsExtracted) throw new InvalidOperationException("workspace/ não contém uma ROM extraída.");
         var manifest = WorkspaceManifest.Load(layout.ManifestFile);
 
-        var header = File.ReadAllBytes(layout.HeaderBin);
-        if (header.Length < NdsHeader.Size) throw new InvalidDataException("header.bin inválido.");
-        header = header[..NdsHeader.Size];
+        var headerFile = File.ReadAllBytes(layout.HeaderBin);
+        if (headerFile.Length < NdsHeader.Size) throw new InvalidDataException("header.bin inválido.");
+        // região 0..0x4000 inteira (header + reservado), zeros se o header.bin só tem os 0x200 bytes do ndstool
+        var headerFull = new byte[NdsHeader.FullHeaderSize];
+        headerFile.AsSpan(0, Math.Min(headerFile.Length, NdsHeader.FullHeaderSize)).CopyTo(headerFull);
+        var header = headerFull[..NdsHeader.Size];
 
         var arm9 = File.ReadAllBytes(layout.Arm9Bin);
         bool footer = arm9.Length >= 12 && BitConverter.ToUInt32(arm9, arm9.Length - 12) == NdsHeader.NitroFooterMagic;
@@ -95,9 +98,12 @@ public static class NdsPacker
         U32(NdsHeader.FatSize, (uint)(fatCount * 8));
         U32(NdsHeader.BannerOffset, banner.Length > 0 ? Place(banner) : 0);
 
-        // arquivos de data/ em ordem de id
+        // arquivos de data/ na ordem física original (arquivos novos no fim, por id)
+        var position = new Dictionary<int, int>();
+        if (manifest?.FileOrder is { } order) for (int i = 0; i < order.Count; i++) position[order[i]] = i;
+        var ordered = files.OrderBy(f => position.TryGetValue(f.FileId, out var i) ? i : int.MaxValue).ThenBy(f => f.FileId);
         int n = 0;
-        foreach (var f in files.OrderBy(f => f.FileId))
+        foreach (var f in ordered)
         {
             var path = Path.Combine(layout.DataDir, f.Path.Replace('/', Path.DirectorySeparatorChar));
             var data = File.ReadAllBytes(path);
@@ -115,13 +121,25 @@ public static class NdsPacker
         U32(NdsHeader.HeaderSize, NdsHeader.SecureAreaStart);
         header[NdsHeader.Capacity] = CapacityByte(total);
         var buffer = rom.GetBuffer();
-        ushort secureCrc = total >= NdsHeader.SecureAreaStart + NdsHeader.SecureAreaLength
-            ? Crc16.Compute(buffer.AsSpan(NdsHeader.SecureAreaStart, NdsHeader.SecureAreaLength))
-            : (ushort)0xFFFF;
+        bool hasSecureArea = total >= NdsHeader.SecureAreaStart + NdsHeader.SecureAreaLength;
+        ushort secureCrc;
+        if (hasSecureArea && manifest?.SecureAreaSha1 is { } sha
+            && NdsExtractor.Sha1Hex(buffer.AsSpan(NdsHeader.SecureAreaStart, NdsHeader.SecureAreaLength)) == sha)
+        {
+            // área segura intacta: o CRC original (calculado pela Nintendo sobre a área cifrada íntegra) continua válido
+            secureCrc = manifest.OriginalSecureAreaCrc;
+        }
+        else
+        {
+            secureCrc = hasSecureArea ? Crc16.Compute(buffer.AsSpan(NdsHeader.SecureAreaStart, NdsHeader.SecureAreaLength)) : (ushort)0xFFFF;
+            if (hasSecureArea && manifest?.SecureAreaSha1 is not null)
+                log?.Report("Aviso: a área segura do arm9 (primeiros 0x4000 bytes) foi alterada; CRC recalculado.");
+        }
         BitConverter.GetBytes(secureCrc).CopyTo(header, NdsHeader.SecureAreaCrc);
         BitConverter.GetBytes(Crc16.Compute(header.AsSpan(0, NdsHeader.HeaderCrc))).CopyTo(header, NdsHeader.HeaderCrc);
+        header.CopyTo(headerFull, 0);
         rom.Position = 0;
-        rom.Write(header);
+        rom.Write(headerFull);
 
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputRom))!);
         File.WriteAllBytes(outputRom, buffer.AsSpan(0, (int)total).ToArray());

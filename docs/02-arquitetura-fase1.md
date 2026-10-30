@@ -57,7 +57,8 @@ Feito em 2026-10-30:
 1. Extração de `base.nds` para `workspace/` e empacotamento em `builds/` em C# puro (`Rom/NdsExtractor`, `Rom/NdsPacker`, `Rom/NdsFileSystem`). Layout igual ao do ndstool: `header.bin`, `arm9.bin` (com nitro footer), `arm7.bin`, `y9.bin`, `y7.bin`, `overlay/overlay_NNNN.bin`, `banner.bin`, `data/`. Extras do hub: `fnt.bin` (FNT original) e `nds-layout.json` (árvore ordenada e ids).
    - Árvore de `data/` inalterada: a FNT original é reaproveitada, ids idênticos aos da ROM.
    - Árvore alterada: FNT reconstruída preservando a ordem conhecida; arquivos novos entram no fim da própria pasta.
-   - Secure area do arm9 copiada sem decifrar (nenhuma chave da BIOS no projeto). Fica válida enquanto os primeiros 0x800 bytes do arm9 não mudarem.
+   - Secure area do arm9 copiada sem decifrar (nenhuma chave da BIOS no projeto). O CRC da secure area do header original é preservado enquanto os bytes 0x4000..0x7FFF não mudarem (dumps de cartucho têm os 8 primeiros bytes destruídos, então recalcular nunca bate com o original).
+   - `header.bin` guarda os 0x4000 bytes iniciais e `nds-layout.json` guarda a ordem física dos arquivos, então o reempacotamento de uma árvore inalterada é **byte a byte idêntico** ao dump original até o tamanho usado (validado com SoulSilver USA em 2026-10-30; teste opcional `POKEHUB_REAL_ROM=<caminho.nds>`).
    - Novo projeto extrai automaticamente. Botões: Extrair ROM, Empacotar, Empacotar e rodar.
 2. "Empacotar e rodar" abre a ROM recém-gerada no melonDS, se instalado.
 

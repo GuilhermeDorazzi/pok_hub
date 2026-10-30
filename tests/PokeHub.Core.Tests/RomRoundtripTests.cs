@@ -148,6 +148,28 @@ public class RomRoundtripTests : IDisposable
         Assert.Equal(4, BitConverter.ToUInt16(fnt, 6)); // total de diretórios no root
     }
 
+    /// <summary>Com POKEHUB_REAL_ROM=&lt;caminho.nds&gt;: extrai e reempacota um dump real e exige igualdade byte a byte até o tamanho usado.</summary>
+    [Fact]
+    public void Real_rom_roundtrip_is_byte_identical()
+    {
+        var romPath = Environment.GetEnvironmentVariable("POKEHUB_REAL_ROM");
+        if (string.IsNullOrEmpty(romPath) || !File.Exists(romPath)) return;
+
+        var ws = Path.Combine(_root, "real");
+        var manifest = NdsExtractor.Extract(romPath, ws);
+        var output = Path.Combine(_root, "real.nds");
+        NdsPacker.Pack(ws, output);
+
+        var original = File.ReadAllBytes(romPath);
+        var rebuilt = File.ReadAllBytes(output);
+        uint used = BitConverter.ToUInt32(original, NdsHeader.TotalUsedSize);
+        Assert.Equal(used, (uint)rebuilt.Length);
+        int firstDiff = original.AsSpan(0, (int)used).CommonPrefixLength(rebuilt);
+        Assert.True(firstDiff == used, $"primeira diferença em 0x{firstDiff:X} (manifesto: {manifest.FileOrder?.Count} arquivos ordenados)");
+        // o restante do dump original é só o preenchimento 0xFF até a capacidade do chip
+        Assert.All(original.Skip((int)used), b => Assert.Equal(0xFF, b));
+    }
+
     [Fact]
     public void Crc16_matches_known_vector()
     {

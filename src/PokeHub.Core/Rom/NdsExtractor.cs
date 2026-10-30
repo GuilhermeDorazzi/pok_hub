@@ -26,7 +26,7 @@ public static class NdsExtractor
         Directory.CreateDirectory(layout.OverlayDir);
         Directory.CreateDirectory(layout.DataDir);
 
-        File.WriteAllBytes(layout.HeaderBin, h);
+        File.WriteAllBytes(layout.HeaderBin, rom[..Math.Min(rom.Length, NdsHeader.FullHeaderSize)]);
 
         // ARM9 (+ nitro footer de 12 bytes logo após, se presente) e ARM7
         var arm9Off = U32(NdsHeader.Arm9Offset); var arm9Size = U32(NdsHeader.Arm9Size);
@@ -82,17 +82,23 @@ public static class NdsExtractor
         }
         log?.Report($"{files.Count} arquivos em data/");
 
+        bool hasSecureArea = rom.Length >= NdsHeader.SecureAreaStart + NdsHeader.SecureAreaLength;
         var manifest = new WorkspaceManifest
         {
             GameCode = NdsRomHeader.Read(romPath).GameCode,
             SourceRomSha1 = Convert.ToHexString(SHA1.HashData(rom)).ToLowerInvariant(),
             FirstDataFileId = firstFileId,
             Arm9HasNitroFooter = footer,
+            OriginalSecureAreaCrc = BitConverter.ToUInt16(h, NdsHeader.SecureAreaCrc),
+            SecureAreaSha1 = hasSecureArea ? Sha1Hex(rom.AsSpan(NdsHeader.SecureAreaStart, NdsHeader.SecureAreaLength)) : null,
+            FileOrder = files.OrderBy(f => fat[f.FileId].Start).Select(f => f.FileId).ToList(),
             Tree = tree,
         };
         manifest.Save(layout.ManifestFile);
         return manifest;
     }
+
+    public static string Sha1Hex(ReadOnlySpan<byte> data) => Convert.ToHexString(SHA1.HashData(data)).ToLowerInvariant();
 
     private static void CreateDirectories(IEnumerable<FntEntry> entries, string dir)
     {
