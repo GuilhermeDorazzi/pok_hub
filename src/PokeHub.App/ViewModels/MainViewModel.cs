@@ -199,12 +199,13 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(CanUseGit))]
-    private async Task ShowHistoryAsync()
+    private void ShowHistory()
     {
-        var history = await _git.HistoryAsync(CurrentProject!);
-        if (history.Count == 0) { Log("Sem versões no workspace ainda."); return; }
-        Log($"Versões do workspace ({history.Count} mais recentes):");
-        foreach (var (hash, msg) in history) Log($"  {hash}  {msg}");
+        var p = CurrentProject!;
+        if (!WorkspaceGit.IsRepo(p)) { Log("workspace/ ainda não é versionado: extraia a ROM ou use 'Salvar versão'."); return; }
+        var win = new HistoryWindow(_git, p, Log) { Owner = Application.Current.MainWindow };
+        win.ShowDialog();
+        if (win.Restored) NotifyProjectCommands();
     }
 
     private async Task SnapshotAfterToolAsync(string pluginId)

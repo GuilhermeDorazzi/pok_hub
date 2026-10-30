@@ -69,9 +69,9 @@ Feito em 2026-10-30:
 
 6. Checagem de dependências (`Runtimes/DependencyChecker`): `dotnet-framework-4.8`/`4.5` pelo valor Release em `HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full` (528040 = 4.8, 378389 = 4.5), `vcredist-x64` por `HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64`. O card mostra cada requisito com estado (em vermelho se falta) e, ao instalar ou abrir, oferece abrir a página oficial de download. Esses instaladores exigem admin, por isso o hub não os executa. Requisitos desconhecidos continuam informativos.
 
-Pendente:
+7. Janela "Versões" (`Views/HistoryWindow`): lista os commits do workspace e restaura o selecionado. O estado atual é commitado antes de restaurar e de novo depois, então o histórico nunca perde nada. A versão mais recente não é restaurável por ser o estado atual.
 
-7. UI para restaurar uma versão do workspace.
+Fase 2 concluída em 2026-10-30. Próximas fases: mais plugins (Nitro Studio 2, DeSmuME), sincronização exportar/reimportar para ferramentas que só abrem .nds, e editores próprios (treinadores, encontros, texto).
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)
 
