@@ -10,6 +10,7 @@ using PokeHub.Core.Hub;
 using PokeHub.Core.Plugins;
 using PokeHub.Core.Processes;
 using PokeHub.Core.Projects;
+using PokeHub.Core.Runtimes;
 
 namespace PokeHub.App.ViewModels;
 
@@ -21,6 +22,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly PluginInstaller _installer;
     private readonly ToolLauncher _launcher;
     private readonly DecompBuildService _builds;
+    private readonly WorkspaceGit _git;
     private readonly ProjectService _projects;
     private readonly StringBuilder _log = new();
 
@@ -47,6 +49,8 @@ public sealed partial class MainViewModel : ObservableObject
         ExtractRomCommand.NotifyCanExecuteChanged();
         PackRomCommand.NotifyCanExecuteChanged();
         PackAndRunCommand.NotifyCanExecuteChanged();
+        SaveVersionCommand.NotifyCanExecuteChanged();
+        ShowHistoryCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ProjectSummary));
     }
 
@@ -60,7 +64,8 @@ public sealed partial class MainViewModel : ObservableObject
                 "Sobrescrever workspace", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (r != MessageBoxResult.Yes) return;
         }
-        await RunBusy($"Extraindo {p.Name}...", () => WorkspaceService.ExtractAsync(p, new Progress<string>(Log), overwrite: true));
+        var m = await RunBusy($"Extraindo {p.Name}...", () => WorkspaceService.ExtractAsync(p, new Progress<string>(Log), overwrite: true));
+        if (m is not null) await EnsureWorkspaceRepoAsync(p);
     }
 
     [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
@@ -73,6 +78,11 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var p = CurrentProject!;
         if (!WorkspaceService.IsExtracted(p)) { Log("workspace/ vazio: extraia a ROM primeiro."); return; }
+        if (!GitMissing && WorkspaceGit.IsRepo(p))
+        {
+            try { await _git.SnapshotAsync(p, "Antes de empacotar", new Progress<string>(Log)); }
+            catch (Exception ex) { Log($"Falha ao salvar versão: {ex.Message}"); }
+        }
         var output = await RunBusy($"Empacotando {p.Name}...", () => WorkspaceService.PackAsync(p, new Progress<string>(Log)));
         if (output is null || !run) return;
 
@@ -117,16 +127,97 @@ public sealed partial class MainViewModel : ObservableObject
         _installer = new PluginInstaller(paths, config);
         _launcher = new ToolLauncher(paths, _installer.Runtimes);
         _builds = new DecompBuildService(config, paths);
+        _git = new WorkspaceGit(_installer.Runtimes);
         _projects = new ProjectService(paths);
 
         _launcher.Output += (rt, line) => Log($"[{rt.PluginId}] {line}");
+        _launcher.Exited += rt => _ = SnapshotAfterToolAsync(rt.PluginId);
 
         Log($"PokeHub iniciado. Raiz: {paths.Root}");
         Log($"{catalog.All.Count} plugins carregados: {string.Join(", ", catalog.All.Select(p => p.Id))}");
         ReloadProjects();
         if (config.LastProject is { } last) CurrentProject = Projects.FirstOrDefault(p => p.Name == last);
         RebuildTools();
+        RefreshGitStatus();
         _ = DetectShellsAsync();
+        _ = CheckGitAsync();
+    }
+
+    // ----- Git -----
+
+    [ObservableProperty] private string _gitStatus = "";
+    [ObservableProperty] private bool _gitMissing;
+
+    private void RefreshGitStatus()
+    {
+        var git = _installer.Runtimes.ResolveGit();
+        GitMissing = git is null;
+        GitStatus = git is null ? "Git não encontrado"
+                  : git == "git" ? "Git: do sistema"
+                  : $"Git: {_installer.Runtimes.GetInstalled(RuntimeManager.GitId)?.Version}";
+        InstallGitCommand.NotifyCanExecuteChanged();
+        SaveVersionCommand.NotifyCanExecuteChanged();
+        ShowHistoryCommand.NotifyCanExecuteChanged();
+    }
+
+    private async Task CheckGitAsync()
+    {
+        if (!GitMissing) { Log(GitStatus); return; }
+        Log("Git não encontrado no PATH nem em runtimes/.");
+        var r = MessageBox.Show(
+            "O Git é necessário para clonar as decomps e para guardar versões do workspace.\n\n" +
+            "O hub pode instalar uma cópia portátil (MinGit, cerca de 38 MB) em runtimes/git, sem alterar o sistema.\n\nInstalar agora?",
+            "Git não encontrado", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (r == MessageBoxResult.Yes) await InstallGitAsync();
+        else Log("Instalação do Git adiada. Use o botão 'Instalar Git' quando quiser.");
+    }
+
+    [RelayCommand(CanExecute = nameof(GitMissing))]
+    private async Task InstallGitAsync()
+    {
+        await RunBusy("Instalando Git portátil...", () => _installer.Runtimes.InstallAsync(RuntimeManager.GitId, new Progress<string>(Log)));
+        RefreshGitStatus();
+    }
+
+    private bool CanUseGit => CurrentProject is not null && !IsBusy && !GitMissing;
+
+    [RelayCommand(CanExecute = nameof(CanUseGit))]
+    private async Task SaveVersionAsync()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log("workspace/ vazio: nada para versionar."); return; }
+        await RunBusy("Salvando versão do workspace...", async () =>
+        {
+            await _git.EnsureRepoAsync(p, new Progress<string>(Log));
+            return await _git.SnapshotAsync(p, "Versão salva pelo usuário", new Progress<string>(Log));
+        });
+    }
+
+    [RelayCommand(CanExecute = nameof(CanUseGit))]
+    private async Task ShowHistoryAsync()
+    {
+        var history = await _git.HistoryAsync(CurrentProject!);
+        if (history.Count == 0) { Log("Sem versões no workspace ainda."); return; }
+        Log($"Versões do workspace ({history.Count} mais recentes):");
+        foreach (var (hash, msg) in history) Log($"  {hash}  {msg}");
+    }
+
+    private async Task SnapshotAfterToolAsync(string pluginId)
+    {
+        try
+        {
+            var p = CurrentProject;
+            if (p is null || GitMissing || !WorkspaceGit.IsRepo(p)) return;
+            await _git.SnapshotAsync(p, $"Após fechar {pluginId}", new Progress<string>(Log));
+        }
+        catch (Exception ex) { Log($"Falha ao salvar versão após {pluginId}: {ex.Message}"); }
+    }
+
+    private async Task EnsureWorkspaceRepoAsync(Project p)
+    {
+        if (GitMissing) { Log("Sem Git: o workspace não será versionado."); return; }
+        try { await _git.EnsureRepoAsync(p, new Progress<string>(Log)); }
+        catch (Exception ex) { Log($"Falha ao versionar o workspace: {ex.Message}"); }
     }
 
     private async Task DetectShellsAsync()
@@ -187,7 +278,8 @@ public sealed partial class MainViewModel : ObservableObject
             Log($"Projeto '{created.Name}' criado: {created.Config.BaseGame} ({created.Config.GameCode}) em {created.Paths.Dir}");
             ReloadProjects();
             CurrentProject = Projects.First(p => p.Name == created.Name);
-            await RunBusy("Extraindo a ROM base para workspace/...", () => WorkspaceService.ExtractAsync(CurrentProject!, new Progress<string>(Log)));
+            var m = await RunBusy("Extraindo a ROM base para workspace/...", () => WorkspaceService.ExtractAsync(CurrentProject!, new Progress<string>(Log)));
+            if (m is not null) await EnsureWorkspaceRepoAsync(CurrentProject!);
         }
     }
 

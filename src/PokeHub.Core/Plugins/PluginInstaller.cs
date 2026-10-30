@@ -103,7 +103,7 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
 
     private async Task<InstalledTool> InstallFromGitAsync(PluginManifest m, Project? project, IProgress<string> log, CancellationToken ct)
     {
-        if (!ProcessRunner.IsOnPath("git")) throw new InvalidOperationException("git não encontrado no PATH. Instale o Git for Windows.");
+        var git = Runtimes.ResolveGit() ?? throw new InvalidOperationException("Git não encontrado. Use 'Instalar Git' no hub ou instale o Git for Windows.");
         var repo = m.Source.Repo ?? throw new InvalidDataException($"{m.Id}: source.repo ausente");
         var url = repo.Contains("://") ? repo : $"https://github.com/{repo}.git";
         var target = TargetDir(m, project);
@@ -111,7 +111,7 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
         if (Directory.Exists(Path.Combine(target, ".git")))
         {
             log.Report($"Repositório já existe, atualizando ({target})...");
-            var pull = await ProcessRunner.RunAsync("git", ["pull", "--ff-only"], target, log, ct);
+            var pull = await ProcessRunner.RunAsync(git, ["pull", "--ff-only"], target, log, ct);
             if (pull != 0) throw new InvalidOperationException("git pull falhou. Veja o log.");
         }
         else
@@ -122,7 +122,7 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
             if (m.Source.Recursive) args.Add("--recursive");
             if (m.Source.Branch is { } b) { args.Add("--branch"); args.Add(b); }
             args.Add(url); args.Add(target);
-            var code = await ProcessRunner.RunAsync("git", args, null, log, ct);
+            var code = await ProcessRunner.RunAsync(git, args, null, log, ct);
             if (code != 0) throw new InvalidOperationException("git clone falhou. Veja o log.");
         }
 

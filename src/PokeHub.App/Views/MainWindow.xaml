@@ -29,7 +29,13 @@
                 <Button DockPanel.Dock="Left" Content="Extrair ROM" Command="{Binding ExtractRomCommand}" />
                 <Button DockPanel.Dock="Left" Content="Empacotar" Command="{Binding PackRomCommand}" />
                 <Button DockPanel.Dock="Left" Content="Empacotar e rodar" Command="{Binding PackAndRunCommand}" FontWeight="Bold" />
+                <Separator DockPanel.Dock="Left" Width="12" Background="Transparent" />
+                <Button DockPanel.Dock="Left" Content="Salvar versão" Command="{Binding SaveVersionCommand}" />
+                <Button DockPanel.Dock="Left" Content="Versões" Command="{Binding ShowHistoryCommand}" />
                 <Button DockPanel.Dock="Right" Content="Pasta do hub" Command="{Binding OpenRootFolderCommand}" />
+                <Button DockPanel.Dock="Right" Content="Instalar Git" Command="{Binding InstallGitCommand}"
+                        Visibility="{Binding GitMissing, Converter={StaticResource BoolToVis}}" />
+                <TextBlock DockPanel.Dock="Right" Text="{Binding GitStatus}" Foreground="#AAB" VerticalAlignment="Center" Margin="0,0,12,0" />
                 <TextBlock DockPanel.Dock="Right" Text="{Binding RootPath}" Foreground="#AAB" VerticalAlignment="Center" Margin="0,0,12,0" />
                 <TextBlock Text="{Binding ProjectSummary}" Foreground="White" VerticalAlignment="Center" Margin="16,0,0,0" />
             </DockPanel>

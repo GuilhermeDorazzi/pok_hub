@@ -20,7 +20,9 @@ public static class ProcessRunner
         };
         foreach (var a in args) psi.ArgumentList.Add(a);
         if (environment is not null) foreach (var (k, v) in environment) psi.Environment[k] = v;
-        if (outputEncoding is not null) { psi.StandardOutputEncoding = outputEncoding; psi.StandardErrorEncoding = outputEncoding; }
+        // git, bash e a maioria das CLIs escrevem UTF-8; wsl.exe passa Unicode explicitamente
+        psi.StandardOutputEncoding = outputEncoding ?? Encoding.UTF8;
+        psi.StandardErrorEncoding = outputEncoding ?? Encoding.UTF8;
 
         using var p = new Process { StartInfo = psi, EnableRaisingEvents = true };
         p.OutputDataReceived += (_, e) => { if (e.Data is not null) log?.Report(e.Data); };
@@ -40,7 +42,7 @@ public static class ProcessRunner
     {
         var psi = new ProcessStartInfo(fileName) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
         foreach (var a in args) psi.ArgumentList.Add(a);
-        if (outputEncoding is not null) psi.StandardOutputEncoding = outputEncoding;
+        psi.StandardOutputEncoding = outputEncoding ?? Encoding.UTF8;
         using var p = Process.Start(psi) ?? throw new InvalidOperationException($"Não foi possível iniciar {fileName}");
         using var cts = new CancellationTokenSource(timeoutMs);
         var output = await p.StandardOutput.ReadToEndAsync(cts.Token);

@@ -65,9 +65,12 @@ Feito em 2026-10-30:
 
 4. Build das decomps (`Decomp/UnixShell`, `Decomp/DecompBuildService`): detecta MSYS2 (pastas usuais) e distros do WSL, roda o `build.command` do manifesto (`make rom`) na pasta do clone e copia `build.output` para `builds/`. MSYS2 tem prioridade porque o clone fica no disco do Windows e o WSL é lento em `/mnt`. Correção ao levantamento: as decomps baixam o compilador sozinhas (`tools/devtools/get_metroskrew.sh` puxa o pacote metroskrew de mid-kid/metroskrew), então o usuário não fornece o mwcc. O que ele precisa é um shell Unix com as dependências do INSTALL.md.
 
+5. Git gerenciado e versionamento do workspace (`Runtimes/RuntimeManager` + `Projects/WorkspaceGit`): ao iniciar, o hub procura git no PATH e em `runtimes/git`; se não há, oferece instalar o MinGit portátil (release do git-for-windows, 64 bits, sem busybox). O `workspace/` vira um repositório git (identidade fixa PokeHub, `* binary`) com commits automáticos: na extração, antes de empacotar e ao fechar uma ferramenta aberta pelo hub. Botões "Salvar versão" e "Versões" na barra superior; `WorkspaceGit.RestoreAsync` já existe para voltar a uma versão, sem UI ainda.
+
 Pendente:
-5. git automático no `workspace/` a cada salvamento.
-6. Verificação de dependências declaradas em `requires` (.NET Framework 4.8, Java).
+
+6. Verificação de dependências declaradas em `requires` que o hub não instala (.NET Framework 4.8).
+7. UI para restaurar uma versão do workspace.
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)
 
