@@ -63,8 +63,9 @@ Feito em 2026-10-30:
 
 3. JRE gerenciado (`Runtimes/RuntimeManager`): requisitos `java21`/`java17` nos manifestos são instalados em `runtimes/<id>` a partir da API do Adoptium (Temurin JRE, Windows x64) junto com a ferramenta. O lançador usa esse java.exe; sem ele, cai no `java` do PATH. Registrado em `hub.json` → `installedRuntimes`.
 
+4. Build das decomps (`Decomp/UnixShell`, `Decomp/DecompBuildService`): detecta MSYS2 (pastas usuais) e distros do WSL, roda o `build.command` do manifesto (`make rom`) na pasta do clone e copia `build.output` para `builds/`. MSYS2 tem prioridade porque o clone fica no disco do Windows e o WSL é lento em `/mnt`. Correção ao levantamento: as decomps baixam o compilador sozinhas (`tools/devtools/get_metroskrew.sh` puxa o pacote metroskrew de mid-kid/metroskrew), então o usuário não fornece o mwcc. O que ele precisa é um shell Unix com as dependências do INSTALL.md.
+
 Pendente:
-4. Build das decomps: detectar WSL2/MSYS2, pedir caminho do mwcc, rodar `make` com log.
 5. git automático no `workspace/` a cada salvamento.
 6. Verificação de dependências declaradas em `requires` (.NET Framework 4.8, Java).
 

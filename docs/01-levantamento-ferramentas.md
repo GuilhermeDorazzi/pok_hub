@@ -36,13 +36,13 @@ Regra prática para o hub (que pretendemos manter open source):
 
 | Repo | Status | Licença | Build no Windows | Observação |
 |---|---|---|---|---|
-| pret/pokeplatinum | WIP, push 2026-10-30 | **Nenhuma** | WSL2 recomendado, MSYS2 alternativa. make + meson/ninja. Compilador Metrowerks (mwcc) rodando nativo no Windows via wrapper `skrewrap`; no macOS via Wine | O mwcc é proprietário da Nintendo/Metrowerks e **não é redistribuível**. O usuário precisa obtê-lo por conta própria. O hub não pode baixar nem embutir |
+| pret/pokeplatinum | WIP, push 2026-10-30 | **Nenhuma** | WSL2 recomendado, MSYS2 alternativa. make + meson/ninja. Compilador Metrowerks (mwcc) via wrapper `skrewrap` (pacote metroskrew, baixado pelo próprio `make`) | Correção (2026-10-30): o build baixa o metroskrew sozinho de mid-kid/metroskrew, o usuário não precisa fornecer o mwcc. O hub continua sem embutir nada: só orquestra o `make` |
 | pret/pokeheartgold | WIP, push 2026-10-30 | **Nenhuma** | Igual ao pokeplatinum | Idem |
 | pret/pokediamond | WIP, push 2026-10-11 | **Nenhuma** | Igual | Idem |
 
 Implicações para o hub:
 - Clonar os repos é tranquilo (git público). Absorver código deles não é, por falta de licença.
-- O hub pode orquestrar o build (detectar WSL2 ou MSYS2, rodar `make`, mostrar log), mas tem que pedir ao usuário o caminho do mwcc.
+- O hub orquestra o build (detecta WSL2 ou MSYS2, roda `make rom`, mostra log). O compilador é baixado pelo próprio Makefile (metroskrew).
 - A verificação do build depende dos hashes SHA-1 listados no README de cada repo.
 
 ## Gen 5 (referência futura)
@@ -63,7 +63,7 @@ Implicações para o hub:
    - Se o hub for **MIT**, fica limitado a NitroPaint e apicula para absorção, e tudo o mais só por lançamento.
    - Recomendação: **GPL-3**. O ecossistema inteiro é GPL, e é o que mantém aberta a "cereja do bolo" de trazer editores para dentro sem depender de parceria.
 4. **Exige parceria/autorização**: PokEditor-Core, Nitro Studio 2, SDSME, ferramentas Gen 5 antigas, decomps da pret.
-5. **Nunca distribuir**: ROMs e o compilador mwcc.
+5. **Nunca distribuir**: ROMs. O compilador mwcc também não entra no repositório do hub; quem o baixa é o Makefile da decomp.
 
 ## Primeiro conjunto de plugins (fase 1)
 
@@ -73,7 +73,7 @@ Implicações para o hub:
 - PokEditor (jar, release GitHub) + JRE gerenciado
 - apicula (zip, build automático do master)
 - Extração/empacotamento de ROM: implementar em C# no hub (evita a dependência de devkitPro)
-- Decomp: clone git de pokeplatinum/pokeheartgold + detecção de WSL2/MSYS2 + caminho do mwcc informado pelo usuário
+- Decomp: clone git de pokeplatinum/pokeheartgold + detecção de WSL2/MSYS2 + `make rom`
 
 ## Pontos a marcar no código para Gen 5
 

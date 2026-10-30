@@ -5,6 +5,7 @@ using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PokeHub.App.Views;
+using PokeHub.Core.Decomp;
 using PokeHub.Core.Hub;
 using PokeHub.Core.Plugins;
 using PokeHub.Core.Processes;
@@ -19,6 +20,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly PluginCatalog _catalog;
     private readonly PluginInstaller _installer;
     private readonly ToolLauncher _launcher;
+    private readonly DecompBuildService _builds;
     private readonly ProjectService _projects;
     private readonly StringBuilder _log = new();
 
@@ -114,6 +116,7 @@ public sealed partial class MainViewModel : ObservableObject
         _catalog = catalog;
         _installer = new PluginInstaller(paths, config);
         _launcher = new ToolLauncher(paths, _installer.Runtimes);
+        _builds = new DecompBuildService(config, paths);
         _projects = new ProjectService(paths);
 
         _launcher.Output += (rt, line) => Log($"[{rt.PluginId}] {line}");
@@ -123,6 +126,20 @@ public sealed partial class MainViewModel : ObservableObject
         ReloadProjects();
         if (config.LastProject is { } last) CurrentProject = Projects.FirstOrDefault(p => p.Name == last);
         RebuildTools();
+        _ = DetectShellsAsync();
+    }
+
+    private async Task DetectShellsAsync()
+    {
+        try
+        {
+            var shells = await _builds.GetShellsAsync();
+            Log(shells.Count == 0
+                ? "Nenhum shell Unix (MSYS2/WSL) encontrado: o build das decomps fica indisponível até instalar um."
+                : $"Shells para decomps: {string.Join("; ", shells.Select(s => s.Description))}");
+            foreach (var t in Tools) t.Refresh();
+        }
+        catch (Exception ex) { Log($"Falha ao detectar MSYS2/WSL: {ex.Message}"); }
     }
 
     private void ReloadProjects()
@@ -147,7 +164,7 @@ public sealed partial class MainViewModel : ObservableObject
         // GEN5: quando houver projeto Gen 5 aberto, o filtro por geração esconde os plugins só de Gen 4.
         var gen = CurrentProject?.Config.Generation;
         foreach (var m in _catalog.ForContext(SelectedContext.Context, gen))
-            Tools.Add(new ToolItemViewModel(m, _installer, _launcher, () => CurrentProject, Log));
+            Tools.Add(new ToolItemViewModel(m, _installer, _launcher, _builds, () => CurrentProject, Log));
     }
 
     public void Log(string line)

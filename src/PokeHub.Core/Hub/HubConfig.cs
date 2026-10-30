@@ -12,6 +12,8 @@ public sealed class HubConfig
     /// <summary>Runtimes gerenciados em runtimes/ (ex.: "java21").</summary>
     public Dictionary<string, InstalledTool> InstalledRuntimes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public string? LastProject { get; set; }
+    /// <summary>Shell Unix preferido para compilar decomps (MSYS2 ou WSL).</summary>
+    public PreferredShell? PreferredShell { get; set; }
 
     public static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -35,6 +37,12 @@ public sealed class HubConfig
     }
 
     public void Save(string file) => File.WriteAllText(file, JsonSerializer.Serialize(this, JsonOptions));
+}
+
+public sealed class PreferredShell
+{
+    public required string Kind { get; set; }
+    public required string Location { get; set; }
 }
 
 public sealed class InstalledTool

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 
 namespace PokeHub.Core.Processes;
 
@@ -6,7 +7,8 @@ namespace PokeHub.Core.Processes;
 public static class ProcessRunner
 {
     public static async Task<int> RunAsync(string fileName, IEnumerable<string> args, string? workingDir,
-        IProgress<string>? log, CancellationToken ct = default)
+        IProgress<string>? log, CancellationToken ct = default,
+        IReadOnlyDictionary<string, string>? environment = null, Encoding? outputEncoding = null)
     {
         var psi = new ProcessStartInfo(fileName)
         {
@@ -17,6 +19,8 @@ public static class ProcessRunner
             WorkingDirectory = workingDir ?? Environment.CurrentDirectory,
         };
         foreach (var a in args) psi.ArgumentList.Add(a);
+        if (environment is not null) foreach (var (k, v) in environment) psi.Environment[k] = v;
+        if (outputEncoding is not null) { psi.StandardOutputEncoding = outputEncoding; psi.StandardErrorEncoding = outputEncoding; }
 
         using var p = new Process { StartInfo = psi, EnableRaisingEvents = true };
         p.OutputDataReceived += (_, e) => { if (e.Data is not null) log?.Report(e.Data); };
@@ -25,8 +29,23 @@ public static class ProcessRunner
         p.Start();
         p.BeginOutputReadLine();
         p.BeginErrorReadLine();
-        await p.WaitForExitAsync(ct);
+        try { await p.WaitForExitAsync(ct); }
+        catch (OperationCanceledException) { try { p.Kill(entireProcessTree: true); } catch { } throw; }
         return p.ExitCode;
+    }
+
+    /// <summary>Captura stdout inteiro de um comando curto (sem log).</summary>
+    public static async Task<(int ExitCode, string Output)> CaptureAsync(string fileName, IEnumerable<string> args,
+        Encoding? outputEncoding = null, int timeoutMs = 10000)
+    {
+        var psi = new ProcessStartInfo(fileName) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
+        foreach (var a in args) psi.ArgumentList.Add(a);
+        if (outputEncoding is not null) psi.StandardOutputEncoding = outputEncoding;
+        using var p = Process.Start(psi) ?? throw new InvalidOperationException($"Não foi possível iniciar {fileName}");
+        using var cts = new CancellationTokenSource(timeoutMs);
+        var output = await p.StandardOutput.ReadToEndAsync(cts.Token);
+        await p.WaitForExitAsync(cts.Token);
+        return (p.ExitCode, output);
     }
 
     public static bool IsOnPath(string exe)

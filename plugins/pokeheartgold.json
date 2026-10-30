@@ -1,7 +1,7 @@
 {
   "id": "pokeheartgold",
   "name": "pokeheartgold (decomp)",
-  "description": "Decompilação de Pokémon HeartGold/SoulSilver pela pret. Clonada dentro do projeto em decomp/pokeheartgold.",
+  "description": "Decompilação de Pokémon HeartGold/SoulSilver pela pret. Clonada dentro do projeto em decomp/pokeheartgold. O build baixa sozinho o compilador (metroskrew) e o meson.",
   "homepage": "https://github.com/pret/pokeheartgold",
   "license": "sem licença",
   "contexts": ["decomp"],
@@ -12,6 +12,7 @@
     "repo": "pret/pokeheartgold",
     "recursive": true
   },
-  "requires": ["wsl2|msys2", "mwcc"],
-  "notes": "Build via WSL2 ou MSYS2 (make). O compilador Metrowerks (mwcc) é proprietário: o usuário fornece."
+  "build": { "command": "make rom", "output": "build/pokeheartgold.us.nds" },
+  "requires": ["unix-shell"],
+  "notes": "Exige MSYS2 ou WSL2 com as dependências do INSTALL.md. O primeiro build demora."
 }

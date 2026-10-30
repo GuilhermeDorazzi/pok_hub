@@ -4,6 +4,7 @@ using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
+using PokeHub.Core.Decomp;
 using PokeHub.Core.Hub;
 using PokeHub.Core.Plugins;
 using PokeHub.Core.Processes;
@@ -16,6 +17,7 @@ public sealed partial class ToolItemViewModel : ObservableObject
 {
     private readonly PluginInstaller _installer;
     private readonly ToolLauncher _launcher;
+    private readonly DecompBuildService _builds;
     private readonly Func<Project?> _currentProject;
     private readonly Action<string> _log;
 
@@ -26,12 +28,13 @@ public sealed partial class ToolItemViewModel : ObservableObject
     [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private string _statusText = "";
 
-    public ToolItemViewModel(PluginManifest manifest, PluginInstaller installer, ToolLauncher launcher,
+    public ToolItemViewModel(PluginManifest manifest, PluginInstaller installer, ToolLauncher launcher, DecompBuildService builds,
         Func<Project?> currentProject, Action<string> log)
     {
         Manifest = manifest;
         _installer = installer;
         _launcher = launcher;
+        _builds = builds;
         _currentProject = currentProject;
         _log = log;
         Refresh();
@@ -41,11 +44,49 @@ public sealed partial class ToolItemViewModel : ObservableObject
     public string Description => Manifest.Description;
     public string LicenseText => Manifest.License is { } l ? $"Licença: {l}" : "";
     public string RequiresText => Manifest.Requires.Count > 0
-        ? "Requer: " + string.Join(", ", Manifest.Requires.Select(r =>
-            !RuntimeManager.IsManaged(r) ? r
-            : _installer.Runtimes.GetInstalled(r) is { } t ? $"{r} (instalado: {t.Version})"
-            : $"{r} (o hub instala junto)"))
+        ? "Requer: " + string.Join(", ", Manifest.Requires.Select(DescribeRequirement))
         : "";
+
+    private string DescribeRequirement(string r)
+    {
+        if (RuntimeManager.IsManaged(r))
+            return _installer.Runtimes.GetInstalled(r) is { } t ? $"{r} (instalado: {t.Version})" : $"{r} (o hub instala junto)";
+        if (r == "unix-shell")
+        {
+            var shells = _builds.CachedShells;
+            return shells is null ? "MSYS2 ou WSL2"
+                 : shells.Count == 0 ? "MSYS2 ou WSL2 (nenhum encontrado)"
+                 : $"MSYS2 ou WSL2 (encontrado: {string.Join(", ", shells.Select(s => s.Description))})";
+        }
+        return r;
+    }
+
+    public bool HasBuild => Manifest.Build is not null;
+    public bool CanBuild => HasBuild && IsInstalled && !IsBusy && _currentProject() is not null;
+
+    [RelayCommand(CanExecute = nameof(CanBuild))]
+    private async Task BuildAsync()
+    {
+        var project = _currentProject();
+        if (Installed is null || project is null) return;
+        try
+        {
+            IsBusy = true;
+            StatusText = "Compilando...";
+            var rom = await _builds.BuildAsync(Manifest, Installed, project, new Progress<string>(_log));
+            _log($"{Manifest.Name}: ROM copiada para {rom}. Use 'Abrir' no melonDS ou 'Empacotar e rodar' para testar.");
+        }
+        catch (Exception ex)
+        {
+            _log($"ERRO no build de {Manifest.Name}: {ex.Message}");
+            MessageBox.Show(ex.Message, $"Falha no build de {Manifest.Name}", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+            Refresh();
+        }
+    }
     public string? Notes => Manifest.Notes;
     public bool HasNotes => !string.IsNullOrWhiteSpace(Manifest.Notes);
     public bool IsInstalled => Installed is not null;
@@ -67,8 +108,10 @@ public sealed partial class ToolItemViewModel : ObservableObject
         OnPropertyChanged(nameof(IsInstalled));
         OnPropertyChanged(nameof(RequiresText));
         OnPropertyChanged(nameof(CanLaunch));
+        OnPropertyChanged(nameof(CanBuild));
         OnPropertyChanged(nameof(InstallButtonText));
         InstallCommand.NotifyCanExecuteChanged();
+        BuildCommand.NotifyCanExecuteChanged();
         LaunchCommand.NotifyCanExecuteChanged();
         OpenFolderCommand.NotifyCanExecuteChanged();
     }

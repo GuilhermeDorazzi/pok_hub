@@ -33,7 +33,9 @@ public sealed class PluginManifest
     public PluginScope Scope { get; set; } = PluginScope.Hub;
     public required PluginSource Source { get; set; }
     public LaunchSpec? Launch { get; set; }
-    /// <summary>Dependências informativas por enquanto (ex.: "java21", "wsl2", "mwcc").</summary>
+    /// <summary>Para decomps: como compilar e onde sai a ROM.</summary>
+    public BuildSpec? Build { get; set; }
+    /// <summary>Dependências: "java21"/"java17" o hub instala; "unix-shell" exige MSYS2 ou WSL; o resto é informativo.</summary>
     public List<string> Requires { get; set; } = [];
     public string? Notes { get; set; }
 }
@@ -49,6 +51,14 @@ public sealed class PluginSource
     public string? Executable { get; set; }
     public string? Branch { get; set; }
     public bool Recursive { get; set; } = true;
+}
+
+public sealed class BuildSpec
+{
+    /// <summary>Comando executado no shell Unix dentro da pasta do repositório (ex.: "make rom").</summary>
+    public string Command { get; set; } = "make";
+    /// <summary>Caminho relativo da ROM gerada (ex.: "build/pokeplatinum.us.nds").</summary>
+    public required string Output { get; set; }
 }
 
 public sealed class LaunchSpec
