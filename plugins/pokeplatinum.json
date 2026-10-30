@@ -1,0 +1,17 @@
+{
+  "id": "pokeplatinum",
+  "name": "pokeplatinum (decomp)",
+  "description": "Decompilação de Pokémon Platinum pela pret. Clonada dentro do projeto em decomp/pokeplatinum.",
+  "homepage": "https://github.com/pret/pokeplatinum",
+  "license": "sem licença",
+  "contexts": ["decomp"],
+  "generations": [4],
+  "scope": "project",
+  "source": {
+    "type": "gitClone",
+    "repo": "pret/pokeplatinum",
+    "recursive": true
+  },
+  "requires": ["wsl2|msys2", "mwcc"],
+  "notes": "Build via WSL2 ou MSYS2 (make). O compilador Metrowerks (mwcc) é proprietário: o usuário fornece. Fase 2: botão de build com log."
+}

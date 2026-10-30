@@ -1,0 +1,19 @@
+{
+  "id": "tinke",
+  "name": "Tinke",
+  "description": "Explorador de arquivos da ROM: NARC, gráficos, texto. Útil para extrair e reimportar arquivos avulsos.",
+  "homepage": "https://github.com/pleonex/tinke",
+  "license": "GPL-3.0",
+  "contexts": ["utility", "graphics"],
+  "generations": [4],
+  "scope": "hub",
+  "source": {
+    "type": "gitHubRelease",
+    "repo": "pleonex/tinke",
+    "assetPattern": "^Tinke-.*\\.zip$",
+    "executable": "Tinke.exe"
+  },
+  "launch": { "args": ["${rom}"] },
+  "requires": ["dotnet-framework-4.5"],
+  "notes": "Repositório arquivado em 2022. Abre a ROM passada como argumento. GEN5: adicionar 5 em generations."
+}

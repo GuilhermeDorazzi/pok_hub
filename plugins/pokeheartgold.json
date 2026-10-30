@@ -1,0 +1,17 @@
+{
+  "id": "pokeheartgold",
+  "name": "pokeheartgold (decomp)",
+  "description": "Decompilação de Pokémon HeartGold/SoulSilver pela pret. Clonada dentro do projeto em decomp/pokeheartgold.",
+  "homepage": "https://github.com/pret/pokeheartgold",
+  "license": "sem licença",
+  "contexts": ["decomp"],
+  "generations": [4],
+  "scope": "project",
+  "source": {
+    "type": "gitClone",
+    "repo": "pret/pokeheartgold",
+    "recursive": true
+  },
+  "requires": ["wsl2|msys2", "mwcc"],
+  "notes": "Build via WSL2 ou MSYS2 (make). O compilador Metrowerks (mwcc) é proprietário: o usuário fornece."
+}

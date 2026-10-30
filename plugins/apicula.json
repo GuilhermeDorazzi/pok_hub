@@ -1,0 +1,17 @@
+{
+  "id": "apicula",
+  "name": "apicula",
+  "description": "Converte modelos NSBMD (mapas, personagens) para glTF/COLLADA para editar no Blender.",
+  "homepage": "https://github.com/scurest/apicula",
+  "license": "0BSD",
+  "contexts": ["models"],
+  "generations": [4],
+  "scope": "hub",
+  "source": {
+    "type": "gitHubRelease",
+    "repo": "scurest/apicula",
+    "assetPattern": "windows.*\\.zip$",
+    "executable": "apicula.exe"
+  },
+  "notes": "Ferramenta CLI, sem launch: o hub vai expor comandos próprios (converter, visualizar). GEN5: adicionar 5 em generations."
+}

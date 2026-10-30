@@ -1,0 +1,19 @@
+{
+  "id": "dspre",
+  "name": "DSPRE Reloaded",
+  "description": "Editor completo de Gen 4: mapas, eventos, scripts, treinadores, encontros, texto e dados de Pokémon.",
+  "homepage": "https://github.com/DS-Pokemon-Rom-Editor/DSPRE",
+  "license": "AGPL-3.0",
+  "contexts": ["maps", "events", "scripts", "trainers", "text", "pokemon"],
+  "generations": [4],
+  "scope": "hub",
+  "source": {
+    "type": "gitHubRelease",
+    "repo": "DS-Pokemon-Rom-Editor/DSPRE",
+    "assetPattern": "^DSPRE-win-Portable\\.zip$",
+    "executable": "DSPRE.exe"
+  },
+  "launch": { "args": [] },
+  "requires": ["dotnet-framework-4.8"],
+  "notes": "Sem argumentos de linha de comando documentados. Abra a pasta workspace/ pelo menu (Load extracted data from directory)."
+}

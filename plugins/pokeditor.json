@@ -1,0 +1,18 @@
+{
+  "id": "pokeditor",
+  "name": "PokEditor",
+  "description": "Stats, learnsets, evoluções, moves e sprites de Pokémon (Gen 4).",
+  "homepage": "https://github.com/turtleisaac/PokEditor",
+  "license": "GPL-3.0",
+  "contexts": ["pokemon"],
+  "generations": [4],
+  "scope": "hub",
+  "source": {
+    "type": "gitHubRelease",
+    "repo": "turtleisaac/PokEditor",
+    "assetPattern": "^PokEditor-.*\\.jar$"
+  },
+  "launch": { "runtime": "java", "args": [] },
+  "requires": ["java21"],
+  "notes": "Precisa de Java 20+ no PATH. Fase posterior: JRE gerenciado em runtimes/."
+}
