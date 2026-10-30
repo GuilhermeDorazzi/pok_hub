@@ -23,6 +23,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ToolLauncher _launcher;
     private readonly DecompBuildService _builds;
     private readonly WorkspaceGit _git;
+    private readonly DependencyChecker _deps;
     private readonly ProjectService _projects;
     private readonly StringBuilder _log = new();
 
@@ -128,6 +129,7 @@ public sealed partial class MainViewModel : ObservableObject
         _launcher = new ToolLauncher(paths, _installer.Runtimes);
         _builds = new DecompBuildService(config, paths);
         _git = new WorkspaceGit(_installer.Runtimes);
+        _deps = new DependencyChecker(_installer.Runtimes, _builds);
         _projects = new ProjectService(paths);
 
         _launcher.Output += (rt, line) => Log($"[{rt.PluginId}] {line}");
@@ -135,6 +137,9 @@ public sealed partial class MainViewModel : ObservableObject
 
         Log($"PokeHub iniciado. Raiz: {paths.Root}");
         Log($"{catalog.All.Count} plugins carregados: {string.Join(", ", catalog.All.Select(p => p.Id))}");
+        var dotnet = DependencyChecker.ReadDotNetRelease();
+        Log(dotnet is null ? "Aviso: .NET Framework 4.x não encontrado (DSPRE e Tinke precisam dele)."
+                           : $".NET Framework 4.x presente (release {dotnet}{(dotnet >= 528040 ? ", 4.8 ou superior" : ", abaixo de 4.8")}).");
         ReloadProjects();
         if (config.LastProject is { } last) CurrentProject = Projects.FirstOrDefault(p => p.Name == last);
         RebuildTools();
@@ -255,7 +260,7 @@ public sealed partial class MainViewModel : ObservableObject
         // GEN5: quando houver projeto Gen 5 aberto, o filtro por geração esconde os plugins só de Gen 4.
         var gen = CurrentProject?.Config.Generation;
         foreach (var m in _catalog.ForContext(SelectedContext.Context, gen))
-            Tools.Add(new ToolItemViewModel(m, _installer, _launcher, _builds, () => CurrentProject, Log));
+            Tools.Add(new ToolItemViewModel(m, _installer, _launcher, _builds, _deps, () => CurrentProject, Log));
     }
 
     public void Log(string line)

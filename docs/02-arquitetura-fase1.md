@@ -67,9 +67,10 @@ Feito em 2026-10-30:
 
 5. Git gerenciado e versionamento do workspace (`Runtimes/RuntimeManager` + `Projects/WorkspaceGit`): ao iniciar, o hub procura git no PATH e em `runtimes/git`; se não há, oferece instalar o MinGit portátil (release do git-for-windows, 64 bits, sem busybox). O `workspace/` vira um repositório git (identidade fixa PokeHub, `* binary`) com commits automáticos: na extração, antes de empacotar e ao fechar uma ferramenta aberta pelo hub. Botões "Salvar versão" e "Versões" na barra superior; `WorkspaceGit.RestoreAsync` já existe para voltar a uma versão, sem UI ainda.
 
+6. Checagem de dependências (`Runtimes/DependencyChecker`): `dotnet-framework-4.8`/`4.5` pelo valor Release em `HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full` (528040 = 4.8, 378389 = 4.5), `vcredist-x64` por `HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64`. O card mostra cada requisito com estado (em vermelho se falta) e, ao instalar ou abrir, oferece abrir a página oficial de download. Esses instaladores exigem admin, por isso o hub não os executa. Requisitos desconhecidos continuam informativos.
+
 Pendente:
 
-6. Verificação de dependências declaradas em `requires` que o hub não instala (.NET Framework 4.8).
 7. UI para restaurar uma versão do workspace.
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)

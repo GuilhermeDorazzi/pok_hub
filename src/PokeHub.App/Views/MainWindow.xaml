@@ -93,10 +93,20 @@
                                                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}" />
                                             </DockPanel>
                                             <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Margin="0,4,0,4" />
-                                            <TextBlock Foreground="Gray" FontSize="11">
+                                            <TextBlock Foreground="Gray" FontSize="11" TextWrapping="Wrap">
                                                 <Run Text="{Binding LicenseText, Mode=OneWay}" />
                                                 <Run Text="   " />
-                                                <Run Text="{Binding RequiresText, Mode=OneWay}" />
+                                                <Run Text="{Binding RequiresText, Mode=OneWay}">
+                                                    <Run.Style>
+                                                        <Style TargetType="Run">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasMissingDependency}" Value="True">
+                                                                    <Setter Property="Foreground" Value="Firebrick" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Run.Style>
+                                                </Run>
                                             </TextBlock>
                                             <TextBlock Text="{Binding Notes}" Foreground="#8A6D00" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
                                                        Visibility="{Binding HasNotes, Converter={StaticResource BoolToVis}}" />

@@ -18,6 +18,7 @@ public sealed partial class ToolItemViewModel : ObservableObject
     private readonly PluginInstaller _installer;
     private readonly ToolLauncher _launcher;
     private readonly DecompBuildService _builds;
+    private readonly DependencyChecker _deps;
     private readonly Func<Project?> _currentProject;
     private readonly Action<string> _log;
 
@@ -29,12 +30,13 @@ public sealed partial class ToolItemViewModel : ObservableObject
     [ObservableProperty] private string _statusText = "";
 
     public ToolItemViewModel(PluginManifest manifest, PluginInstaller installer, ToolLauncher launcher, DecompBuildService builds,
-        Func<Project?> currentProject, Action<string> log)
+        DependencyChecker deps, Func<Project?> currentProject, Action<string> log)
     {
         Manifest = manifest;
         _installer = installer;
         _launcher = launcher;
         _builds = builds;
+        _deps = deps;
         _currentProject = currentProject;
         _log = log;
         Refresh();
@@ -44,21 +46,33 @@ public sealed partial class ToolItemViewModel : ObservableObject
     public string Description => Manifest.Description;
     public string LicenseText => Manifest.License is { } l ? $"Licença: {l}" : "";
     public string RequiresText => Manifest.Requires.Count > 0
-        ? "Requer: " + string.Join(", ", Manifest.Requires.Select(DescribeRequirement))
+        ? "Requer: " + string.Join(", ", _deps.CheckAll(Manifest.Requires).Select(d =>
+            d.Satisfied is null && d.Detail == "" ? d.Name
+            : d.IsMissing ? $"{d.Name} (FALTANDO: {d.Detail})"
+            : $"{d.Name} ({d.Detail})"))
         : "";
 
-    private string DescribeRequirement(string r)
+    public bool HasMissingDependency => _deps.CheckAll(Manifest.Requires).Any(d => d.IsMissing);
+
+    /// <summary>Avisa sobre dependências faltantes. Devolve false se o usuário cancelou a ação.</summary>
+    private bool ConfirmDependencies(string action)
     {
-        if (RuntimeManager.IsManaged(r))
-            return _installer.Runtimes.GetInstalled(r) is { } t ? $"{r} (instalado: {t.Version})" : $"{r} (o hub instala junto)";
-        if (r == "unix-shell")
+        var missing = _deps.CheckAll(Manifest.Requires).Where(d => d.IsMissing).ToList();
+        if (missing.Count == 0) return true;
+        var lines = string.Join("\n", missing.Select(d => $"• {d.Name}: {d.Detail}"));
+        var withUrl = missing.FirstOrDefault(d => d.InstallUrl is not null);
+        var text = $"{Manifest.Name} depende de algo que o hub não instala sozinho:\n\n{lines}\n\n" +
+                   (withUrl is null ? $"Continuar com '{action}' mesmo assim?"
+                                    : $"Sim = abrir a página de download de {withUrl.Name}\nNão = continuar com '{action}' mesmo assim\nCancelar = parar");
+        var r = MessageBox.Show(text, "Dependência faltando", withUrl is null ? MessageBoxButton.YesNo : MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+        if (r == MessageBoxResult.Cancel) return false;
+        if (r == MessageBoxResult.Yes && withUrl is not null)
         {
-            var shells = _builds.CachedShells;
-            return shells is null ? "MSYS2 ou WSL2"
-                 : shells.Count == 0 ? "MSYS2 ou WSL2 (nenhum encontrado)"
-                 : $"MSYS2 ou WSL2 (encontrado: {string.Join(", ", shells.Select(s => s.Description))})";
+            Process.Start(new ProcessStartInfo(withUrl.InstallUrl!) { UseShellExecute = true });
+            _log($"Página de download aberta: {withUrl.InstallUrl}. Instale e tente de novo.");
+            return false;
         }
-        return r;
+        return withUrl is null ? r == MessageBoxResult.Yes : true;
     }
 
     public bool HasBuild => Manifest.Build is not null;
@@ -107,6 +121,7 @@ public sealed partial class ToolItemViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(IsInstalled));
         OnPropertyChanged(nameof(RequiresText));
+        OnPropertyChanged(nameof(HasMissingDependency));
         OnPropertyChanged(nameof(CanLaunch));
         OnPropertyChanged(nameof(CanBuild));
         OnPropertyChanged(nameof(InstallButtonText));
@@ -125,6 +140,7 @@ public sealed partial class ToolItemViewModel : ObservableObject
     private async Task InstallAsync()
     {
         var project = _currentProject();
+        if (!ConfirmDependencies("instalar")) return;
         try
         {
             IsBusy = true;
@@ -158,6 +174,7 @@ public sealed partial class ToolItemViewModel : ObservableObject
     private void Launch()
     {
         if (Installed is null) return;
+        if (!ConfirmDependencies("abrir")) return;
         try
         {
             var rt = _launcher.Launch(Manifest, Installed, _currentProject());
