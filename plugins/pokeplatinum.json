@@ -1,9 +1,18 @@
 {
   "id": "pokeplatinum",
   "name": "pokeplatinum (decomp)",
-  "description": "Decompilação de Pokémon Platinum pela pret. Clonada dentro do projeto em decomp/pokeplatinum. O build baixa sozinho o compilador (metroskrew) e o meson.",
-  "purpose": "Decompilação: o código-fonte do Platinum reconstruído pela comunidade pret. Serve para alterar o CÓDIGO do jogo (mecânicas de batalha, itens novos, IA, sistemas inteiros), o que nenhum editor binário faz. É para usuário avançado: quem só quer editar dados não precisa disto.",
-  "cost": "Clone de ~1 GB. O primeiro build leva de 20 a 50 minutos no Windows; os seguintes, segundos.",
+  "description": {
+    "pt-BR": "Decompilação de Pokémon Platinum pela pret. Clonada dentro do projeto em decomp/pokeplatinum. O build baixa sozinho o compilador (metroskrew) e o meson.",
+    "en-US": "pret's decompilation of Pokémon Platinum. Cloned inside the project at decomp/pokeplatinum. The build downloads the compiler (metroskrew) and meson by itself."
+  },
+  "purpose": {
+    "pt-BR": "Decompilação: o código-fonte do Platinum reconstruído pela comunidade pret. Serve para alterar o CÓDIGO do jogo (mecânicas de batalha, itens novos, IA, sistemas inteiros), o que nenhum editor binário faz. É para usuário avançado: quem só quer editar dados não precisa disto.",
+    "en-US": "Decompilation: the Platinum source code rebuilt by the pret community. It lets you change the game's CODE (battle mechanics, new items, AI, whole systems), which no binary editor can. For advanced users: if you only want to edit data you do not need this."
+  },
+  "cost": {
+    "pt-BR": "Clone de ~1 GB. O primeiro build leva de 20 a 50 minutos no Windows; os seguintes, segundos.",
+    "en-US": "~1 GB clone. The first build takes 20 to 50 minutes on Windows; later ones take seconds."
+  },
   "confirmInstall": true,
   "homepage": "https://github.com/pret/pokeplatinum",
   "license": "sem licença",
@@ -22,10 +31,16 @@
   "build": {
     "command": "make rom",
     "output": "build/pokeplatinum.us.nds",
-    "firstBuildNotice": "Este é o primeiro build desta decomp. Ele reconstrói o jogo inteiro a partir do código-fonte: cerca de 16.700 passos, de 20 a 50 minutos no Windows dependendo da máquina. Os builds seguintes refazem só o que mudou e levam segundos.\n\nA decomp serve para alterar o código do jogo (mecânicas, itens novos, IA). Se você só quer editar dados, use o DSPRE e os editores do hub e não precisa disto.\n\nO hub continua usável durante o build; acompanhe pelo log."
+    "firstBuildNotice": {
+      "pt-BR": "Este é o primeiro build desta decomp. Ele reconstrói o jogo inteiro a partir do código-fonte: cerca de 16.700 passos, de 20 a 50 minutos no Windows dependendo da máquina. Os builds seguintes refazem só o que mudou e levam segundos.\n\nA decomp serve para alterar o código do jogo (mecânicas, itens novos, IA). Se você só quer editar dados, use o DSPRE e os editores do hub e não precisa disto.\n\nO hub continua usável durante o build; acompanhe pelo log.",
+      "en-US": "This is the first build of this decomp. It rebuilds the whole game from source: about 16,700 steps, 20 to 50 minutes on Windows depending on the machine. Later builds only redo what changed and take seconds.\n\nThe decomp is for changing the game's code (mechanics, new items, AI). If you only want to edit data, use DSPRE and the hub's editors; you do not need this.\n\nThe hub stays usable during the build; follow it in the log."
+    }
   },
   "requires": [
     "unix-shell"
   ],
-  "notes": "Exige MSYS2 ou WSL2 com as dependências do INSTALL.md (gcc-arm-none-eabi, ninja, bison, flex, python3, p7zip, libpng). O primeiro build demora."
+  "notes": {
+    "pt-BR": "Exige MSYS2 ou WSL2 com as dependências do INSTALL.md (gcc-arm-none-eabi, ninja, bison, flex, python3, p7zip, libpng). O primeiro build demora.",
+    "en-US": "Requires MSYS2 or WSL2 with the INSTALL.md dependencies. The first build is slow."
+  }
 }

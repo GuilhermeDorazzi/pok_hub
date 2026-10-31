@@ -1,9 +1,18 @@
 {
   "id": "dspre",
   "name": "DSPRE Reloaded",
-  "description": "Editor completo de Gen 4: mapas, eventos, scripts, treinadores, encontros, texto e dados de Pokémon.",
-  "purpose": "Editor principal de Gen 4. Serve para mexer nos dados do jogo: mapas, eventos, scripts, treinadores, encontros, textos e Pokémon. É a ferramenta que a maior parte dos hacks usa; se você vai editar o jogo, comece por ela.",
-  "cost": "33 MB de download, uns 150 MB em disco, 1 minuto.",
+  "description": {
+    "pt-BR": "Editor completo de Gen 4: mapas, eventos, scripts, treinadores, encontros, texto e dados de Pokémon.",
+    "en-US": "Complete Gen 4 editor: maps, events, scripts, trainers, encounters, text and Pokémon data."
+  },
+  "purpose": {
+    "pt-BR": "Editor principal de Gen 4. Serve para mexer nos dados do jogo: mapas, eventos, scripts, treinadores, encontros, textos e Pokémon. É a ferramenta que a maior parte dos hacks usa; se você vai editar o jogo, comece por ela.",
+    "en-US": "The main Gen 4 editor. It changes the game's data: maps, events, scripts, trainers, encounters, text and Pokémon. Most hacks are built with it; if you are going to edit the game, start here."
+  },
+  "cost": {
+    "pt-BR": "33 MB de download, uns 150 MB em disco, 1 minuto.",
+    "en-US": "33 MB download, about 150 MB on disk, 1 minute."
+  },
   "homepage": "https://github.com/DS-Pokemon-Rom-Editor/DSPRE",
   "license": "AGPL-3.0",
   "contexts": [
@@ -31,5 +40,8 @@
   "requires": [
     "dotnet-framework-4.8"
   ],
-  "notes": "Ao abrir, o hub aponta o DSPRE para o workspace/ do projeto (formato ds-rom); confirme a reabertura na janela do DSPRE. Salve no DSPRE antes de empacotar."
+  "notes": {
+    "pt-BR": "Ao abrir, o hub aponta o DSPRE para o workspace/ do projeto (formato ds-rom); confirme a reabertura na janela do DSPRE. Salve no DSPRE antes de empacotar.",
+    "en-US": "When opened, the hub points DSPRE to the project's workspace/ (ds-rom format); confirm the reopen prompt in DSPRE. Save in DSPRE before packing."
+  }
 }

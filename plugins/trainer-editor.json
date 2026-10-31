@@ -1,8 +1,14 @@
 {
   "id": "trainer-editor",
   "name": "Editor de treinadores (PokeHub)",
-  "description": "Editor embutido: nome, classe, itens, IA, tipo de batalha e o time completo de cada treinador, lendo nomes de espécies, itens e golpes do próprio jogo.",
-  "purpose": "Editor do próprio hub para os treinadores: nome, classe, itens, IA, tipo de batalha e o time completo. Não instala nada e grava direto no workspace.",
+  "description": {
+    "pt-BR": "Editor embutido: nome, classe, itens, IA, tipo de batalha e o time completo de cada treinador, lendo nomes de espécies, itens e golpes do próprio jogo.",
+    "en-US": "Built-in editor: name, class, items, AI, battle type and the full party of every trainer, reading species, item and move names from the game itself."
+  },
+  "purpose": {
+    "pt-BR": "Editor do próprio hub para os treinadores: nome, classe, itens, IA, tipo de batalha e o time completo. Não instala nada e grava direto no workspace.",
+    "en-US": "The hub's own trainer editor: name, class, items, AI, battle type and the full party. Installs nothing and writes straight to the workspace."
+  },
   "license": "GPL-3.0",
   "contexts": [
     "trainers"
@@ -17,5 +23,8 @@
   "launch": {
     "args": []
   },
-  "notes": "Grava direto no workspace e salva uma versão no git a cada salvamento. Reempacote para testar."
+  "notes": {
+    "pt-BR": "Grava direto no workspace e salva uma versão no git a cada salvamento. Reempacote para testar.",
+    "en-US": "Writes straight to the workspace and saves a git version on every save. Repack to test."
+  }
 }

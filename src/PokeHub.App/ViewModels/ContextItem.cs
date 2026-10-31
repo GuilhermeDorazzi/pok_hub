@@ -1,22 +1,20 @@
+using PokeHub.Core.Localization;
 using PokeHub.Core.Plugins;
 
 namespace PokeHub.App.ViewModels;
 
-public sealed record ContextItem(ToolContext Context, string Title, string Hint)
+/// <summary>Contexto da coluna esquerda. Título e dica vêm do dicionário de idioma (chaves ctx.&lt;nome&gt; e ctx.&lt;nome&gt;.hint).</summary>
+public sealed record ContextItem(ToolContext Context)
 {
-    public static readonly IReadOnlyList<ContextItem> All =
+    private string Key => "ctx." + Context.ToString().ToLowerInvariant();
+    public string Title => Loc.T(Key);
+    public string Hint => Loc.T(Key + ".hint");
+
+    public static readonly IReadOnlyList<ToolContext> Order =
     [
-        new(ToolContext.Maps, "Mapas", "Editar mapas, matrizes e cabeçalhos"),
-        new(ToolContext.Events, "Eventos", "NPCs, warps, triggers"),
-        new(ToolContext.Scripts, "Scripts", "Lógica dos eventos"),
-        new(ToolContext.Trainers, "Treinadores", "Times e classes de treinador"),
-        new(ToolContext.Pokemon, "Pokémon", "Stats, learnsets, evoluções"),
-        new(ToolContext.Text, "Texto", "Diálogos e nomes"),
-        new(ToolContext.Graphics, "Gráficos", "Sprites, tiles, paletas"),
-        new(ToolContext.Models, "Modelos 3D", "NSBMD, texturas"),
-        new(ToolContext.Audio, "Áudio", "SDAT, músicas e efeitos"),
-        new(ToolContext.Emulator, "Emulador", "Testar a ROM"),
-        new(ToolContext.Decomp, "Decomp", "Projetos de decompilação da pret"),
-        new(ToolContext.Utility, "Utilitários", "Exploradores e conversores"),
+        ToolContext.Maps, ToolContext.Events, ToolContext.Scripts, ToolContext.Trainers, ToolContext.Pokemon, ToolContext.Text,
+        ToolContext.Graphics, ToolContext.Models, ToolContext.Audio, ToolContext.Emulator, ToolContext.Decomp, ToolContext.Utility,
     ];
+
+    public static IReadOnlyList<ContextItem> Build() => Order.Select(c => new ContextItem(c)).ToList();
 }

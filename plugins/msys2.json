@@ -1,9 +1,18 @@
 {
   "id": "msys2",
   "name": "MSYS2 + toolchain das decomps",
-  "description": "Shell Unix portátil com gcc, make, ninja, python, libpng e as demais dependências do INSTALL.md das decomps da pret. Extraído em runtimes/msys2 sem instalador nem administrador.",
-  "purpose": "Ambiente Unix portátil que as decomps exigem para compilar no Windows: gcc, make, ninja, python e libpng. Só é necessário para usar o botão 'Compilar ROM' das decomps. Quem usa apenas DSPRE e os editores do hub não precisa instalar.",
-  "cost": "40 MB de download, cerca de 2,3 GB em disco, uns 5 minutos de instalação.",
+  "description": {
+    "pt-BR": "Shell Unix portátil com gcc, make, ninja, python, libpng e as demais dependências do INSTALL.md das decomps da pret. Extraído em runtimes/msys2 sem instalador nem administrador.",
+    "en-US": "Portable Unix shell with gcc, make, ninja, python, libpng and the other INSTALL.md dependencies of the pret decomps. Extracted into runtimes/msys2 without an installer or administrator rights."
+  },
+  "purpose": {
+    "pt-BR": "Ambiente Unix portátil que as decomps exigem para compilar no Windows: gcc, make, ninja, python e libpng. Só é necessário para usar o botão 'Compilar ROM' das decomps. Quem usa apenas DSPRE e os editores do hub não precisa instalar.",
+    "en-US": "Portable Unix environment the decomps need to build on Windows: gcc, make, ninja, python and libpng. Only needed for the decomps' 'Build ROM' button. If you only use DSPRE and the hub's editors you do not need it."
+  },
+  "cost": {
+    "pt-BR": "40 MB de download, cerca de 2,3 GB em disco, uns 5 minutos de instalação.",
+    "en-US": "40 MB download, about 2.3 GB on disk, about 5 minutes to install."
+  },
   "confirmInstall": true,
   "homepage": "https://www.msys2.org/",
   "license": "BSD-3-Clause (MSYS2); pacotes com licenças próprias",
@@ -35,5 +44,8 @@
     ],
     "libpngVersion": "1.6.50"
   },
-  "notes": "Baixa 40 MB, instala a toolchain pelo pacman e compila uma libpng estática para o msys (a do mingw64 sugerida pelo INSTALL.md derruba o nitrogfx). Ocupa cerca de 2 GB e leva uns 5 minutos. O botão 'Compilar ROM' das decomps passa a usar este MSYS2."
+  "notes": {
+    "pt-BR": "Baixa 40 MB, instala a toolchain pelo pacman e compila uma libpng estática para o msys (a do mingw64 sugerida pelo INSTALL.md derruba o nitrogfx). Ocupa cerca de 2 GB e leva uns 5 minutos. O botão 'Compilar ROM' das decomps passa a usar este MSYS2.",
+    "en-US": "Downloads 40 MB, installs the toolchain with pacman and builds a static libpng for msys (the mingw64 one suggested by INSTALL.md crashes nitrogfx). Takes about 2 GB and 5 minutes. The decomps' 'Build ROM' button then uses this MSYS2."
+  }
 }

@@ -12,13 +12,35 @@ public static class HubBootstrapper
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PokeHub");
     private static string SettingsFile => Path.Combine(SettingsDir, "settings.json");
 
-    private sealed class AppSettings { public string? RootPath { get; set; } }
+    private sealed class AppSettings { public string? RootPath { get; set; } public string? Language { get; set; } }
+
+    private static AppSettings LoadSettings()
+    {
+        if (!File.Exists(SettingsFile)) return new AppSettings();
+        try { return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(SettingsFile), HubConfig.JsonOptions) ?? new AppSettings(); }
+        catch { return new AppSettings(); }
+    }
+
+    private static void SaveSettings(AppSettings s)
+    {
+        Directory.CreateDirectory(SettingsDir);
+        File.WriteAllText(SettingsFile, JsonSerializer.Serialize(s, HubConfig.JsonOptions));
+    }
 
     public static string? FindConfiguredRoot()
     {
-        if (!File.Exists(SettingsFile)) return null;
-        var s = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(SettingsFile), HubConfig.JsonOptions);
-        return s?.RootPath is { } p && Directory.Exists(p) ? p : null;
+        var s = LoadSettings();
+        return s.RootPath is { } p && Directory.Exists(p) ? p : null;
+    }
+
+    /// <summary>Idioma salvo em settings.json, ou null se nunca escolhido.</summary>
+    public static string? SavedLanguage() => LoadSettings().Language;
+
+    public static void SaveLanguage(string language)
+    {
+        var s = LoadSettings();
+        s.Language = language;
+        SaveSettings(s);
     }
 
     public static HubPaths Initialize(string root)
@@ -27,8 +49,9 @@ public static class HubBootstrapper
         foreach (var dir in paths.AllDirectories()) Directory.CreateDirectory(dir);
         if (!File.Exists(paths.ConfigFile)) new HubConfig().Save(paths.ConfigFile);
 
-        Directory.CreateDirectory(SettingsDir);
-        File.WriteAllText(SettingsFile, JsonSerializer.Serialize(new AppSettings { RootPath = paths.Root }, HubConfig.JsonOptions));
+        var s = LoadSettings();
+        s.RootPath = paths.Root;
+        SaveSettings(s);
         return paths;
     }
 }

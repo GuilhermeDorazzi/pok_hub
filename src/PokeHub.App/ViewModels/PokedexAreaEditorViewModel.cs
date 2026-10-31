@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PokeHub.Core.Gen4;
+using PokeHub.Core.Localization;
 
 namespace PokeHub.App.ViewModels;
 
@@ -75,7 +76,7 @@ public sealed partial class PokedexAreaEditorViewModel : ObservableObject
     [ObservableProperty] private bool _isDirty;
     [ObservableProperty] private string _status = "";
 
-    public string GameLabel => $"{_repo.Game.Game} · áreas da Pokédex (a/1/3/3)";
+    public string GameLabel => Loc.T("dx.gameLabel", _repo.Game.Game);
 
     public PokedexAreaEditorViewModel(PokedexAreaRepository repo, Action<string> log, Func<string, Task> snapshot)
     {
@@ -85,14 +86,14 @@ public sealed partial class PokedexAreaEditorViewModel : ObservableObject
         for (int i = 1; i <= PokedexAreaRepository.SpeciesCount; i++)
             Species.Add($"{i:D3}  {(i < repo.SpeciesNames.Count ? repo.SpeciesNames[i] : "")}");
 
-        NormalBlocks.Add(new(PokedexAreaBlock.NormalMorning, "Manhã", PokedexAreaRepository.NormalLocations, this));
-        NormalBlocks.Add(new(PokedexAreaBlock.NormalDay, "Dia", PokedexAreaRepository.NormalLocations, this));
-        NormalBlocks.Add(new(PokedexAreaBlock.NormalNight, "Noite", PokedexAreaRepository.NormalLocations, this));
-        NormalBlocks.Add(new(PokedexAreaBlock.NormalAll, "Qualquer hora", PokedexAreaRepository.NormalLocations, this));
-        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialMorning, "Manhã", PokedexAreaRepository.SpecialLocations, this));
-        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialDay, "Dia", PokedexAreaRepository.SpecialLocations, this));
-        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialNight, "Noite", PokedexAreaRepository.SpecialLocations, this));
-        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialAll, "Qualquer hora", PokedexAreaRepository.SpecialLocations, this));
+        NormalBlocks.Add(new(PokedexAreaBlock.NormalMorning, Loc.T("dx.morning"), PokedexAreaRepository.NormalLocations, this));
+        NormalBlocks.Add(new(PokedexAreaBlock.NormalDay, Loc.T("dx.day"), PokedexAreaRepository.NormalLocations, this));
+        NormalBlocks.Add(new(PokedexAreaBlock.NormalNight, Loc.T("dx.night"), PokedexAreaRepository.NormalLocations, this));
+        NormalBlocks.Add(new(PokedexAreaBlock.NormalAll, Loc.T("dx.anytime"), PokedexAreaRepository.NormalLocations, this));
+        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialMorning, Loc.T("dx.morning"), PokedexAreaRepository.SpecialLocations, this));
+        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialDay, Loc.T("dx.day"), PokedexAreaRepository.SpecialLocations, this));
+        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialNight, Loc.T("dx.night"), PokedexAreaRepository.SpecialLocations, this));
+        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialAll, Loc.T("dx.anytime"), PokedexAreaRepository.SpecialLocations, this));
         LoadSpecies();
     }
 
@@ -133,7 +134,7 @@ public sealed partial class PokedexAreaEditorViewModel : ObservableObject
         // escreve no repositório na hora: trocar de espécie não perde a edição; só "Salvar" grava no disco
         foreach (var b in AllBlocks) _repo.SetAreas(SelectedSpecies, b.Block, b.SelectedIds);
         IsDirty = _repo.HasChanges;
-        Status = IsDirty ? "Alterações não salvas" : "";
+        Status = IsDirty ? Loc.T("common.unsaved") : "";
     }
 
     [RelayCommand]
@@ -143,14 +144,14 @@ public sealed partial class PokedexAreaEditorViewModel : ObservableObject
         {
             _repo.Save();
             IsDirty = false;
-            Status = $"Salvo às {DateTime.Now:HH:mm:ss}";
-            _log("Áreas da Pokédex salvas no workspace.");
-            await _snapshot("Editor de áreas da Pokédex");
+            Status = Loc.T("common.savedAt", DateTime.Now.ToString("HH:mm:ss"));
+            _log(Loc.T("dx.savedLog"));
+            await _snapshot(Loc.T("dx.snapshot"));
         }
         catch (Exception ex)
         {
-            Status = "Erro ao salvar: " + ex.Message;
-            _log("ERRO ao salvar áreas da Pokédex: " + ex.Message);
+            Status = Loc.T("common.saveError", ex.Message);
+            _log(Loc.T("dx.saveErrorLog", ex.Message));
         }
     }
 }

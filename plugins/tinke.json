@@ -1,9 +1,18 @@
 {
   "id": "tinke",
   "name": "Tinke",
-  "description": "Explorador de arquivos da ROM: NARC, gráficos, texto. Útil para extrair e reimportar arquivos avulsos.",
-  "purpose": "Explorador de arquivos da ROM. Serve para abrir, extrair e reimportar arquivos avulsos (NARC, gráficos, texto) quando nenhum editor específico cobre o que você quer.",
-  "cost": "1 MB, instantâneo. Ferramenta antiga, arquivada em 2022, mas ainda funciona.",
+  "description": {
+    "pt-BR": "Explorador de arquivos da ROM: NARC, gráficos, texto. Útil para extrair e reimportar arquivos avulsos.",
+    "en-US": "ROM file explorer: NARC, graphics, text. Useful to extract and reimport individual files."
+  },
+  "purpose": {
+    "pt-BR": "Explorador de arquivos da ROM. Serve para abrir, extrair e reimportar arquivos avulsos (NARC, gráficos, texto) quando nenhum editor específico cobre o que você quer.",
+    "en-US": "ROM file explorer. Opens, extracts and reimports individual files (NARC, graphics, text) when no specific editor covers what you need."
+  },
+  "cost": {
+    "pt-BR": "1 MB, instantâneo. Ferramenta antiga, arquivada em 2022, mas ainda funciona.",
+    "en-US": "1 MB, instant. Old tool, archived in 2022, but still works."
+  },
   "homepage": "https://github.com/pleonex/tinke",
   "license": "GPL-3.0",
   "contexts": [
@@ -28,5 +37,8 @@
   "requires": [
     "dotnet-framework-4.5"
   ],
-  "notes": "Repositório arquivado em 2022. Abre a ROM passada como argumento. GEN5: adicionar 5 em generations."
+  "notes": {
+    "pt-BR": "Repositório arquivado em 2022. Abre a ROM passada como argumento. GEN5: adicionar 5 em generations.",
+    "en-US": "Repository archived in 2022. Opens the ROM passed as argument. GEN5: add 5 to generations."
+  }
 }

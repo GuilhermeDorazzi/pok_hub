@@ -2,11 +2,12 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:PokeHub.App.ViewModels"
+        xmlns:loc="clr-namespace:PokeHub.App"
         mc:Ignorable="d"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         d:DataContext="{d:DesignInstance vm:MainViewModel}"
-        Title="PokeHub" Height="720" Width="1100" MinHeight="500" MinWidth="800"
+        Title="PokeHub" Height="720" Width="1180" MinHeight="500" MinWidth="860"
         FontSize="13" Background="#F4F4F6">
     <Grid>
     <Grid x:Name="MainContent">
@@ -21,24 +22,25 @@
         <Border Grid.Row="0" Background="#2B2D42" Padding="12,8">
             <DockPanel>
                 <TextBlock DockPanel.Dock="Left" Text="PokeHub" Foreground="White" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,24,0" />
-                <TextBlock DockPanel.Dock="Left" Text="Projeto:" Foreground="#CCD" VerticalAlignment="Center" Margin="0,0,6,0" />
-                <ComboBox DockPanel.Dock="Left" Width="220" ItemsSource="{Binding Projects}" SelectedItem="{Binding CurrentProject}"
+                <TextBlock DockPanel.Dock="Left" Text="{loc:T main.project}" Foreground="#CCD" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <ComboBox DockPanel.Dock="Left" Width="200" ItemsSource="{Binding Projects}" SelectedItem="{Binding CurrentProject}"
                           DisplayMemberPath="Name" VerticalAlignment="Center" />
-                <Button DockPanel.Dock="Left" Content="Novo projeto" Command="{Binding NewProjectCommand}" Margin="8,0,0,0" />
-                <Button DockPanel.Dock="Left" Content="Pasta do projeto" Command="{Binding OpenProjectFolderCommand}" />
+                <Button DockPanel.Dock="Left" Content="{loc:T main.newProject}" Command="{Binding NewProjectCommand}" Margin="8,0,0,0" />
+                <Button DockPanel.Dock="Left" Content="{loc:T main.projectFolder}" Command="{Binding OpenProjectFolderCommand}" />
                 <Separator DockPanel.Dock="Left" Width="12" Background="Transparent" />
-                <Button DockPanel.Dock="Left" Content="Extrair ROM" Command="{Binding ExtractRomCommand}" />
-                <Button DockPanel.Dock="Left" Content="Empacotar" Command="{Binding PackRomCommand}" />
-                <Button DockPanel.Dock="Left" Content="Empacotar e rodar" Command="{Binding PackAndRunCommand}" FontWeight="Bold" />
+                <Button DockPanel.Dock="Left" Content="{loc:T main.extractRom}" Command="{Binding ExtractRomCommand}" />
+                <Button DockPanel.Dock="Left" Content="{loc:T main.pack}" Command="{Binding PackRomCommand}" />
+                <Button DockPanel.Dock="Left" Content="{loc:T main.packAndRun}" Command="{Binding PackAndRunCommand}" FontWeight="Bold" />
                 <Separator DockPanel.Dock="Left" Width="12" Background="Transparent" />
-                <Button DockPanel.Dock="Left" Content="Salvar versão" Command="{Binding SaveVersionCommand}" />
-                <Button DockPanel.Dock="Left" Content="Versões" Command="{Binding ShowHistoryCommand}" />
-                <Button DockPanel.Dock="Right" Content="Pasta do hub" Command="{Binding OpenRootFolderCommand}" />
-                <Button DockPanel.Dock="Right" Content="Instalar Git" Command="{Binding InstallGitCommand}"
+                <Button DockPanel.Dock="Left" Content="{loc:T main.saveVersion}" Command="{Binding SaveVersionCommand}" />
+                <Button DockPanel.Dock="Left" Content="{loc:T main.versions}" Command="{Binding ShowHistoryCommand}" />
+                <ComboBox DockPanel.Dock="Right" Width="150" ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}"
+                          DisplayMemberPath="Name" VerticalAlignment="Center" ToolTip="{loc:T main.language}" />
+                <Button DockPanel.Dock="Right" Content="{loc:T main.hubFolder}" Command="{Binding OpenRootFolderCommand}" />
+                <Button DockPanel.Dock="Right" Content="{loc:T main.installGit}" Command="{Binding InstallGitCommand}"
                         Visibility="{Binding GitMissing, Converter={StaticResource BoolToVis}}" />
                 <TextBlock DockPanel.Dock="Right" Text="{Binding GitStatus}" Foreground="#AAB" VerticalAlignment="Center" Margin="0,0,12,0" />
-                <TextBlock DockPanel.Dock="Right" Text="{Binding RootPath}" Foreground="#AAB" VerticalAlignment="Center" Margin="0,0,12,0" />
-                <TextBlock Text="{Binding ProjectSummary}" Foreground="White" VerticalAlignment="Center" Margin="16,0,0,0" />
+                <TextBlock Text="{Binding ProjectSummary}" Foreground="White" VerticalAlignment="Center" Margin="16,0,0,0" TextTrimming="CharacterEllipsis" />
             </DockPanel>
         </Border>
 
@@ -65,7 +67,7 @@
             <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="16">
                 <StackPanel>
                     <TextBlock Text="{Binding SelectedContext.Title}" FontSize="20" FontWeight="Bold" Margin="0,0,0,12" />
-                    <TextBlock Text="Nenhuma ferramenta cadastrada para este contexto ainda." Foreground="Gray">
+                    <TextBlock Text="{loc:T main.noTools}" Foreground="Gray">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -90,7 +92,7 @@
                                             <DockPanel>
                                                 <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" />
                                                 <TextBlock Text="{Binding StatusText}" Foreground="#555" Margin="12,0,0,0" VerticalAlignment="Center" />
-                                                <TextBlock Text="  ● em execução" Foreground="Green" VerticalAlignment="Center"
+                                                <TextBlock Text="{loc:T main.running}" Foreground="Green" VerticalAlignment="Center"
                                                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}" />
                                             </DockPanel>
                                             <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Margin="0,4,0,4" />
@@ -109,13 +111,13 @@
                                                     </Run.Style>
                                                 </Run>
                                             </TextBlock>
-                                            <Expander Header="Para que serve?" Margin="0,6,0,0" FontSize="12"
+                                            <Expander Header="{loc:T main.whatFor}" Margin="0,6,0,0" FontSize="12"
                                                       Visibility="{Binding HasPurpose, Converter={StaticResource BoolToVis}}">
                                                 <StackPanel Margin="12,4,0,0">
                                                     <TextBlock Text="{Binding Purpose}" TextWrapping="Wrap" />
                                                     <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Foreground="#555"
                                                                Visibility="{Binding HasCost, Converter={StaticResource BoolToVis}}">
-                                                        <Run Text="Custo: " FontWeight="SemiBold" /><Run Text="{Binding Cost, Mode=OneWay}" />
+                                                        <Run Text="{loc:T main.cost}" FontWeight="SemiBold" /><Run Text="{Binding Cost, Mode=OneWay}" />
                                                     </TextBlock>
                                                 </StackPanel>
                                             </Expander>
@@ -123,15 +125,15 @@
                                                        Visibility="{Binding HasNotes, Converter={StaticResource BoolToVis}}" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Vertical" Margin="12,0,0,0" MinWidth="150">
-                                            <Button Content="Abrir" Command="{Binding LaunchCommand}" FontWeight="Bold" Margin="0,0,0,6"
+                                            <Button Content="{loc:T main.open}" Command="{Binding LaunchCommand}" FontWeight="Bold" Margin="0,0,0,6"
                                                     Visibility="{Binding HasBuild, Converter={StaticResource InverseBoolToVis}}" />
-                                            <Button Content="Compilar ROM" Command="{Binding BuildCommand}" FontWeight="Bold" Margin="0,0,0,6"
+                                            <Button Content="{loc:T main.buildRom}" Command="{Binding BuildCommand}" FontWeight="Bold" Margin="0,0,0,6"
                                                     Visibility="{Binding HasBuild, Converter={StaticResource BoolToVis}}" />
                                             <Button Content="{Binding InstallButtonText}" Command="{Binding InstallCommand}" Margin="0,0,0,6"
                                                     Visibility="{Binding CanInstallOrUpdate, Converter={StaticResource BoolToVis}}" />
-                                            <Button Content="Pasta" Command="{Binding OpenFolderCommand}" Margin="0,0,0,6"
+                                            <Button Content="{loc:T main.folder}" Command="{Binding OpenFolderCommand}" Margin="0,0,0,6"
                                                     Visibility="{Binding CanInstallOrUpdate, Converter={StaticResource BoolToVis}}" />
-                                            <Button Content="Site" Command="{Binding OpenHomepageCommand}"
+                                            <Button Content="{loc:T main.site}" Command="{Binding OpenHomepageCommand}"
                                                     Visibility="{Binding CanInstallOrUpdate, Converter={StaticResource BoolToVis}}" />
                                         </StackPanel>
                                     </Grid>
@@ -148,11 +150,11 @@
         <!-- Log -->
         <DockPanel Grid.Row="3" Background="#1E1E1E">
             <DockPanel DockPanel.Dock="Top" Margin="8,4">
-                <TextBlock Text="Log" Foreground="#AAA" FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock Text="{loc:T main.log}" Foreground="#AAA" FontWeight="Bold" VerticalAlignment="Center" />
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button x:Name="CopyLogButton" Content="Copiar tudo" Click="CopyLog_Click" MinWidth="90" Padding="6,2" />
-                    <Button Content="Limpar" Command="{Binding ClearLogCommand}" MinWidth="60" Padding="6,2" />
-                    <Button x:Name="ToggleLogButton" Content="Ocultar" Click="ToggleLog_Click" MinWidth="70" Padding="6,2" Margin="0" />
+                    <Button x:Name="CopyLogButton" Content="{loc:T main.copyAll}" Click="CopyLog_Click" MinWidth="90" Padding="6,2" />
+                    <Button Content="{loc:T main.clear}" Command="{Binding ClearLogCommand}" MinWidth="60" Padding="6,2" />
+                    <Button x:Name="ToggleLogButton" Content="{loc:T main.hide}" Click="ToggleLog_Click" MinWidth="70" Padding="6,2" Margin="0" />
                 </StackPanel>
             </DockPanel>
             <TextBox x:Name="LogBody" Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True" Background="#1E1E1E" Foreground="#DDD" BorderThickness="0"
@@ -165,14 +167,14 @@
     <Border x:Name="FirstRunOverlay" Visibility="Collapsed" Background="#CC2B2D42">
         <Border Background="White" CornerRadius="8" Padding="28" MaxWidth="560" VerticalAlignment="Center" HorizontalAlignment="Center">
             <StackPanel>
-                <TextBlock Text="Bem-vindo ao PokeHub" FontSize="22" FontWeight="Bold" Margin="0,0,0,12" />
-                <TextBlock TextWrapping="Wrap" Margin="0,0,0,8"
-                           Text="Escolha a pasta onde o hub vai guardar as ferramentas, os runtimes e os seus projetos. Tudo fica dentro dela, organizado assim:" />
-                <TextBlock FontFamily="Consolas" FontSize="12" Foreground="#444" Margin="12,0,0,12"
-                           Text="tools/      ferramentas (DSPRE, melonDS, ...)&#10;runtimes/   Java, Git portátil&#10;projects/   seus hacks, cada um com base.nds, workspace/ e builds/&#10;cache/      downloads reaproveitados" />
-                <TextBlock TextWrapping="Wrap" Foreground="Gray" FontSize="12" Margin="0,0,0,16"
-                           Text="Sugestão: uma pasta vazia num disco com espaço, por exemplo D:\PokeHub. Você pode mudar depois apagando %AppData%\PokeHub\settings.json." />
-                <Button Content="Escolher pasta..." Click="ChooseRoot_Click" HorizontalAlignment="Right" FontWeight="Bold" Padding="16,6" />
+                <DockPanel Margin="0,0,0,12">
+                    <ComboBox DockPanel.Dock="Right" x:Name="FirstRunLanguage" Width="150" DisplayMemberPath="Name" SelectionChanged="FirstRunLanguage_Changed" />
+                    <TextBlock Text="{loc:T firstRun.title}" FontSize="22" FontWeight="Bold" />
+                </DockPanel>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,8" Text="{loc:T firstRun.intro}" />
+                <TextBlock FontFamily="Consolas" FontSize="12" Foreground="#444" Margin="12,0,0,12" Text="{loc:T firstRun.tree}" />
+                <TextBlock TextWrapping="Wrap" Foreground="Gray" FontSize="12" Margin="0,0,0,16" Text="{loc:T firstRun.hint}" />
+                <Button Content="{loc:T firstRun.choose}" Click="ChooseRoot_Click" HorizontalAlignment="Right" FontWeight="Bold" Padding="16,6" />
             </StackPanel>
         </Border>
     </Border>

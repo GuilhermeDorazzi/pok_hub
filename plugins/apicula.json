@@ -1,9 +1,18 @@
 {
   "id": "apicula",
   "name": "apicula",
-  "description": "Converte modelos NSBMD (mapas, personagens) para glTF/COLLADA para editar no Blender.",
-  "purpose": "Converte modelos 3D do DS (NSBMD: mapas, personagens) para glTF ou COLLADA, para editar no Blender. Só para quem vai mexer em modelos 3D.",
-  "cost": "Menos de 1 MB, instantâneo. Pode exigir o Visual C++ Redistributable.",
+  "description": {
+    "pt-BR": "Converte modelos NSBMD (mapas, personagens) para glTF/COLLADA para editar no Blender.",
+    "en-US": "Converts NSBMD models (maps, characters) to glTF/COLLADA for editing in Blender."
+  },
+  "purpose": {
+    "pt-BR": "Converte modelos 3D do DS (NSBMD: mapas, personagens) para glTF ou COLLADA, para editar no Blender. Só para quem vai mexer em modelos 3D.",
+    "en-US": "Converts DS 3D models (NSBMD: maps, characters) to glTF or COLLADA for editing in Blender. Only for those working on 3D models."
+  },
+  "cost": {
+    "pt-BR": "Menos de 1 MB, instantâneo. Pode exigir o Visual C++ Redistributable.",
+    "en-US": "Under 1 MB, instant. May require the Visual C++ Redistributable."
+  },
   "homepage": "https://github.com/scurest/apicula",
   "license": "0BSD",
   "contexts": [
@@ -19,7 +28,10 @@
     "assetPattern": "windows.*\\.zip$",
     "executable": "apicula.exe"
   },
-  "notes": "Ferramenta CLI, sem launch: o hub vai expor comandos próprios (converter, visualizar). GEN5: adicionar 5 em generations.",
+  "notes": {
+    "pt-BR": "Ferramenta CLI, sem launch: o hub vai expor comandos próprios (converter, visualizar). GEN5: adicionar 5 em generations.",
+    "en-US": "CLI tool, no launch: the hub will expose its own commands (convert, view). GEN5: add 5 to generations."
+  },
   "requires": [
     "vcredist-x64"
   ]

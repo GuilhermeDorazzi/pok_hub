@@ -1,3 +1,5 @@
+using PokeHub.Core.Localization;
+
 namespace PokeHub.Core.Plugins;
 
 /// <summary>Contextos da tela principal. Cada plugin declara em quais aparece.</summary>
@@ -28,11 +30,11 @@ public sealed class PluginManifest
 {
     public required string Id { get; set; }
     public required string Name { get; set; }
-    public string Description { get; set; } = "";
+    public LocalizedText Description { get; set; } = new("");
     /// <summary>Para que serve, quem precisa e o que acontece ao instalar. Mostrado no card em "Para que serve?".</summary>
-    public string? Purpose { get; set; }
+    public LocalizedText? Purpose { get; set; }
     /// <summary>Custo em disco, download e tempo (ex.: "40 MB de download, 2,3 GB em disco, uns 5 minutos").</summary>
-    public string? Cost { get; set; }
+    public LocalizedText? Cost { get; set; }
     /// <summary>true = pedir confirmação antes de instalar, mostrando o custo (instalações pesadas).</summary>
     public bool ConfirmInstall { get; set; }
     public string? Homepage { get; set; }
@@ -49,7 +51,7 @@ public sealed class PluginManifest
     public SetupSpec? Setup { get; set; }
     /// <summary>Dependências: "java21"/"java17" o hub instala; "unix-shell" exige MSYS2 ou WSL; o resto é informativo.</summary>
     public List<string> Requires { get; set; } = [];
-    public string? Notes { get; set; }
+    public LocalizedText? Notes { get; set; }
 }
 
 public sealed class PluginSource
@@ -82,7 +84,7 @@ public sealed class BuildSpec
     /// <summary>Caminho relativo da ROM gerada (ex.: "build/pokeplatinum.us.nds").</summary>
     public required string Output { get; set; }
     /// <summary>Aviso mostrado antes do primeiro build (quando ainda não existe a pasta de build).</summary>
-    public string? FirstBuildNotice { get; set; }
+    public LocalizedText? FirstBuildNotice { get; set; }
 }
 
 public sealed class LaunchSpec

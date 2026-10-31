@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using PokeHub.Core.Decomp;
 using PokeHub.Core.Hub;
+using PokeHub.Core.Localization;
 using PokeHub.Core.Plugins;
 using PokeHub.Core.Processes;
 using PokeHub.Core.Projects;
@@ -45,12 +46,12 @@ public sealed partial class ToolItemViewModel : ObservableObject
     }
 
     public string Name => Manifest.Name;
-    public string Description => Manifest.Description;
-    public string LicenseText => Manifest.License is { } l ? $"Licença: {l}" : "";
+    public string Description => Manifest.Description.Value;
+    public string LicenseText => Manifest.License is { } l ? Loc.T("tool.license", l) : "";
     public string RequiresText => Manifest.Requires.Count > 0
-        ? "Requer: " + string.Join(", ", _deps.CheckAll(Manifest.Requires).Select(d =>
+        ? Loc.T("tool.requires") + string.Join(", ", _deps.CheckAll(Manifest.Requires).Select(d =>
             d.Satisfied is null && d.Detail == "" ? d.Name
-            : d.IsMissing ? $"{d.Name} (FALTANDO: {d.Detail})"
+            : d.IsMissing ? Loc.T("tool.missing", d.Name, d.Detail)
             : $"{d.Name} ({d.Detail})"))
         : "";
 
@@ -63,15 +64,14 @@ public sealed partial class ToolItemViewModel : ObservableObject
         if (missing.Count == 0) return true;
         var lines = string.Join("\n", missing.Select(d => $"• {d.Name}: {d.Detail}"));
         var withUrl = missing.FirstOrDefault(d => d.InstallUrl is not null);
-        var text = $"{Manifest.Name} depende de algo que o hub não instala sozinho:\n\n{lines}\n\n" +
-                   (withUrl is null ? $"Continuar com '{action}' mesmo assim?"
-                                    : $"Sim = abrir a página de download de {withUrl.Name}\nNão = continuar com '{action}' mesmo assim\nCancelar = parar");
-        var r = MessageBox.Show(text, "Dependência faltando", withUrl is null ? MessageBoxButton.YesNo : MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+        var text = Loc.T("tool.dep.text", Manifest.Name, lines) +
+                   (withUrl is null ? Loc.T("tool.dep.continue", action) : Loc.T("tool.dep.options", withUrl.Name, action));
+        var r = MessageBox.Show(text, Loc.T("tool.dep.title"), withUrl is null ? MessageBoxButton.YesNo : MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
         if (r == MessageBoxResult.Cancel) return false;
         if (r == MessageBoxResult.Yes && withUrl is not null)
         {
             Process.Start(new ProcessStartInfo(withUrl.InstallUrl!) { UseShellExecute = true });
-            _log($"Página de download aberta: {withUrl.InstallUrl}. Instale e tente de novo.");
+            _log(Loc.T("tool.dep.opened", withUrl.InstallUrl));
             return false;
         }
         return withUrl is null ? r == MessageBoxResult.Yes : true;
@@ -88,21 +88,21 @@ public sealed partial class ToolItemViewModel : ObservableObject
         bool firstBuild = !Directory.Exists(Path.Combine(Installed.ExecutablePath, "build"));
         if (firstBuild && Manifest.Build?.FirstBuildNotice is { } notice)
         {
-            var r = MessageBox.Show(notice + "\n\nIniciar o primeiro build agora?", $"Primeiro build: {Manifest.Name}",
+            var r = MessageBox.Show(notice.Value + Loc.T("tool.firstBuild.ask"), Loc.T("tool.firstBuild.title", Manifest.Name),
                 MessageBoxButton.YesNo, MessageBoxImage.Information);
-            if (r != MessageBoxResult.Yes) { _log($"{Manifest.Name}: build cancelado."); return; }
+            if (r != MessageBoxResult.Yes) { _log(Loc.T("tool.build.cancelled", Manifest.Name)); return; }
         }
         try
         {
             IsBusy = true;
-            StatusText = firstBuild ? "Compilando (primeiro build, demora)..." : "Compilando...";
+            StatusText = firstBuild ? Loc.T("tool.status.buildingFirst") : Loc.T("tool.status.building");
             var rom = await _builds.BuildAsync(Manifest, Installed, project, new Progress<string>(_log));
-            _log($"{Manifest.Name}: ROM copiada para {rom}. Use 'Abrir' no melonDS ou 'Empacotar e rodar' para testar.");
+            _log(Loc.T("tool.build.done", Manifest.Name, rom));
         }
         catch (Exception ex)
         {
-            _log($"ERRO no build de {Manifest.Name}: {ex.Message}");
-            MessageBox.Show(ex.Message, $"Falha no build de {Manifest.Name}", MessageBoxButton.OK, MessageBoxImage.Error);
+            _log(Loc.T("tool.build.error", Manifest.Name, ex.Message));
+            MessageBox.Show(ex.Message, Loc.T("tool.build.errorTitle", Manifest.Name), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -110,37 +110,37 @@ public sealed partial class ToolItemViewModel : ObservableObject
             Refresh();
         }
     }
-    public string? Notes => Manifest.Notes;
-    public bool HasNotes => !string.IsNullOrWhiteSpace(Manifest.Notes);
-    public string? Purpose => Manifest.Purpose;
-    public string? Cost => Manifest.Cost;
-    public bool HasPurpose => !string.IsNullOrWhiteSpace(Manifest.Purpose);
-    public bool HasCost => !string.IsNullOrWhiteSpace(Manifest.Cost);
+    public string? Notes => Manifest.Notes?.Value;
+    public bool HasNotes => Manifest.Notes is { IsEmpty: false };
+    public string? Purpose => Manifest.Purpose?.Value;
+    public string? Cost => Manifest.Cost?.Value;
+    public bool HasPurpose => Manifest.Purpose is { IsEmpty: false };
+    public bool HasCost => Manifest.Cost is { IsEmpty: false };
 
     /// <summary>Instalações pesadas pedem confirmação mostrando o propósito e o custo.</summary>
     private bool ConfirmHeavyInstall()
     {
         if (!Manifest.ConfirmInstall || IsInstalled) return true;
-        var text = $"{Manifest.Name}\n\n{Manifest.Purpose}\n\nCusto: {Manifest.Cost}\n\nInstalar agora?";
-        return MessageBox.Show(text, "Antes de instalar", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes;
+        var text = Loc.T("tool.confirm.text", Manifest.Name, Purpose, Cost);
+        return MessageBox.Show(text, Loc.T("tool.confirm.title"), MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes;
     }
     public bool IsInstalled => Installed is not null;
     public bool IsBuiltin => Manifest.Source.Type == SourceType.Builtin;
     public bool IsRuntime => Manifest.Source.Type == SourceType.Runtime;
     public bool CanInstallOrUpdate => !IsBuiltin;
-    public string InstallButtonText => IsSystemSource ? "Apontar executável"
-        : IsRuntime && IsInstalled ? "Preparar toolchain de novo"
-        : IsInstalled ? "Atualizar" : "Instalar";
+    public string InstallButtonText => IsSystemSource ? Loc.T("tool.installBtn.system")
+        : IsRuntime && IsInstalled ? Loc.T("tool.installBtn.prepare")
+        : IsInstalled ? Loc.T("tool.installBtn.update") : Loc.T("tool.installBtn.install");
     public bool CanLaunch => IsInstalled && Manifest.Launch is not null && !IsBusy && (!IsBuiltin || _currentProject() is not null);
     public bool IsSystemSource => Manifest.Source.Type == SourceType.System;
 
     public void Refresh()
     {
         Installed = _installer.GetInstalled(Manifest, _currentProject());
-        StatusText = IsBuiltin ? (_currentProject() is null ? "Abra um projeto" : "Embutido no hub")
+        StatusText = IsBuiltin ? (_currentProject() is null ? Loc.T("tool.status.openProject") : Loc.T("tool.status.builtin"))
             : Installed is null
-            ? (Manifest.Scope == PluginScope.Project && _currentProject() is null ? "Abra um projeto para instalar" : "Não instalado")
-            : $"Instalado: {Installed.Version}";
+            ? (Manifest.Scope == PluginScope.Project && _currentProject() is null ? Loc.T("tool.status.projectScope") : Loc.T("tool.status.notInstalled"))
+            : Loc.T("tool.status.installed", Installed.Version);
         NotifyAll();
     }
 
@@ -167,30 +167,30 @@ public sealed partial class ToolItemViewModel : ObservableObject
     private async Task InstallAsync()
     {
         var project = _currentProject();
-        if (!ConfirmDependencies("instalar")) return;
-        if (!ConfirmHeavyInstall()) { _log($"{Manifest.Name}: instalação cancelada."); return; }
+        if (!ConfirmDependencies(Loc.T("tool.action.install"))) return;
+        if (!ConfirmHeavyInstall()) { _log(Loc.T("tool.install.cancelled", Manifest.Name)); return; }
         try
         {
             IsBusy = true;
             if (IsSystemSource)
             {
-                var dlg = new OpenFileDialog { Title = $"Executável de {Manifest.Name}", Filter = "Executáveis|*.exe;*.jar;*.bat|Todos|*.*" };
+                var dlg = new OpenFileDialog { Title = Loc.T("tool.exeDialog", Manifest.Name), Filter = Loc.T("tool.exeFilter") };
                 if (dlg.ShowDialog() != true) return;
                 Installed = _installer.RegisterSystemTool(Manifest, project, dlg.FileName);
-                _log($"{Manifest.Name}: registrado em {dlg.FileName}");
+                _log(Loc.T("tool.registered", Manifest.Name, dlg.FileName));
             }
             else
             {
-                StatusText = "Instalando...";
+                StatusText = Loc.T("tool.status.installing");
                 var progress = new Progress<string>(_log);
                 Installed = await _installer.InstallAsync(Manifest, project, progress);
                 if (Manifest.Source.Type == SourceType.Runtime && Manifest.Setup?.Pacman is { Count: > 0 } packages)
                 {
-                    StatusText = "Preparando toolchain...";
+                    StatusText = Loc.T("tool.status.preparing");
                     var shells = await _builds.GetShellsAsync(refresh: true);
                     var msysRoot = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(Installed.ExecutablePath)!, "..", ".."));
                     var shell = shells.FirstOrDefault(s => s.Kind == UnixShellKind.Msys2 && string.Equals(Path.GetFullPath(s.Location), msysRoot, StringComparison.OrdinalIgnoreCase))
-                        ?? throw new InvalidOperationException("MSYS2 extraído mas não detectado.");
+                        ?? throw new InvalidOperationException(Loc.T("tool.msysNotDetected"));
                     await _builds.PrepareMsys2ToolchainAsync(shell, packages, progress, libpngVersion: Manifest.Setup.LibpngVersion);
                     await _builds.GetShellsAsync(refresh: true);
                 }
@@ -198,8 +198,8 @@ public sealed partial class ToolItemViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _log($"ERRO ao instalar {Manifest.Name}: {ex.Message}");
-            MessageBox.Show(ex.Message, $"Falha ao instalar {Manifest.Name}", MessageBoxButton.OK, MessageBoxImage.Error);
+            _log(Loc.T("tool.installError", Manifest.Name, ex.Message));
+            MessageBox.Show(ex.Message, Loc.T("tool.installErrorTitle", Manifest.Name), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -212,7 +212,7 @@ public sealed partial class ToolItemViewModel : ObservableObject
     private void Launch()
     {
         if (Installed is null) return;
-        if (!ConfirmDependencies("abrir")) return;
+        if (!ConfirmDependencies(Loc.T("tool.action.open"))) return;
         if (IsBuiltin)
         {
             var project = _currentProject();
@@ -220,8 +220,8 @@ public sealed partial class ToolItemViewModel : ObservableObject
             try { BuiltinEditors.Open(Manifest.Id, project, _log, msg => _snapshot(project, msg)); }
             catch (Exception ex)
             {
-                _log($"ERRO ao abrir {Manifest.Name}: {ex.Message}");
-                MessageBox.Show(ex.Message, $"Falha ao abrir {Manifest.Name}", MessageBoxButton.OK, MessageBoxImage.Error);
+                _log(Loc.T("tool.openError", Manifest.Name, ex.Message));
+                MessageBox.Show(ex.Message, Loc.T("tool.openErrorTitle", Manifest.Name), MessageBoxButton.OK, MessageBoxImage.Error);
             }
             return;
         }
@@ -229,17 +229,17 @@ public sealed partial class ToolItemViewModel : ObservableObject
         {
             var rt = _launcher.Launch(Manifest, Installed, _currentProject(), new Progress<string>(_log));
             IsRunning = true;
-            _log($"{Manifest.Name} aberto (pid {rt.Process.Id})");
+            _log(Loc.T("tool.opened", Manifest.Name, rt.Process.Id));
             rt.Process.Exited += (_, _) => Application.Current.Dispatcher.Invoke(() =>
             {
                 IsRunning = false;
-                _log($"{Manifest.Name} fechado (código {rt.Process.ExitCode})");
+                _log(Loc.T("tool.closed", Manifest.Name, rt.Process.ExitCode));
             });
         }
         catch (Exception ex)
         {
-            _log($"ERRO ao abrir {Manifest.Name}: {ex.Message}");
-            MessageBox.Show(ex.Message, $"Falha ao abrir {Manifest.Name}", MessageBoxButton.OK, MessageBoxImage.Error);
+            _log(Loc.T("tool.openError", Manifest.Name, ex.Message));
+            MessageBox.Show(ex.Message, Loc.T("tool.openErrorTitle", Manifest.Name), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

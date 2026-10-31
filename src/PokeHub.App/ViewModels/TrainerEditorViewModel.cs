@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PokeHub.Core.Gen4;
+using PokeHub.Core.Localization;
 
 namespace PokeHub.App.ViewModels;
 
@@ -35,7 +36,7 @@ public sealed partial class PartyRowViewModel(PartyMember member, TrainerEditorV
         Owner.MarkDirty();
     }
 
-    public string IvText => $"IVs ≈ {Member.Difficulty * 31 / 255}";
+    public string IvText => Loc.T("tr.ivs", Member.Difficulty * 31 / 255);
     public string Summary => $"{Owner.SpeciesName(Member.Species)} Lv.{Member.Level}";
 }
 
@@ -50,7 +51,7 @@ public sealed partial class TrainerEditorViewModel : ObservableObject
     public IReadOnlyList<string> Moves => _repo.Moves;
     public IReadOnlyList<string> Classes => _repo.Classes;
     public bool HasBallSeal => _repo.Game.HasBallSeal;
-    public string GameLabel => $"{_repo.Game.Game} · {_repo.Trainers.Count} treinadores";
+    public string GameLabel => Loc.T("tr.gameLabel", _repo.Game.Game, _repo.Trainers.Count);
 
     public ObservableCollection<TrainerListItem> AllTrainers { get; } = [];
     public ObservableCollection<TrainerListItem> FilteredTrainers { get; } = [];
@@ -147,7 +148,7 @@ public sealed partial class TrainerEditorViewModel : ObservableObject
         }
     }
 
-    public void MarkDirty() { IsDirty = true; Status = "Alterações não salvas"; }
+    public void MarkDirty() { IsDirty = true; Status = Loc.T("common.unsaved"); }
 
     private bool CanAddPokemon() => Current is not null && Current.Party.Count < Trainer.MaxParty;
 
@@ -181,14 +182,14 @@ public sealed partial class TrainerEditorViewModel : ObservableObject
         {
             _repo.Save();
             IsDirty = false;
-            Status = $"Salvo às {DateTime.Now:HH:mm:ss}";
-            _log("Treinadores salvos no workspace.");
-            await _snapshot("Editor de treinadores");
+            Status = Loc.T("common.savedAt", DateTime.Now.ToString("HH:mm:ss"));
+            _log(Loc.T("tr.savedLog"));
+            await _snapshot(Loc.T("tr.snapshot"));
         }
         catch (Exception ex)
         {
-            Status = "Erro ao salvar: " + ex.Message;
-            _log("ERRO ao salvar treinadores: " + ex.Message);
+            Status = Loc.T("common.saveError", ex.Message);
+            _log(Loc.T("tr.saveErrorLog", ex.Message));
         }
     }
 }

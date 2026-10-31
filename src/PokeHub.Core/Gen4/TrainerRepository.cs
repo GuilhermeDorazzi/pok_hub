@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using PokeHub.Core.Projects;
 
 namespace PokeHub.Core.Gen4;
@@ -55,7 +56,7 @@ public sealed class TrainerRepository
     }
 
     public string NameOf(Trainer t) => t.Id < Names.Count ? Names[t.Id] : $"#{t.Id}";
-    public string ClassOf(Trainer t) => t.Class < Classes.Count ? Classes[t.Class] : $"classe {t.Class}";
+    public string ClassOf(Trainer t) => t.Class < Classes.Count ? Classes[t.Class] : Loc.T("tr.classN", t.Class);
 
     /// <summary>Grava trdata, trpoke e, se algum nome mudou, o banco de nomes dentro do msg.narc.</summary>
     public void Save()

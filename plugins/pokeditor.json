@@ -1,9 +1,18 @@
 {
   "id": "pokeditor",
   "name": "PokEditor",
-  "description": "Stats, learnsets, evoluções, moves e sprites de Pokémon (Gen 4).",
-  "purpose": "Editor de dados de Pokémon: stats base, golpes aprendidos, evoluções e sprites. Complementa o DSPRE nessa parte. Precisa de Java, que o hub instala junto.",
-  "cost": "14 MB da ferramenta + 46 MB do Java (Temurin 21) em runtimes/, uns 2 minutos.",
+  "description": {
+    "pt-BR": "Stats, learnsets, evoluções, moves e sprites de Pokémon (Gen 4).",
+    "en-US": "Pokémon stats, learnsets, evolutions, moves and sprites (Gen 4)."
+  },
+  "purpose": {
+    "pt-BR": "Editor de dados de Pokémon: stats base, golpes aprendidos, evoluções e sprites. Complementa o DSPRE nessa parte. Precisa de Java, que o hub instala junto.",
+    "en-US": "Pokémon data editor: base stats, learnsets, evolutions and sprites. Complements DSPRE on that side. Needs Java, which the hub installs alongside."
+  },
+  "cost": {
+    "pt-BR": "14 MB da ferramenta + 46 MB do Java (Temurin 21) em runtimes/, uns 2 minutos.",
+    "en-US": "14 MB for the tool + 46 MB for Java (Temurin 21) in runtimes/, about 2 minutes."
+  },
   "homepage": "https://github.com/turtleisaac/PokEditor",
   "license": "GPL-3.0",
   "contexts": [
@@ -25,5 +34,8 @@
   "requires": [
     "java21"
   ],
-  "notes": "Precisa de Java 20+. O hub instala o Temurin JRE 21 em runtimes/ junto com a ferramenta."
+  "notes": {
+    "pt-BR": "Precisa de Java 20+. O hub instala o Temurin JRE 21 em runtimes/ junto com a ferramenta.",
+    "en-US": "Needs Java 20+. The hub installs the Temurin JRE 21 in runtimes/ together with the tool."
+  }
 }

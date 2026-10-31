@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using Microsoft.Win32;
+using PokeHub.Core.Localization;
 using PokeHub.Core.Projects;
 using PokeHub.Core.Rom;
 
@@ -21,7 +22,7 @@ public partial class NewProjectWindow : Window
 
     private void Browse_Click(object sender, RoutedEventArgs e)
     {
-        var dlg = new OpenFileDialog { Title = "ROM base", Filter = "ROM Nintendo DS|*.nds|Todos|*.*" };
+        var dlg = new OpenFileDialog { Title = Loc.T("np.dialogTitle"), Filter = Loc.T("np.filter") };
         if (dlg.ShowDialog(this) != true) return;
         RomBox.Text = dlg.FileName;
         try
@@ -29,8 +30,8 @@ public partial class NewProjectWindow : Window
             _header = NdsRomHeader.Read(dlg.FileName);
             var ok = _header.Game != BaseGame.Unknown;
             DetectedText.Text = ok
-                ? $"Detectado: {_header.Game} ({_header.GameCode}, {_header.Region}) · Gen {_header.Generation} · {_header.Title}"
-                : $"ROM não reconhecida (game code '{_header.GameCode}', título '{_header.Title}'). Suportado: Gen 4."; // GEN5
+                ? Loc.T("np.detected", _header.Game, _header.GameCode, _header.Region, _header.Generation, _header.Title)
+                : Loc.T("np.unknown", _header.GameCode, _header.Title); // GEN5
             DetectedText.Foreground = ok ? System.Windows.Media.Brushes.DarkGreen : System.Windows.Media.Brushes.Firebrick;
             if (string.IsNullOrWhiteSpace(NameBox.Text) && ok)
                 NameBox.Text = Path.GetFileNameWithoutExtension(dlg.FileName);
@@ -39,7 +40,7 @@ public partial class NewProjectWindow : Window
         catch (Exception ex)
         {
             _header = null;
-            DetectedText.Text = $"Erro ao ler a ROM: {ex.Message}";
+            DetectedText.Text = Loc.T("np.readError", ex.Message);
             DetectedText.Foreground = System.Windows.Media.Brushes.Firebrick;
             CreateButton.IsEnabled = false;
         }
@@ -54,7 +55,7 @@ public partial class NewProjectWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message, "Não foi possível criar o projeto", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, ex.Message, Loc.T("np.createError"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }

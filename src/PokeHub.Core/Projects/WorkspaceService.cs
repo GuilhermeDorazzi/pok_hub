@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using PokeHub.Core.Rom;
 using PokeHub.Core.Runtimes;
 
@@ -20,9 +21,9 @@ public sealed class WorkspaceService(RuntimeManager runtimes)
 
     public static string FormatLabel(Project p) => FormatOf(p) switch
     {
-        WorkspaceFormat.DsRom => "workspace ds-rom",
-        WorkspaceFormat.Ndstool => "workspace ndstool (legado)",
-        _ => "workspace vazio",
+        WorkspaceFormat.DsRom => Loc.T("ws.dsrom"),
+        WorkspaceFormat.Ndstool => Loc.T("ws.ndstool"),
+        _ => Loc.T("ws.empty"),
     };
 
     /// <summary>Devolve true ao concluir (para o chamador distinguir de uma falha tratada).</summary>

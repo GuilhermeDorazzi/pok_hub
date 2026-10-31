@@ -2,10 +2,11 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:PokeHub.App.ViewModels"
+        xmlns:loc="clr-namespace:PokeHub.App"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DataContext="{d:DesignInstance vm:PokedexAreaEditorViewModel}"
-        Title="Editor de áreas da Pokédex" Width="1200" Height="760" MinWidth="900" MinHeight="520"
+        Title="{loc:T dx.title}" Width="1200" Height="760" MinWidth="900" MinHeight="520"
         WindowStartupLocation="CenterOwner" FontSize="13" Closing="Window_Closing">
     <Window.Resources>
         <DataTemplate x:Key="BlockTemplate" DataType="{x:Type vm:AreaBlockViewModel}">
@@ -16,8 +17,8 @@
                             <Run Text="{Binding Title, Mode=OneWay}" /><Run Text=" (" /><Run Text="{Binding SelectedCount, Mode=OneWay}" /><Run Text=")" />
                         </TextBlock>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="Todas" Command="{Binding SelectAllCommand}" MinWidth="50" Padding="6,1" />
-                            <Button Content="Nenhuma" Command="{Binding ClearAllCommand}" MinWidth="60" Padding="6,1" Margin="0" />
+                            <Button Content="{loc:T dx.all}" Command="{Binding SelectAllCommand}" MinWidth="50" Padding="6,1" />
+                            <Button Content="{loc:T dx.none}" Command="{Binding ClearAllCommand}" MinWidth="60" Padding="6,1" Margin="0" />
                         </StackPanel>
                     </DockPanel>
                     <ListBox ItemsSource="{Binding Areas}" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -40,16 +41,16 @@
     <DockPanel Margin="10">
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
             <TextBlock Text="{Binding GameLabel}" Foreground="Gray" DockPanel.Dock="Right" VerticalAlignment="Center" />
-            <TextBlock Text="Pokémon" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <TextBlock Text="{loc:T dx.pokemon}" VerticalAlignment="Center" Margin="0,0,8,0" />
             <ComboBox ItemsSource="{Binding Species}" SelectedIndex="{Binding SelectedIndex}" Width="260" MaxDropDownHeight="400" />
-            <CheckBox Content="Ordenar por nome" IsChecked="{Binding OrderByName}" VerticalAlignment="Center" Margin="16,0,0,0" />
+            <CheckBox Content="{loc:T dx.orderByName}" IsChecked="{Binding OrderByName}" VerticalAlignment="Center" Margin="16,0,0,0" />
         </DockPanel>
 
         <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
             <TextBlock Text="{Binding Status}" Foreground="Gray" VerticalAlignment="Center" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Salvar" Command="{Binding SaveCommand}" FontWeight="Bold" Padding="16,6" />
-                <Button Content="Fechar" IsCancel="True" Padding="16,6" />
+                <Button Content="{loc:T common.save}" Command="{Binding SaveCommand}" FontWeight="Bold" Padding="16,6" />
+                <Button Content="{loc:T common.close}" IsCancel="True" Padding="16,6" />
             </StackPanel>
         </DockPanel>
 
@@ -58,11 +59,11 @@
                 <RowDefinition Height="Auto" /><RowDefinition Height="*" />
                 <RowDefinition Height="Auto" /><RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Text="Áreas normais (rotas e cidades)" FontWeight="Bold" Margin="4,0" />
+            <TextBlock Grid.Row="0" Text="{loc:T dx.normal}" FontWeight="Bold" Margin="4,0" />
             <ItemsControl Grid.Row="1" ItemsSource="{Binding NormalBlocks}" ItemTemplate="{StaticResource BlockTemplate}">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" Columns="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             </ItemsControl>
-            <TextBlock Grid.Row="2" Text="Áreas especiais (cavernas, prédios, florestas)" FontWeight="Bold" Margin="4,8,4,0" />
+            <TextBlock Grid.Row="2" Text="{loc:T dx.special}" FontWeight="Bold" Margin="4,8,4,0" />
             <ItemsControl Grid.Row="3" ItemsSource="{Binding SpecialBlocks}" ItemTemplate="{StaticResource BlockTemplate}">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" Columns="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             </ItemsControl>

@@ -1,9 +1,18 @@
 {
   "id": "nitropaint",
   "name": "NitroPaint",
-  "description": "Editor de gráficos DS: paletas, tiles, backgrounds, sprites (OBJ), animações, fontes e texturas.",
-  "purpose": "Editor de gráficos do DS: sprites, tiles, paletas, fundos e texturas. Use quando quiser trocar a aparência de algo, não os dados.",
-  "cost": "Menos de 1 MB, instantâneo.",
+  "description": {
+    "pt-BR": "Editor de gráficos DS: paletas, tiles, backgrounds, sprites (OBJ), animações, fontes e texturas.",
+    "en-US": "DS graphics editor: palettes, tiles, backgrounds, sprites (OBJ), animations, fonts and textures."
+  },
+  "purpose": {
+    "pt-BR": "Editor de gráficos do DS: sprites, tiles, paletas, fundos e texturas. Use quando quiser trocar a aparência de algo, não os dados.",
+    "en-US": "DS graphics editor: sprites, tiles, palettes, backgrounds and textures. Use it to change how something looks, not the data."
+  },
+  "cost": {
+    "pt-BR": "Menos de 1 MB, instantâneo.",
+    "en-US": "Under 1 MB, instant."
+  },
   "homepage": "https://github.com/Garhoogin/NitroPaint",
   "license": "BSD-2-Clause",
   "contexts": [
@@ -21,5 +30,8 @@
   "launch": {
     "args": []
   },
-  "notes": "Código BSD-2: candidato a ser absorvido pelo hub. GEN5: formatos iguais, adicionar 5 em generations."
+  "notes": {
+    "pt-BR": "Código BSD-2: candidato a ser absorvido pelo hub. GEN5: formatos iguais, adicionar 5 em generations.",
+    "en-US": "BSD-2 code: a candidate to be absorbed by the hub. GEN5: same formats, add 5 to generations."
+  }
 }

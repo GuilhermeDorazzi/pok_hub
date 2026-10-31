@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using PokeHub.Core.Localization;
 using PokeHub.Core.Projects;
 
 namespace PokeHub.App.Views;
@@ -26,10 +27,10 @@ public partial class HistoryWindow : Window
 
     private async Task LoadAsync()
     {
-        StatusText.Text = "Carregando...";
+        StatusText.Text = Loc.T("hist.loading");
         var history = await _git.HistoryAsync(_project, 100);
         VersionsList.ItemsSource = history.Select(h => new Row(h.Hash, h.Message)).ToList();
-        StatusText.Text = history.Count == 0 ? "Nenhuma versão ainda." : $"{history.Count} versões (mais recente primeiro).";
+        StatusText.Text = history.Count == 0 ? Loc.T("hist.none") : Loc.T("hist.count", history.Count);
     }
 
     private void VersionsList_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
@@ -38,25 +39,23 @@ public partial class HistoryWindow : Window
     private async void Restore_Click(object sender, RoutedEventArgs e)
     {
         if (VersionsList.SelectedItem is not Row row) return;
-        var r = MessageBox.Show(this,
-            $"Voltar o workspace para a versão {row.Hash}?\n\n\"{row.Message}\"\n\n" +
-            "Feche as ferramentas que estiverem com o workspace aberto antes de continuar, senão elas podem sobrescrever os arquivos restaurados.",
-            "Restaurar versão", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        var r = MessageBox.Show(this, Loc.T("hist.confirm", row.Hash, row.Message), Loc.T("hist.confirmTitle"),
+            MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return;
 
         try
         {
             IsEnabled = false;
-            StatusText.Text = "Restaurando...";
+            StatusText.Text = Loc.T("hist.restoring");
             await _git.RestoreAsync(_project, row.Hash, new Progress<string>(_log));
             Restored = true;
             await LoadAsync();
-            StatusText.Text += $"  Restaurado de {row.Hash}.";
+            StatusText.Text += Loc.T("hist.restored", row.Hash);
         }
         catch (Exception ex)
         {
-            _log($"ERRO ao restaurar {row.Hash}: {ex.Message}");
-            MessageBox.Show(this, ex.Message, "Falha ao restaurar", MessageBoxButton.OK, MessageBoxImage.Error);
+            _log(Loc.T("hist.error", row.Hash, ex.Message));
+            MessageBox.Show(this, ex.Message, Loc.T("hist.errorTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { IsEnabled = true; }
     }

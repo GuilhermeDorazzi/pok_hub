@@ -3,6 +3,7 @@ using System.Windows;
 using PokeHub.App.ViewModels;
 using PokeHub.App.Views;
 using PokeHub.Core.Hub;
+using PokeHub.Core.Localization;
 using PokeHub.Core.Plugins;
 
 namespace PokeHub.App;
@@ -12,6 +13,8 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        Loc.Instance.Language = Loc.Resolve(HubBootstrapper.SavedLanguage());
+
         var window = new MainWindow();
         MainWindow = window;
         window.RootChosen += root => window.DataContext = CreateViewModel(root);

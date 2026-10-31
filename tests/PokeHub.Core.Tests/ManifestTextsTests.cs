@@ -11,14 +11,14 @@ public class ManifestTextsTests
     public void Every_manifest_explains_its_purpose()
     {
         foreach (var m in Catalog.All)
-            Assert.False(string.IsNullOrWhiteSpace(m.Purpose), $"{m.Id} sem purpose");
+            Assert.True(m.Purpose is { IsEmpty: false }, $"{m.Id} sem purpose");
     }
 
     [Fact]
     public void Installable_manifests_state_their_cost()
     {
         foreach (var m in Catalog.All.Where(m => m.Source.Type != SourceType.Builtin))
-            Assert.False(string.IsNullOrWhiteSpace(m.Cost), $"{m.Id} sem cost");
+            Assert.True(m.Cost is { IsEmpty: false }, $"{m.Id} sem cost");
     }
 
     [Fact]
@@ -28,8 +28,8 @@ public class ManifestTextsTests
         foreach (var m in Catalog.All.Where(m => m.Build is not null))
         {
             Assert.True(m.ConfirmInstall, $"{m.Id} deveria confirmar a instalação");
-            Assert.False(string.IsNullOrWhiteSpace(m.Build!.FirstBuildNotice), $"{m.Id} sem firstBuildNotice");
-            Assert.Contains("minutos", m.Build.FirstBuildNotice);
+            Assert.True(m.Build!.FirstBuildNotice is { IsEmpty: false }, $"{m.Id} sem firstBuildNotice");
+            Assert.Contains("minutos", m.Build.FirstBuildNotice!.Value);
         }
     }
 }

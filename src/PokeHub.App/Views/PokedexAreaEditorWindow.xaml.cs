@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using PokeHub.App.ViewModels;
+using PokeHub.Core.Localization;
 
 namespace PokeHub.App.Views;
 
@@ -15,7 +16,7 @@ public partial class PokedexAreaEditorWindow : Window
     private void Window_Closing(object sender, CancelEventArgs e)
     {
         if (DataContext is not PokedexAreaEditorViewModel vm || !vm.IsDirty) return;
-        var r = MessageBox.Show(this, "Há alterações não salvas. Fechar mesmo assim?", "Editor de áreas da Pokédex",
+        var r = MessageBox.Show(this, Loc.T("common.closeConfirm"), Loc.T("dx.title"),
             MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) e.Cancel = true;
     }
