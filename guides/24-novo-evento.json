@@ -8,8 +8,8 @@
     "en-US": "New event"
   },
   "intro": {
-    "pt-BR": "Cria um NPC completo sem mexer em scripts: você escolhe o mapa, clica onde ele fica, escolhe a aparência e o que ele faz. Por enquanto, em HeartGold e SoulSilver, com os modelos Falar, Dar item, Pokémon no mapa e Trocar Pokémon. Cada um pode ficar parado, olhar em volta ou andar.",
-    "en-US": "Creates a complete NPC without touching scripts: pick the map, click where it stands, pick its look and what it does. For now on HeartGold and SoulSilver, with the Talk, Give item, Pokémon on the map and Trade Pokémon templates. Each can stand still, look around or walk."
+    "pt-BR": "Cria um NPC completo sem mexer em scripts: você escolhe o mapa, clica onde ele fica, escolhe a aparência e o que ele faz. Funciona em HeartGold, SoulSilver e Platinum, com os modelos Falar, Dar item, Pokémon no mapa e Trocar Pokémon. Cada um pode ficar parado, olhar em volta ou andar.",
+    "en-US": "Creates a complete NPC without touching scripts: pick the map, click where it stands, pick its look and what it does. Works on HeartGold, SoulSilver and Platinum, with the Talk, Give item, Pokémon on the map and Trade Pokémon templates. Each can stand still, look around or walk."
   },
   "steps": [
     {
@@ -31,8 +31,12 @@
   ],
   "tips": [
     {
-      "pt-BR": "O jogo tem 13 vagas de troca. O modelo Trocar Pokémon usa só as que nenhum script usa, então não estraga as trocas originais; quando acabarem, ele avisa. O nível do Pokémon recebido segue o do que você entregou.",
-      "en-US": "The game has 13 trade slots. The Trade Pokémon template only uses those no script uses, so it does not break the original trades; when they run out, it says so. The received Pokémon's level follows the one you gave."
+      "pt-BR": "No Platinum, o modelo Pokémon no mapa mostra só as 35 espécies que têm sprite de campo nesse jogo.",
+      "en-US": "On Platinum, the Pokémon on the map template only lists the 35 species with a field sprite in that game."
+    },
+    {
+      "pt-BR": "O SoulSilver tem 3 vagas de troca livres, e o Platinum nenhuma. O modelo Trocar Pokémon usa só as que nenhum script usa, então não estraga as trocas originais; quando acabarem, ele avisa. O nível do Pokémon recebido segue o do que você entregou.",
+      "en-US": "SoulSilver has 3 free trade slots, and Platinum none. The Trade Pokémon template only uses those no script uses, so it does not break the original trades; when they run out, it says so. The received Pokémon's level follows the one you gave."
     },
     {
       "pt-BR": "O save guarda os objetos do mapa onde foi feito. Se você salvou no mesmo mapa do NPC novo, saia do mapa e volte para ele aparecer. Em jogo novo isso não acontece.",

@@ -75,6 +75,7 @@ public sealed partial class NewEventViewModel : ObservableObject
     /// <summary>Tile escolhido, em coordenadas da planta.</summary>
     public (int X, int Y)? Tile { get; private set; }
     public IReadOnlyList<NewEventChoice> Species { get; }
+    public IReadOnlyList<NewEventChoice> AllSpecies { get; }
     public bool UsesSpriteList => !IsPokemon;
     public string FreeTradeNote { get; }
     public IReadOnlyList<NewEventChoice> Movements { get; } =
@@ -91,12 +92,15 @@ public sealed partial class NewEventViewModel : ObservableObject
         _font = Gen4Font.Load(map.Game);
         Items = items.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}")).Skip(1).ToList();
         SelectedItem = Items.FirstOrDefault();
-        Species = species.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}")).Where(s => NewEventService.SpriteForSpecies(s.Value) is not null).ToList();
+        Species = species.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}")).Where(s => NewEventService.SpriteForSpecies(s.Value, map.Game.IsPlatinum) is not null).ToList();
         SelectedSpecies = Species.FirstOrDefault();
-        AskSpecies = Species.FirstOrDefault();
-        GiveSpecies = Species.FirstOrDefault();
+        // a troca aceita qualquer espécie: o que precisa de sprite de campo é só o Pokémon no mapa
+        AllSpecies = species.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}")).Where(s => s.Value is >= 1 and <= 493).ToList();
+        AskSpecies = AllSpecies.FirstOrDefault();
+        GiveSpecies = AllSpecies.FirstOrDefault();
         SelectedMovement = Movements[0];
-        FreeTradeNote = Loc.T("newev.trade.free", NewEventService.FreeTradeSlots(map.Game).Count);
+        int freeTrades = NewEventService.FreeTradeSlots(map.Game).Count;
+        FreeTradeNote = freeTrades == 0 ? Loc.T("core.newev.noTradeSlot") : Loc.T("newev.trade.free", freeTrades);
         SelectedFacing = Facings[0];
         Sprites = map.Sprites is { } sprites
             ? sprites.Ids.Select(id => (id, image: sprites.Render(id))).Where(s => s.image is not null).Select(s => new NewEventSprite(s.id, s.image!.ToBitmap())).ToList()
@@ -116,7 +120,7 @@ public sealed partial class NewEventViewModel : ObservableObject
         OnPropertyChanged(nameof(UsesRange));
     }
     partial void OnSelectedSpeciesChanged(NewEventChoice? value) =>
-        PokemonSprite = value is not null && NewEventService.SpriteForSpecies(value.Value) is { } sprite ? SpriteOf(sprite) : null;
+        PokemonSprite = value is not null && NewEventService.SpriteForSpecies(value.Value, _map.Game.IsPlatinum) is { } sprite ? SpriteOf(sprite) : null;
 
     private void ApplyMapFilter()
     {

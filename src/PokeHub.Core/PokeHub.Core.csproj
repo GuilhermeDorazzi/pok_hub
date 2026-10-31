@@ -11,6 +11,7 @@
     <EmbeddedResource Include="Gen4\scrcmd-hgss.json" LogicalName="scrcmd-hgss.json" />
     <EmbeddedResource Include="Gen4\flagnames-hgss.json" LogicalName="flagnames-hgss.json" />
     <EmbeddedResource Include="Gen4\follower-sprites-hgss.json" LogicalName="follower-sprites-hgss.json" />
+    <EmbeddedResource Include="Gen4\field-sprites-platinum.json" LogicalName="field-sprites-platinum.json" />
     <EmbeddedResource Include="Gen4\scrcmd-platinum.json" LogicalName="scrcmd-platinum.json" />
     <EmbeddedResource Include="Gen4\flagnames-platinum.json" LogicalName="flagnames-platinum.json" />
     <EmbeddedResource Include="Localization\pt-BR.json" LogicalName="i18n/pt-BR.json" />

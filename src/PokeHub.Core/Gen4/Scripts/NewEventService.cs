@@ -27,7 +27,7 @@ public sealed record NewNpc(int MapId, int X, int Z, int SpriteId, int Facing, N
 public sealed record NewNpcResult(int ObjectIndex, int ScriptId, int? Flag, IReadOnlyList<string> Warnings);
 
 /// <summary>Monta um script novo: comandos por nome, com rótulos para os saltos dentro dele.</summary>
-public sealed class ScriptBuilder(ScriptCommandTable table)
+public sealed class ScriptBuilder(ScriptCommandTable table, IReadOnlyDictionary<string, string>? rename = null)
 {
     private readonly MemoryStream _code = new();
     private readonly Dictionary<string, int> _labels = [];
@@ -35,6 +35,7 @@ public sealed class ScriptBuilder(ScriptCommandTable table)
 
     public ScriptBuilder Emit(string command, params object[] args)
     {
+        if (rename is not null && rename.TryGetValue(command, out var renamed)) command = renamed;
         int opcode = -1;
         for (int i = 0; i < table.Commands.Count && opcode < 0; i++)
             if (table.Commands[i].Name == command) opcode = i;
@@ -50,7 +51,13 @@ public sealed class ScriptBuilder(ScriptCommandTable table)
                 _jumps.Add(((int)_code.Length, label));
                 _code.Write(new byte[size]);
             }
-            else _code.Write(BitConverter.GetBytes(Convert.ToInt64(args[i])).AsSpan(0, size));
+            else
+            {
+                long value = Convert.ToInt64(args[i]);
+                // mensagem é um byte só: um banco com mais de 256 falas não cabe, e gravar cortado chamaria a fala errada
+                if (size < 8 && (value < 0 || value >= 1L << (size * 8))) throw new ArgumentException(Loc.T("core.script.argRange", i + 1, (1L << (size * 8)) - 1));
+                _code.Write(BitConverter.GetBytes(value).AsSpan(0, size));
+            }
         }
         return this;
     }
@@ -72,7 +79,7 @@ public sealed class ScriptBuilder(ScriptCommandTable table)
 
 /// <summary>
 /// Cria um NPC completo: mensagens no banco do mapa, script novo no arquivo do mapa, flag livre quando precisa e o objeto no arquivo de eventos.
-/// O script segue o formato dos NPCs do próprio jogo. Por enquanto só HG/SS: nomes de comandos e faixas de flags mudam no Platinum.
+/// O script segue o formato dos NPCs do próprio jogo, em HG/SS e Platinum: os comandos fazem o mesmo, com outros nomes nas tabelas de cada decomp.
 /// </summary>
 public static class NewEventService
 {
@@ -80,15 +87,27 @@ public static class NewEventService
     public const int NpcWarningCount = 51;
     /// <summary>Banco com apelidos (vaga) e nomes de treinador (vaga + 13) das trocas.</summary>
     public const int TradeNamesBank = 200;
-    private const int TradeSlots = 13, MaxRange = 8;
+    private const int TradeSlots = 13, PlatinumTradeSlots = 4, MaxRange = 8;
     private const int TradeGiveOffset = 0, TradeAbilityOffset = 28, TradeAskOffset = 0x4C;
     private const int PartyCancelled = 255, ConditionNotEqual = 5;
     private const int SelectSoundCommandSeen = 609, SpecialVar0 = 0x8004, SpecialVar1 = 0x8005, ResultVar = 0x800C;
-    private const int GiveItemStd = 2033, BagFullStd = 2009, ConditionEqual = 1, SelectSound = 1500, MaxSpecies = 493;
+    private const int GiveItemStd = 2033, BagFullStd = 2009, PlatinumGiveItem = 2016, PlatinumBagFull = 2017, ConditionEqual = 1, SelectSound = 1500, MaxSpecies = 493;
     /// <summary>Flags de treinador começam aqui e vão até o último treinador; as do sistema começam em 0x960.</summary>
     private const int TrainerFlagBase = 0x550, SystemFlagBase = 0x960;
 
-    public static bool Supports(Gen4Game game) => game.IsHgss;
+    public static bool Supports(Gen4Game game) => game.IsHgss || game.IsPlatinum;
+
+    /// <summary>Nome em HG/SS para o nome em Platinum.</summary>
+    private static readonly Dictionary<string, string> PlatinumNames = new()
+    {
+        ["NPCMsg"] = "Message", ["CloseMsg"] = "CloseMessage", ["WaitFade"] = "WaitFadeScreen", ["SetVar"] = "SetVarFromValue", ["CopyVar"] = "SetVarFromVar",
+        ["HasSpaceForItem"] = "CanFitItem", ["CallStd"] = "CallCommonScript", ["CheckBattleWon"] = "CheckWonBattle", ["WhiteOut"] = "BlackOutFromBattle",
+        ["HidePerson"] = "RemoveObject", ["ScrCmd_566"] = "OpenPartyMenuForTrade", ["GetPartySelection"] = "GetSelectedPartySlot", ["RestoreOverworld"] = "ReturnToField",
+        ["LoadNPCTrade"] = "InitNPCTrade", ["NPCTradeGetReqSpecies"] = "GetNPCTradeRequestedSpecies", ["NPCTradeExec"] = "StartNPCTrade", ["NPCTradeEnd"] = "FinishNPCTrade",
+    };
+
+    private static bool IsPlatinum(ScriptCommandTable table) => ReferenceEquals(table, ScriptCommandTable.Platinum);
+    private static ScriptBuilder NewBuilder(ScriptCommandTable table) => new(table, IsPlatinum(table) ? PlatinumNames : null);
 
     /// <summary>A flag livre mais alta da faixa segura: entre as de treinador e as do sistema, sem uso em script nenhum.</summary>
     public static int? PickFreeFlag(EventMap map, int trainerCount)
@@ -105,44 +124,53 @@ public static class NewEventService
     /// <summary>Altura do NPC: a do objeto mais próximo, porque o terreno 3D não está lido. Sem vizinho, usa uma placa ou 0.</summary>
     public static int HeightFor(EventFile events, int x, int z)
     {
-        if (events.Objects.Count > 0)
-            return events.Objects.OrderBy(o => Math.Abs(o.X - x) + Math.Abs(o.Z - z)).First().Y;
+        // quem se move está no chão de verdade; placas e objetos parados às vezes têm altura diferente, como em Twinleaf
+        var moving = events.Objects.Where(o => o.Movement != 0).ToList();
+        var candidates = moving.Count > 0 ? moving : events.Objects;
+        if (candidates.Count > 0)
+            return candidates.OrderBy(o => Math.Abs(o.X - x) + Math.Abs(o.Z - z)).First().Y;
         return events.Bg.Count > 0 ? events.Bg.OrderBy(b => Math.Abs(b.X - x) + Math.Abs(b.Z - z)).First().Y : 0;
     }
 
-    private static readonly Lazy<Dictionary<int, int>> Followers = new(() =>
+    private static Dictionary<int, int> LoadSprites(string resource)
     {
-        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("follower-sprites-hgss.json")
-            ?? throw new InvalidOperationException("follower-sprites-hgss.json embutido não encontrado.");
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource)
+            ?? throw new InvalidOperationException($"{resource} embutido não encontrado.");
         using var doc = JsonDocument.Parse(stream);
         return doc.RootElement.GetProperty("sprites").EnumerateObject().ToDictionary(p => int.Parse(p.Name), p => p.Value.GetInt32());
-    });
+    }
 
-    /// <summary>Sprite de campo da espécie, o mesmo do Pokémon que segue o jogador no HG/SS. Null se não houver.</summary>
-    public static int? SpriteForSpecies(int species) => Followers.Value.TryGetValue(species, out var sprite) ? sprite : null;
+    private static readonly Lazy<Dictionary<int, int>> Followers = new(() => LoadSprites("follower-sprites-hgss.json"));
+    private static readonly Lazy<Dictionary<int, int>> PlatinumSprites = new(() => LoadSprites("field-sprites-platinum.json"));
+
+    /// <summary>Sprite de campo da espécie, ou null. HG/SS tem o de todas, por causa do Pokémon que segue o jogador; o Platinum só de algumas.</summary>
+    public static int? SpriteForSpecies(int species, bool platinum = false) =>
+        (platinum ? PlatinumSprites : Followers).Value.TryGetValue(species, out var sprite) ? sprite : null;
 
     /// <summary>Vagas de troca que nenhum script carrega. Trocar uma delas não afeta nenhum NPC do jogo.</summary>
     public static List<int> FreeTradeSlots(Gen4Game game)
     {
         var used = new HashSet<long>();
-        var table = ScriptCommandTable.Hgss;
+        var table = game.IsPlatinum ? ScriptCommandTable.Platinum : ScriptCommandTable.Hgss;
+        string load = game.IsPlatinum ? PlatinumNames["LoadNPCTrade"] : "LoadNPCTrade";
         foreach (var file in Narc.Read(File.ReadAllBytes(game.ScriptsPath)).Files)
         {
             var script = new ScriptFile(file, table);
             for (int id = 1; id <= script.EntryOffsets.Count; id++)
                 foreach (var i in script.Routine(id)!.Instructions)
-                    if (i.Name == "LoadNPCTrade") used.Add(i.Args[0].Value);
+                    if (i.Name == load) used.Add(i.Args[0].Value);
         }
-        return Enumerable.Range(0, TradeSlots).Where(slot => !used.Contains(slot)).ToList();
+        return Enumerable.Range(0, game.IsPlatinum ? PlatinumTradeSlots : TradeSlots).Where(slot => !used.Contains(slot)).ToList();
     }
 
-    private static void BuildTrade(ScriptBuilder s, int slot, int flag, IReadOnlyList<int> m)
+    private static void BuildTrade(ScriptBuilder s, int slot, int flag, IReadOnlyList<int> m, bool platinum)
     {
         s.Emit("PlaySE", SelectSound).Emit("LockAll").Emit("FacePlayer")
             .Emit("CheckFlag", flag).Emit("GoToIf", ConditionEqual, "done")
-            .Emit("NPCMsg", m[0])
-            .Emit("TouchscreenMenuHide").Emit("GetMenuChoice", ResultVar).Emit("TouchscreenMenuShow")
-            .Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "yes")
+            .Emit("NPCMsg", m[0]);
+        if (platinum) s.Emit("ShowYesNoMenu", ResultVar);
+        else s.Emit("TouchscreenMenuHide").Emit("GetMenuChoice", ResultVar).Emit("TouchscreenMenuShow");
+        s.Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "yes")
             .Emit("GoTo", "decline")
             .Label("yes")
             .Emit("CloseMsg")
@@ -168,10 +196,11 @@ public static class NewEventService
 
     public static byte[] BuildScript(ScriptCommandTable table, NpcBehavior behavior, IReadOnlyList<int> messages, int? flag, int objectId = 0, int tradeSlot = 0)
     {
-        var s = new ScriptBuilder(table);
+        var s = NewBuilder(table);
+        bool platinum = IsPlatinum(table);
         if (behavior is TradeBehavior)
         {
-            BuildTrade(s, tradeSlot, flag!.Value, messages);
+            BuildTrade(s, tradeSlot, flag!.Value, messages, platinum);
             return s.Build();
         }
         if (behavior is PokemonBehavior mon)
@@ -180,8 +209,9 @@ public static class NewEventService
             if (messages.Count > 0) s.Emit("NPCMsg", messages[0]);
             s.Emit("WaitCry");
             if (messages.Count > 0) s.Emit("CloseMsg");
-            s.Emit("WildBattle", mon.Species, mon.Level, 0)
-                .Emit("CheckBattleWon", ResultVar)
+            if (platinum) s.Emit("StartWildBattle", mon.Species, mon.Level);
+            else s.Emit("WildBattle", mon.Species, mon.Level, 0);
+            s.Emit("CheckBattleWon", ResultVar)
                 .Emit("CompareVarToValue", ResultVar, 0)
                 .Emit("GoToIf", ConditionEqual, "lost");
             if (flag is { } hide) s.Emit("SetFlag", hide).Emit("HidePerson", objectId);
@@ -189,7 +219,9 @@ public static class NewEventService
                 .Label("lost").Emit("WhiteOut").Emit("ReleaseAll").Emit("End")
                 .Build();
         }
-        s.Emit($"ScrCmd_{SelectSoundCommandSeen}").Emit("LockAll").Emit("FacePlayer");
+        if (platinum) s.Emit("PlaySE", SelectSound);
+        else s.Emit($"ScrCmd_{SelectSoundCommandSeen}");
+        s.Emit("LockAll").Emit("FacePlayer");
         switch (behavior)
         {
             case TalkBehavior:
@@ -204,12 +236,12 @@ public static class NewEventService
                     .Emit("HasSpaceForItem", SpecialVar0, SpecialVar1, ResultVar)
                     .Emit("CompareVarToValue", ResultVar, 0)
                     .Emit("GoToIf", ConditionEqual, "full")
-                    .Emit("CallStd", GiveItemStd)
+                    .Emit("CallStd", platinum ? PlatinumGiveItem : GiveItemStd)
                     .Emit("SetFlag", flag.Value)
                     .Label("after")
                     .Emit("NPCMsg", messages[1]).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End")
                     .Label("full")
-                    .Emit("CallStd", BagFullStd).Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
+                    .Emit("CallStd", platinum ? PlatinumBagFull : BagFullStd).Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
                 break;
             default:
                 throw new ArgumentException(behavior.GetType().Name);
@@ -228,6 +260,7 @@ public static class NewEventService
         if (npc.Behavior is GiveItemBehavior { Quantity: < 1 or > 99 }) throw new ArgumentException(Loc.T("core.newev.badQuantity"));
         if (npc.Behavior is PokemonBehavior { Level: < 1 or > 100 }) throw new ArgumentException(Loc.T("core.newev.badLevel"));
         if (npc.Behavior is PokemonBehavior { Species: < 1 or > MaxSpecies }) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
+        if (npc.Behavior is PokemonBehavior mon && SpriteForSpecies(mon.Species, game.IsPlatinum) is null) throw new ArgumentException(Loc.T("core.newev.noFieldSprite"));
         if (npc.Behavior is TradeBehavior { AskSpecies: < 1 or > MaxSpecies } or TradeBehavior { GiveSpecies: < 1 or > MaxSpecies }) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
         if (npc.Range is < 1 or > MaxRange) throw new ArgumentException(Loc.T("core.newev.badRange", MaxRange));
 
@@ -273,13 +306,14 @@ public static class NewEventService
         };
         var messages = lines.Select(text => texts.AddText(header.MsgBank, text)).ToList();
 
-        var table = ScriptCommandTable.Hgss;
+        var table = game.IsPlatinum ? ScriptCommandTable.Platinum : ScriptCommandTable.Hgss;
         int objectId = events.Objects.Count == 0 ? 0 : events.Objects.Max(o => o.Id) + 1;
         var code = BuildScript(table, npc.Behavior, messages, flag, objectId, tradeSlot ?? 0);
 
         byte[]? tradeNarc = null;
         if (npc.Behavior is TradeBehavior trade)
         {
+            // só HG/SS chega aqui hoje: as 4 vagas do Platinum estão todas em uso, e o FreeTradeSlots já recusou
             var path = Path.Combine(game.FilesRoot, TradesRelativePath);
             var trades = Narc.Read(File.ReadAllBytes(path));
             var record = trades.Files[tradeSlot!.Value];
@@ -298,7 +332,7 @@ public static class NewEventService
         int index = events.Objects.Count;
         eventsNarc.Files[header.EventsBank] = EventFile.AddObject(eventsNarc.Files[header.EventsBank], new ObjectEvent(index,
             Id: objectId,
-            SpriteId: npc.Behavior is PokemonBehavior p ? SpriteForSpecies(p.Species) ?? npc.SpriteId : npc.SpriteId,
+            SpriteId: npc.Behavior is PokemonBehavior p ? SpriteForSpecies(p.Species, game.IsPlatinum) ?? npc.SpriteId : npc.SpriteId,
             Movement: npc.Movement switch
             {
                 NpcMovement.LookAround => MovementLookAround,
