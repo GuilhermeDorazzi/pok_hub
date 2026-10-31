@@ -13,7 +13,8 @@ public sealed partial class PartyRowViewModel(PartyMember member, TrainerEditorV
     public PartyMember Member { get; } = member;
     public TrainerEditorViewModel Owner { get; } = owner;
 
-    public int Species { get => Member.Species; set { Member.Species = (ushort)value; OnPropertyChanged(); OnPropertyChanged(nameof(Summary)); Owner.MarkDirty(); } }
+    public int Species { get => Member.Species; set { Member.Species = (ushort)value; OnPropertyChanged(); OnPropertyChanged(nameof(Summary)); OnPropertyChanged(nameof(Sprite)); Owner.MarkDirty(); } }
+    public BitmapSource? Sprite => Owner.Catalog.Sprite(Member.Species);
     public int Form { get => Member.Form; set { Member.Form = (ushort)Math.Clamp(value, 0, 63); OnPropertyChanged(); Owner.MarkDirty(); } }
     public int Level { get => Member.Level; set { Member.Level = (ushort)Math.Clamp(value, 1, 100); OnPropertyChanged(); OnPropertyChanged(nameof(Summary)); Owner.MarkDirty(); } }
     public int Difficulty { get => Member.Difficulty; set { Member.Difficulty = (byte)Math.Clamp(value, 0, 255); OnPropertyChanged(); OnPropertyChanged(nameof(IvText)); Owner.MarkDirty(); } }
@@ -41,6 +42,14 @@ public sealed partial class PartyRowViewModel(PartyMember member, TrainerEditorV
     public string Summary => $"{Owner.SpeciesName(Member.Species)} Lv.{Member.Level}";
 }
 
+/// <summary>Uma flag de IA do treinador selecionado, como caixa de marcar.</summary>
+public sealed class AiFlagOption(int bit, TrainerEditorViewModel owner) : ObservableObject
+{
+    public string Label => Loc.T($"tr.ai.{bit}");
+    public bool IsSet { get => owner.GetAiBit(bit); set => owner.SetAiBit(bit, value); }
+    public void Refresh() => OnPropertyChanged(nameof(IsSet));
+}
+
 public sealed partial class TrainerEditorViewModel : ObservableObject
 {
     private readonly TrainerRepository _repo;
@@ -48,6 +57,8 @@ public sealed partial class TrainerEditorViewModel : ObservableObject
     private readonly Func<string, Task> _snapshot;
 
     public IReadOnlyList<string> Species => _repo.Species;
+    public SpeciesCatalog Catalog { get; }
+    public IReadOnlyList<AiFlagOption> AiFlags { get; }
     public IReadOnlyList<string> Items => _repo.Items;
     public IReadOnlyList<string> Moves => _repo.Moves;
     public IReadOnlyList<string> Classes => _repo.Classes;
@@ -68,6 +79,8 @@ public sealed partial class TrainerEditorViewModel : ObservableObject
         _repo = repo;
         _log = log;
         _snapshot = snapshot;
+        Catalog = new SpeciesCatalog(repo.Species, PokemonSprites.Load(repo.Game));
+        AiFlags = Enumerable.Range(0, Trainer.AiFlagCount).Select(bit => new AiFlagOption(bit, this)).ToList();
         foreach (var t in repo.Trainers) AllTrainers.Add(new TrainerListItem(t, repo));
         ApplyFilter();
         Selected = FilteredTrainers.FirstOrDefault();
@@ -100,6 +113,7 @@ public sealed partial class TrainerEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(DoubleBattle));
         OnPropertyChanged(nameof(Item1)); OnPropertyChanged(nameof(Item2)); OnPropertyChanged(nameof(Item3)); OnPropertyChanged(nameof(Item4));
         OnPropertyChanged(nameof(AiFlagsHex));
+        RefreshAiFlags();
         AddPokemonCommand.NotifyCanExecuteChanged();
     }
 
@@ -148,10 +162,23 @@ public sealed partial class TrainerEditorViewModel : ObservableObject
             if (Current is null) return;
             var s = value.Trim();
             if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) s = s[2..];
-            if (uint.TryParse(s, System.Globalization.NumberStyles.HexNumber, null, out var v)) { Current.AiFlags = v; MarkDirty(); }
+            if (uint.TryParse(s, System.Globalization.NumberStyles.HexNumber, null, out var v)) { Current.AiFlags = v; RefreshAiFlags(); MarkDirty(); }
             OnPropertyChanged();
         }
     }
+
+    public bool GetAiBit(int bit) => Current is { } t && (t.AiFlags & (1u << bit)) != 0;
+
+    public void SetAiBit(int bit, bool on)
+    {
+        if (Current is not { } t) return;
+        t.AiFlags = on ? t.AiFlags | (1u << bit) : t.AiFlags & ~(1u << bit);
+        OnPropertyChanged(nameof(AiFlagsHex));
+        RefreshAiFlags();
+        MarkDirty();
+    }
+
+    private void RefreshAiFlags() { foreach (var flag in AiFlags) flag.Refresh(); }
 
     public void MarkDirty() { IsDirty = true; Status = Loc.T("common.unsaved"); }
 

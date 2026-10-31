@@ -23,6 +23,24 @@ public sealed class RgbaImage(int width, int height)
             Buffer.BlockCopy(Pixels, ((y + row) * Width + x) * 4, img.Pixels, row * w * 4, w * 4);
         return img;
     }
+
+    /// <summary>Recorte quadrado em volta dos pixels visíveis, para a figura ocupar a miniatura inteira. null se a imagem está vazia.</summary>
+    public RgbaImage? TrimmedToOpaque()
+    {
+        int left = Width, top = Height, right = -1, bottom = -1;
+        for (int y = 0; y < Height; y++)
+            for (int x = 0; x < Width; x++)
+                if (Pixels[(y * Width + x) * 4 + 3] != 0)
+                {
+                    left = Math.Min(left, x); right = Math.Max(right, x);
+                    top = Math.Min(top, y); bottom = Math.Max(bottom, y);
+                }
+        if (right < 0) return null;
+        int side = Math.Max(right - left, bottom - top) + 1;
+        int x0 = Math.Clamp(left - (side - (right - left + 1)) / 2, 0, Width - side);
+        int y0 = Math.Clamp(top - (side - (bottom - top + 1)) / 2, 0, Height - side);
+        return Crop(x0, y0, side, side);
+    }
 }
 
 /// <summary>Cabeçalho comum dos formatos Nitro (NCLR, NCGR, NSCR): magic, seções nomeadas.</summary>

@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:PokeHub.App.ViewModels"
+        xmlns:views="clr-namespace:PokeHub.App.Views"
         xmlns:loc="clr-namespace:PokeHub.App"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -9,6 +10,7 @@
         Title="{loc:T tr.title}" Width="1150" Height="720" MinWidth="900" MinHeight="500"
         WindowStartupLocation="CenterOwner" FontSize="13" Closing="Window_Closing">
     <Window.Resources>
+        <Style TargetType="TextBox"><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
         <Style TargetType="ComboBox">
             <Setter Property="IsEditable" Value="False" />
             <Setter Property="MaxDropDownHeight" Value="300" />
@@ -55,7 +57,7 @@
                         <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
-                        <RowDefinition /><RowDefinition /><RowDefinition />
+                        <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
                     </Grid.RowDefinitions>
                     <TextBlock Text="{loc:T tr.name}" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
                     <TextBox Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Grid.Row="0" Grid.Column="1" Margin="0,0,16,4" MaxLength="10" />
@@ -70,8 +72,20 @@
                         <CheckBox Content="{loc:T tr.moves}" IsChecked="{Binding HasMoves}" />
                     </StackPanel>
 
-                    <TextBlock Text="{loc:T tr.trainerItems}" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0" />
-                    <UniformGrid Rows="1" Columns="4" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3">
+                    <TextBlock Text="{loc:T tr.aiFlags}" Grid.Row="2" Grid.Column="0" VerticalAlignment="Top" Margin="0,2,8,4" />
+                    <ItemsControl ItemsSource="{Binding AiFlags}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,4" ToolTip="{loc:T tr.aiFlagsTip}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding Label}" IsChecked="{Binding IsSet}" Margin="0,2,14,2" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="{loc:T tr.trainerItems}" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <UniformGrid Rows="1" Columns="4" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3">
                         <ComboBox ItemsSource="{Binding Items}" SelectedIndex="{Binding Item1}" Margin="0,0,4,0" />
                         <ComboBox ItemsSource="{Binding Items}" SelectedIndex="{Binding Item2}" Margin="0,0,4,0" />
                         <ComboBox ItemsSource="{Binding Items}" SelectedIndex="{Binding Item3}" Margin="0,0,4,0" />
@@ -92,19 +106,24 @@
                                 <Border BorderBrush="#DDD" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,6" Background="#FAFAFA">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <StackPanel>
+                                        <Image Source="{Binding Sprite}" Width="72" Height="72" Margin="0,0,10,0" VerticalAlignment="Top"
+                                               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                        <StackPanel Grid.Column="1">
                                             <WrapPanel>
                                                 <TextBlock Text="{loc:T tr.species}" VerticalAlignment="Center" Margin="0,0,4,0" />
-                                                <ComboBox ItemsSource="{Binding Owner.Species}" SelectedIndex="{Binding Species}" Width="170" Margin="0,0,12,4" />
+                                                <views:SpeciesPicker Catalog="{Binding Owner.Catalog}" SelectedSpecies="{Binding Species}" Width="190" Margin="0,0,12,4" />
                                                 <TextBlock Text="{loc:T tr.form}" VerticalAlignment="Center" Margin="0,0,4,0" />
                                                 <TextBox Text="{Binding Form}" Width="40" Margin="0,0,12,4" />
                                                 <TextBlock Text="{loc:T tr.level}" VerticalAlignment="Center" Margin="0,0,4,0" />
                                                 <TextBox Text="{Binding Level}" Width="40" Margin="0,0,12,4" />
-                                                <TextBlock Text="{loc:T tr.difficulty}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                <StackPanel Orientation="Horizontal">
+<TextBlock Text="{loc:T tr.difficulty}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                <Slider Maximum="255" Value="{Binding Difficulty}" TickFrequency="1" IsSnapToTickEnabled="True" Width="110" Margin="0,0,4,4" VerticalAlignment="Center" />
                                                 <TextBox Text="{Binding Difficulty}" Width="40" Margin="0,0,4,4" />
                                                 <TextBlock Text="{Binding IvText}" Foreground="Gray" VerticalAlignment="Center" Margin="0,0,12,4" />
+</StackPanel>
                                                 <TextBlock Text="{loc:T tr.item}" VerticalAlignment="Center" Margin="0,0,4,0"
                                                            Visibility="{Binding Owner.HasItems, Converter={StaticResource BoolToVis}}" />
                                                 <ComboBox ItemsSource="{Binding Owner.Items}" SelectedIndex="{Binding Item}" Width="150" Margin="0,0,12,4"
@@ -116,10 +135,10 @@
                                             </WrapPanel>
                                             <WrapPanel Visibility="{Binding Owner.HasMoves, Converter={StaticResource BoolToVis}}">
                                                 <TextBlock Text="{loc:T tr.movesLabel}" VerticalAlignment="Center" Margin="0,0,4,0" />
-                                                <ComboBox ItemsSource="{Binding Owner.Moves}" SelectedIndex="{Binding Move1}" Width="140" Margin="0,0,4,4" />
-                                                <ComboBox ItemsSource="{Binding Owner.Moves}" SelectedIndex="{Binding Move2}" Width="140" Margin="0,0,4,4" />
-                                                <ComboBox ItemsSource="{Binding Owner.Moves}" SelectedIndex="{Binding Move3}" Width="140" Margin="0,0,4,4" />
-                                                <ComboBox ItemsSource="{Binding Owner.Moves}" SelectedIndex="{Binding Move4}" Width="140" Margin="0,0,4,4" />
+                                                <ComboBox ItemsSource="{Binding Owner.Moves}" SelectedIndex="{Binding Move1}" Width="125" Margin="0,0,4,4" />
+                                                <ComboBox ItemsSource="{Binding Owner.Moves}" SelectedIndex="{Binding Move2}" Width="125" Margin="0,0,4,4" />
+                                                <ComboBox ItemsSource="{Binding Owner.Moves}" SelectedIndex="{Binding Move3}" Width="125" Margin="0,0,4,4" />
+                                                <ComboBox ItemsSource="{Binding Owner.Moves}" SelectedIndex="{Binding Move4}" Width="125" Margin="0,0,4,4" />
                                             </WrapPanel>
                                             <WrapPanel>
                                                 <CheckBox Content="{loc:T tr.forceMale}" IsChecked="{Binding ForceMale}" Margin="0,0,12,0" />
@@ -128,7 +147,7 @@
                                                 <CheckBox Content="{loc:T tr.ability2}" IsChecked="{Binding AbilitySlot2}" />
                                             </WrapPanel>
                                         </StackPanel>
-                                        <Button Grid.Column="1" Content="{loc:T tr.remove}" VerticalAlignment="Top" MinWidth="70"
+                                        <Button Grid.Column="2" Content="{loc:T tr.remove}" VerticalAlignment="Top" MinWidth="70"
                                                 Command="{Binding Owner.RemovePokemonCommand}" CommandParameter="{Binding}" />
                                     </Grid>
                                 </Border>

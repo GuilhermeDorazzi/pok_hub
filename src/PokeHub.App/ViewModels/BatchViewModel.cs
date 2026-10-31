@@ -27,13 +27,13 @@ public sealed partial class BatchViewModel : ObservableObject
         _trainers = TrainerRepository.Load(project);
         _encounters = EncounterRepository.Load(project);
         Classes = [new(-1, Loc.T("batch.allClasses")), .. _trainers.Classes.Select((c, i) => new NamedIndex(i, c)).Where(c => c.Name.Length > 0)];
-        Species = _trainers.Species.Select((s, i) => new NamedIndex(i, s)).Where(s => s.Index > 0 && s.Name.Length > 0).OrderBy(s => s.Name).ToList();
+        Catalog = new SpeciesCatalog(_trainers.Species, PokemonSprites.Load(_trainers.Game));
         Items = [new(0, Loc.T("batch.noItem")), .. _trainers.Items.Select((s, i) => new NamedIndex(i, s)).Where(s => s.Index > 0 && s.Name.Length > 0 && s.Name != "-----").OrderBy(s => s.Name)];
         SelectedClass = Classes[0];
     }
 
     public IReadOnlyList<NamedIndex> Classes { get; }
-    public IReadOnlyList<NamedIndex> Species { get; }
+    public SpeciesCatalog Catalog { get; }
     public IReadOnlyList<NamedIndex> Items { get; }
 
     // treinadores
@@ -47,14 +47,14 @@ public sealed partial class BatchViewModel : ObservableObject
     [ObservableProperty] private bool _setHeldItem;
     [ObservableProperty] private NamedIndex? _heldItem;
     [ObservableProperty] private bool _trainerReplace;
-    [ObservableProperty] private NamedIndex? _trainerFrom;
-    [ObservableProperty] private NamedIndex? _trainerTo;
+    [ObservableProperty] private int _trainerFrom = -1;
+    [ObservableProperty] private int _trainerTo = -1;
 
     // encontros
     [ObservableProperty] private bool _encountersEnabled;
     [ObservableProperty] private bool _encounterReplace = true;
-    [ObservableProperty] private NamedIndex? _encounterFrom;
-    [ObservableProperty] private NamedIndex? _encounterTo;
+    [ObservableProperty] private int _encounterFrom = -1;
+    [ObservableProperty] private int _encounterTo = -1;
     [ObservableProperty] private double _encounterLevelPercent = 100;
     [ObservableProperty] private int _encounterLevelOffset;
     [ObservableProperty] private int _encounterMinLevel = 1;
@@ -71,14 +71,14 @@ public sealed partial class BatchViewModel : ObservableObject
         NameFilter = NameFilter.Trim(),
         LevelPercent = TrainerLevelPercent, LevelOffset = TrainerLevelOffset, MinLevel = TrainerMinLevel, MaxLevel = TrainerMaxLevel,
         HeldItem = SetHeldItem && HeldItem is { } i ? (ushort)i.Index : null,
-        ReplaceSpeciesFrom = TrainerReplace && TrainerFrom is { } f ? (ushort)f.Index : null,
-        ReplaceSpeciesTo = TrainerReplace && TrainerTo is { } t ? (ushort)t.Index : null,
+        ReplaceSpeciesFrom = TrainerReplace && TrainerFrom >= 0 ? (ushort)TrainerFrom : null,
+        ReplaceSpeciesTo = TrainerReplace && TrainerTo >= 0 ? (ushort)TrainerTo : null,
     };
 
     private EncounterBatchOptions EncounterOptions() => new()
     {
-        ReplaceSpeciesFrom = EncounterReplace && EncounterFrom is { } f ? (ushort)f.Index : null,
-        ReplaceSpeciesTo = EncounterReplace && EncounterTo is { } t ? (ushort)t.Index : null,
+        ReplaceSpeciesFrom = EncounterReplace && EncounterFrom >= 0 ? (ushort)EncounterFrom : null,
+        ReplaceSpeciesTo = EncounterReplace && EncounterTo >= 0 ? (ushort)EncounterTo : null,
         LevelPercent = EncounterLevelPercent, LevelOffset = EncounterLevelOffset, MinLevel = EncounterMinLevel, MaxLevel = EncounterMaxLevel,
     };
 

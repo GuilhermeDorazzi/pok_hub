@@ -63,6 +63,8 @@ public sealed partial class EncounterEditorViewModel : ObservableObject
     private readonly Func<string, Task> _snapshot;
 
     public IReadOnlyList<string> Species => _repo.Species;
+    public SpeciesCatalog Catalog => _catalog ??= new SpeciesCatalog(_repo.Species, PokemonSprites.Load(_repo.Game));
+    private SpeciesCatalog? _catalog;
     public ObservableCollection<EncounterEntry> AllEntries { get; } = [];
     public ObservableCollection<EncounterEntry> FilteredEntries { get; } = [];
     public ObservableCollection<EncounterGroupViewModel> Groups { get; } = [];

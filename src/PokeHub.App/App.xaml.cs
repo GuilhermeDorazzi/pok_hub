@@ -53,12 +53,13 @@ public partial class App : Application
             {
                 try
                 {
-                    foreach (var (id, suffix) in new[] { ("pokedex-area-editor", "pokedex"), ("event-map", "events"), ("trainer-editor", "trainers") })
+                    foreach (var (id, suffix) in new[] { ("pokedex-area-editor", "pokedex"), ("event-map", "events"), ("trainer-editor", "trainers"), ("encounter-editor", "encounters") })
                     {
                         BuiltinEditors.Open(id, project, _ => { }, _ => Task.CompletedTask);
                         var win = Windows.OfType<Window>().LastOrDefault(w => w != window);
                         if (win is null) continue;
                         if (win.DataContext is PokedexAreaEditorViewModel dexVm) dexVm.SelectedSpecies = 16; // Pidgey
+                        if (win.DataContext is TrainerEditorViewModel trainerVm) trainerVm.Selected = trainerVm.FilteredTrainers.ElementAtOrDefault(20); // Falkner
                         await Task.Delay(500);
                         win.UpdateLayout();
                         var root = (FrameworkElement)win.Content;

@@ -72,7 +72,7 @@ public class TrainerSpriteTests
 
     private static void AssertSprite(byte[] stored)
     {
-        var image = TrainerSprites.Decode(Ncbr(stored), Palette())!;
+        var image = SpriteStrip.Decode(Ncbr(stored), Palette())!;
         Assert.Equal(Side, image.Width);
         Assert.Equal(Side, image.Height);
         Assert.Equal(new byte[] { 255, 0, 0, 255 }, image.Pixels[..4]);
@@ -85,7 +85,7 @@ public class TrainerSpriteTests
     [Fact]
     public void Decrypt_is_forward_when_the_seed_is_the_first_word()
     {
-        var encrypted = TrainerSprites.Decrypt(PlainPixels(), fromEnd: false);
+        var encrypted = SpriteStrip.Decrypt(PlainPixels(), fromEnd: false);
         Assert.NotEqual(PlainPixels(), encrypted);
         Assert.Equal(0, BitConverter.ToUInt16(encrypted, 0)); // a primeira palavra é a própria semente
     }
@@ -97,7 +97,40 @@ public class TrainerSpriteTests
     public void Non_sprite_data_gives_no_image()
     {
         var body = Ncbr(new byte[8]);
-        Assert.Null(TrainerSprites.Decode(body, Palette())); // tamanho menor que o declarado pelas dimensões
+        Assert.Null(SpriteStrip.Decode(body, Palette())); // tamanho menor que o declarado pelas dimensões
+    }
+
+    [Fact]
+    public void Trim_crops_a_centered_square_around_visible_pixels()
+    {
+        var image = new PokeHub.Core.Graphics.RgbaImage(16, 16);
+        image.Set(4, 6, 1, 2, 3);
+        image.Set(8, 7, 1, 2, 3);
+        var trimmed = image.TrimmedToOpaque()!;
+        Assert.Equal(5, trimmed.Width);
+        Assert.Equal(5, trimmed.Height);
+        Assert.Null(new PokeHub.Core.Graphics.RgbaImage(4, 4).TrimmedToOpaque());
+    }
+
+    /// <summary>Com POKEHUB_WORKSPACE (HGSS): todas as espécies têm imagem e o espaço vazio não.</summary>
+    [Fact]
+    public void Real_workspace_every_species_has_a_sprite()
+    {
+        var ws = Environment.GetEnvironmentVariable("POKEHUB_WORKSPACE");
+        if (string.IsNullOrEmpty(ws) || !Directory.Exists(ws)) return;
+        var projectDir = Path.GetDirectoryName(ws.TrimEnd('\\', '/'))!;
+        var project = new Project { Paths = new ProjectPaths(projectDir), Config = ProjectConfig.Load(Path.Combine(projectDir, "project.json")) };
+        var sprites = PokemonSprites.Load(Gen4Game.For(project))!;
+        Assert.Null(sprites.Render(0));
+        Assert.Null(sprites.Render(9999));
+        for (int species = 1; species <= 493; species++)
+        {
+            var image = sprites.Render(species);
+            Assert.NotNull(image);
+            int transparent = 0;
+            for (int i = 3; i < image!.Pixels.Length; i += 4) if (image.Pixels[i] == 0) transparent++;
+            Assert.True(transparent > 0, $"espécie {species} sem fundo: decifrada errado");
+        }
     }
 
     /// <summary>Com POKEHUB_WORKSPACE (HGSS).</summary>
