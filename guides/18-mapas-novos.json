@@ -1,0 +1,49 @@
+{
+  "id": "new-maps",
+  "group": "edit",
+  "feature": "newmaps",
+  "tools": [
+    "pdsms"
+  ],
+  "title": {
+    "pt-BR": "Mapas novos com o Pokémon DS Map Studio",
+    "en-US": "New maps with Pokémon DS Map Studio"
+  },
+  "intro": {
+    "pt-BR": "O DS Map Studio desenha mapas novos com tiles, como um editor 2D, e gera o modelo 3D sozinho. Ele não abre os mapas originais: para ajustar um mapa existente, use o DSPRE.",
+    "en-US": "DS Map Studio draws new maps with tiles, like a 2D editor, and builds the 3D model by itself. It does not open the original maps: to adjust an existing map, use DSPRE."
+  },
+  "steps": [
+    {
+      "pt-BR": "Instale pelo card Mapas novos. O Java 8 vem junto, em runtimes/.",
+      "en-US": "Install from the New maps card. Java 8 comes along, in runtimes/."
+    },
+    {
+      "pt-BR": "Crie um projeto escolhendo o jogo certo (DP, Platinum ou HG/SS) e desenhe o mapa. Salve o projeto na pasta do seu projeto do hub, para não perder.",
+      "en-US": "Create a project choosing the right game (DP, Platinum or HG/SS) and draw the map. Save the project in your hub project's folder so it is not lost."
+    },
+    {
+      "pt-BR": "Para exportar o .nsbmd, coloque o g3dcvtr.exe na pasta bin/converter da ferramenta, em tools/pdsms. Ele não vem no pacote nem pode ser baixado pelo hub, porque faz parte do kit de desenvolvimento da Nintendo.",
+      "en-US": "To export the .nsbmd, put g3dcvtr.exe in the tool's bin/converter folder, under tools/pdsms. It is not in the package and the hub cannot download it, because it is part of Nintendo's development kit."
+    },
+    {
+      "pt-BR": "No DSPRE, abra o Map Editor e importe o .nsbmd, as colisões e o BDHC gerados. Salve no DSPRE, feche, salve uma versão no hub e Teste.",
+      "en-US": "In DSPRE, open the Map Editor and import the generated .nsbmd, collisions and BDHC. Save in DSPRE, close it, save a version in the hub and Test."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Importe sobre uma cópia de um mapa sem importância primeiro: um modelo com erro pode travar o jogo ao entrar no mapa.",
+      "en-US": "Import over a copy of an unimportant map first: a model with an error can freeze the game when entering the map."
+    }
+  ],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "Pokémon DS Map Studio no GitHub",
+        "en-US": "Pokémon DS Map Studio on GitHub"
+      },
+      "url": "https://github.com/Trifindo/Pokemon-DS-Map-Studio"
+    }
+  ]
+}

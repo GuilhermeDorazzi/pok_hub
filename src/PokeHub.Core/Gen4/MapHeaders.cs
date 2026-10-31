@@ -10,6 +10,8 @@ public sealed record MapHeaderInfo(int Id, string InternalName, int? EncounterFi
     public int ScriptHeaderBank { get; init; } = -1;
     public int MsgBank { get; init; } = -1;
     public int EventsBank { get; init; } = -1;
+    /// <summary>HGSS: matriz do mapa (a/0/4/1).</summary>
+    public int MatrixId { get; init; } = -1;
 }
 
 /// <summary>
@@ -45,6 +47,7 @@ public static class MapHeaders
                     ScriptHeaderBank = BitConverter.ToUInt16(arm9, o + 8),
                     MsgBank = BitConverter.ToUInt16(arm9, o + 10),
                     EventsBank = BitConverter.ToUInt16(arm9, o + 16),
+                    MatrixId = BitConverter.ToUInt16(arm9, o + 4),
                 });
                 continue;
             }

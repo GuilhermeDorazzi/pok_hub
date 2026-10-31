@@ -41,6 +41,10 @@
   ],
   "tips": [
     {
+      "pt-BR": "A planta ao lado da lista mostra colisões, grama e água com os eventos no lugar. Clique num marcador para ver o evento; num warp, para abrir o mapa de destino. É só uma planta: não mostra o modelo 3D nem as sprites dos NPCs.",
+      "en-US": "The layout next to the list shows collisions, grass and water with the events in place. Click a marker to see the event; a warp, to open the destination map. It is only a layout: it does not show the 3D model or the NPCs' sprites."
+    },
+    {
       "pt-BR": "'Usada pelo jogo (fora de scripts)' significa que a decomp deu nome à flag (o código do jogo a usa), mesmo sem script mexer nela: não use.",
       "en-US": "'Used by the game (outside scripts)' means the decomp named the flag (game code uses it) even though no script touches it: do not use it."
     },

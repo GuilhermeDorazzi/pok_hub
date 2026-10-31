@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using PokeHub.Core.Gen4.Scripts;
 using PokeHub.Core.Localization;
@@ -81,10 +82,50 @@ public sealed partial class EventMapViewModel : ObservableObject
         Events.Clear();
         if (value is null) return;
         foreach (var e in _map.Events.Where(e => e.MapId == value.Id)) Events.Add(e);
+        Layout = _map.LayoutOf(value.Id);
+        LayoutImage = Layout?.Render().ToBitmap();
+        LayoutStatus = Layout is null ? Loc.T("ev.layout.none") : "";
+        LayoutChanged?.Invoke();
         SelectedEvent = Events.FirstOrDefault();
     }
 
-    partial void OnSelectedEventChanged(EventEntry? value) => EventDetails = value is null ? "" : Describe(value);
+    partial void OnSelectedEventChanged(EventEntry? value)
+    {
+        EventDetails = value is null ? "" : Describe(value);
+        LayoutChanged?.Invoke();
+    }
+
+    // ----- planta do mapa -----
+    /// <summary>Tiles por lado em pixels na tela.</summary>
+    public const int TileScale = 8;
+    public event Action? LayoutChanged;
+    public MapLayout? Layout { get; private set; }
+    [ObservableProperty] private BitmapSource? _layoutImage;
+    [ObservableProperty] private string _layoutStatus = "";
+
+    public bool IsSelected(LayoutMarker m) => SelectedEvent is { } e && e.Kind == m.Kind && e.Index == m.Index;
+
+    public string MarkerTip(LayoutMarker m)
+    {
+        if (m.Kind == EventKind.Warp) return Loc.T("ev.layout.warpTip", m.Index, m.TargetMap is { } t ? _map.MapTitle(t) : "?");
+        var e = EventOf(m);
+        if (e is null) return Loc.T("ev.position", m.X, m.Y);
+        var summary = e.Actions.FirstOrDefault() ?? e.Messages.FirstOrDefault();
+        return summary is null ? e.Title : $"{e.Title}: {summary}";
+    }
+
+    private EventEntry? EventOf(LayoutMarker m) => Events.FirstOrDefault(e => e.Kind == m.Kind && e.Index == m.Index);
+
+    /// <summary>Clique na planta: evento vai para os detalhes; warp abre o mapa de destino.</summary>
+    public void ActivateMarker(LayoutMarker m)
+    {
+        if (m.Kind != EventKind.Warp) { if (EventOf(m) is { } e) SelectedEvent = e; return; }
+        if (m.TargetMap is not { } target) return;
+        var row = AllMaps.FirstOrDefault(r => r.Id == target);
+        if (row is null) { LayoutStatus = Loc.T("ev.layout.noEvents", _map.MapTitle(target)); return; }
+        if (!Maps.Contains(row)) MapSearch = "";
+        SelectedMap = row;
+    }
 
     public string Describe(EventEntry e)
     {

@@ -39,7 +39,13 @@
                             <RowDefinition Height="6" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <ListView Grid.Row="0" ItemsSource="{Binding Events}" SelectedItem="{Binding SelectedEvent}">
+                        <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="6" />
+                            <ColumnDefinition Width="430" />
+                        </Grid.ColumnDefinitions>
+                        <ListView Grid.Column="0" ItemsSource="{Binding Events}" SelectedItem="{Binding SelectedEvent}">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn Header="{loc:T ev.col.event}" Width="110" DisplayMemberBinding="{Binding Title}" />
@@ -60,6 +66,25 @@
                                 </GridView>
                             </ListView.View>
                         </ListView>
+                        <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="#DDD" />
+                        <DockPanel Grid.Column="2">
+                            <WrapPanel DockPanel.Dock="Bottom" Margin="0,4,0,0" TextElement.FontSize="11">
+                                <Border Width="10" Height="10" Background="#E0403A" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.npc}" Margin="0,0,8,0" />
+                                <Border Width="10" Height="10" Background="#E8B820" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.trigger}" Margin="0,0,8,0" />
+                                <Border Width="10" Height="10" Background="#3070E0" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.sign}" Margin="0,0,8,0" />
+                                <Border Width="10" Height="10" Background="#A040C0" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.warp}" Margin="0,0,8,0" />
+                                <Border Width="10" Height="10" Background="#60686E" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.blocked}" Margin="0,0,8,0" />
+                                <Border Width="10" Height="10" Background="#7ABE64" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.grass}" Margin="0,0,8,0" />
+                                <Border Width="10" Height="10" Background="#68A5E1" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.water}" />
+                            </WrapPanel>
+                            <TextBlock DockPanel.Dock="Bottom" Text="{Binding LayoutStatus}" Foreground="#555" TextWrapping="Wrap" />
+                            <ScrollViewer x:Name="LayoutScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="#2A2E32">
+                                <Canvas x:Name="LayoutCanvas" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                    <Image x:Name="LayoutImageView" Source="{Binding LayoutImage}" RenderOptions.BitmapScalingMode="NearestNeighbor" Stretch="Fill" />
+                                </Canvas>
+                            </ScrollViewer>
+                        </DockPanel>
+                        </Grid>
                         <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" Background="#DDD" />
                         <TextBox Grid.Row="2" Text="{Binding EventDetails, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="12"
                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="6" />

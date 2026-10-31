@@ -37,7 +37,7 @@ public sealed class ToolLauncher(HubPaths hub, RuntimeManager runtimes)
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            CreateNoWindow = launch.Runtime is not null,
+            CreateNoWindow = launch.Runtime is not null || IsBatch(exe),
             WorkingDirectory = Expand(launch.WorkingDirectory, vars) ?? Path.GetDirectoryName(exe) ?? hub.Root,
         };
 
@@ -47,7 +47,13 @@ public sealed class ToolLauncher(HubPaths hub, RuntimeManager runtimes)
             psi.ArgumentList.Add("-jar");
             psi.ArgumentList.Add(exe);
         }
-        else psi.FileName = exe;
+        else
+        {
+            psi.FileName = exe;
+            // o .bat de um programa Java acha o java pelo JAVA_HOME; sem isso usaria o do sistema, se houver
+            if (m.Requires.Any(RuntimeManager.IsManaged) && JavaHomeOf(runtimes.ResolveJava(m.Requires)) is { } javaHome)
+                psi.Environment["JAVA_HOME"] = javaHome;
+        }
 
         foreach (var a in launch.Args) psi.ArgumentList.Add(Expand(a, vars)!);
 
@@ -63,6 +69,12 @@ public sealed class ToolLauncher(HubPaths hub, RuntimeManager runtimes)
         _running.Add(rt);
         return rt;
     }
+
+    private static bool IsBatch(string exe) => exe.EndsWith(".bat", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Pasta do Java a partir de ...\\bin\\java.exe; null se for só "java" do PATH.</summary>
+    public static string? JavaHomeOf(string javaExe) =>
+        Path.IsPathRooted(javaExe) ? Path.GetDirectoryName(Path.GetDirectoryName(javaExe)) : null;
 
     private Dictionary<string, string> BuildVariables(Project? project, string exe)
     {

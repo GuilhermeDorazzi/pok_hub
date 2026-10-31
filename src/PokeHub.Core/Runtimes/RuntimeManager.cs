@@ -29,6 +29,7 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
     public static readonly IReadOnlyDictionary<string, RuntimeSpec> Known = new Dictionary<string, RuntimeSpec>(StringComparer.OrdinalIgnoreCase)
     {
         ["java21"] = new("java21", "Eclipse Temurin JRE 21", RuntimeSource.Adoptium, "java.exe", JavaFeatureVersion: 21),
+        ["java8"] = new("java8", "Eclipse Temurin JRE 8", RuntimeSource.Adoptium, "java.exe", JavaFeatureVersion: 8),
         ["java17"] = new("java17", "Eclipse Temurin JRE 17", RuntimeSource.Adoptium, "java.exe", JavaFeatureVersion: 17),
         [GitId] = new(GitId, Loc.T("core.rt.gitName"), RuntimeSource.GitHubRelease, "git.exe",
             Repo: "git-for-windows/git", AssetPattern: @"^MinGit-[\d.]+-64-bit\.zip$", ExecutableRelativePath: @"cmd\git.exe"),

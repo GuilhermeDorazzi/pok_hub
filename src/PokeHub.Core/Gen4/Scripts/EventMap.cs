@@ -57,6 +57,8 @@ public sealed class EventMap
 {
     public const string ScriptsNarcRelativePath = @"a\0\1\2";
     public const string EventsNarcRelativePath = @"a\0\3\2";
+    public const string MatrixNarcRelativePath = @"a\0\4\1";
+    public const string LandNarcRelativePath = @"a\0\6\5";
 
     public Gen4Game Game { get; }
     public FlagNames Names { get; }
@@ -66,6 +68,8 @@ public sealed class EventMap
     public int MapsWithEvents { get; private set; }
 
     private readonly Dictionary<int, FlagUsage> _flagUsage = [];
+    private Narc? _events, _matrices, _land;
+    private bool _triedLayouts;
     private readonly Dictionary<int, FlagUsage> _varUsage = [];
 
     private EventMap(Gen4Game game, IReadOnlyList<MapHeaderInfo> headers, IReadOnlyList<string> locationNames)
@@ -88,7 +92,7 @@ public sealed class EventMap
         List<string> Bank(int b) => b >= 0 && b < text.Files.Count ? Gen4TextArchive.Read(text.Files[b]).Messages.Select(m => Gen4TextArchive.Decode(m)).ToList() : [];
         var species = Bank(game.SpeciesBank); var items = Bank(game.ItemsBank); var trainers = Bank(game.TrainerNamesBank); var locations = Bank(game.LocationNamesBank);
         var headers = MapHeaders.Load(game);
-        var map = new EventMap(game, headers, locations);
+        var map = new EventMap(game, headers, locations) { _events = events };
         var table = ScriptCommandTable.Hgss;
         var bankCache = new Dictionary<int, List<string>>();
 
@@ -130,6 +134,36 @@ public sealed class EventMap
         }
         map.BuildUsage();
         return map;
+    }
+
+    /// <summary>Planta de um mapa, ou null se os arquivos de matriz ou terreno faltarem.</summary>
+    public MapLayout? LayoutOf(int mapId)
+    {
+        var header = Headers.FirstOrDefault(h => h.Id == mapId);
+        if (header is null || _events is null || header.EventsBank < 0 || header.EventsBank >= _events.Files.Count) return null;
+        if (!_triedLayouts)
+        {
+            _triedLayouts = true;
+            var matrices = Path.Combine(Game.FilesRoot, MatrixNarcRelativePath);
+            var land = Path.Combine(Game.FilesRoot, LandNarcRelativePath);
+            if (File.Exists(matrices) && File.Exists(land))
+            {
+                _matrices = Narc.Read(File.ReadAllBytes(matrices));
+                _land = Narc.Read(File.ReadAllBytes(land));
+            }
+        }
+        if (_matrices is null || _land is null || header.MatrixId < 0 || header.MatrixId >= _matrices.Files.Count) return null;
+        var landNarc = _land;
+        return MapLayout.Build(_matrices.Files[header.MatrixId], i => i < landNarc.Files.Count ? landNarc.Files[i] : null, mapId,
+            new EventFile(_events.Files[header.EventsBank]), hasSoundSection: Game.IsHgss);
+    }
+
+    public string MapTitle(int mapId)
+    {
+        var header = Headers.FirstOrDefault(h => h.Id == mapId);
+        if (header is null) return $"#{mapId}";
+        return header.LocationNameIndex >= 0 && header.LocationNameIndex < LocationNames.Count && LocationNames[header.LocationNameIndex].Length > 0
+            ? $"{LocationNames[header.LocationNameIndex]} ({header.InternalName})" : header.InternalName;
     }
 
     /// <summary>Resume o que uma rotina (e as sub-rotinas que ela chama) faz em termos de jogo.</summary>

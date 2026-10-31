@@ -8,6 +8,7 @@ using Xunit.Abstractions;
 
 namespace PokeHub.Core.Tests;
 
+[Collection("Pokédex no workspace real")] // um regrava o arquivo que o outro lê: em paralelo, um pode falhar
 public class PokedexMapTests(ITestOutputHelper output)
 {
     [Fact]

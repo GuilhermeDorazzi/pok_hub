@@ -641,6 +641,7 @@ public sealed partial class MainViewModel : ObservableObject
         EditCards.Clear();
         AdvancedCards.Clear();
         EditCards.Add(new FeatureCardViewModel("maps", FeatureGroup.Edit, "\uE707", Tool("dspre")));
+        EditCards.Add(new FeatureCardViewModel("newmaps", FeatureGroup.Edit, "\uE8EC", Tool("pdsms")));
         EditCards.Add(new FeatureCardViewModel("trainers", FeatureGroup.Edit, "\uE716", Tool("trainer-editor")));
         EditCards.Add(new FeatureCardViewModel("encounters", FeatureGroup.Edit, "\uE909", Tool("encounter-editor")));
         EditCards.Add(new FeatureCardViewModel("text", FeatureGroup.Edit, "\uE8D2", Tool("text-editor")));

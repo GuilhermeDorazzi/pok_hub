@@ -4,6 +4,7 @@ using Xunit;
 
 namespace PokeHub.Core.Tests;
 
+[Collection("Pokédex no workspace real")] // um regrava o arquivo que o outro lê: em paralelo, um pode falhar
 public class PokedexAreaTests
 {
     [Fact]

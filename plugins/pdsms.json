@@ -1,0 +1,41 @@
+{
+  "id": "pdsms",
+  "name": "Pokémon DS Map Studio",
+  "description": {
+    "pt-BR": "Cria mapas 3D novos de Gen 4 e 5 num editor de tiles, sem precisar modelar em 3D.",
+    "en-US": "Creates new Gen 4 and 5 3D maps in a tile editor, with no 3D modeling needed."
+  },
+  "purpose": {
+    "pt-BR": "Para desenhar mapas do zero, o que o DSPRE não faz: ele edita colisões e construções, mas indica esta ferramenta para mapas novos. Não abre os mapas originais do jogo. Para gerar o .nsbmd que entra na ROM, ela pede o g3dcvtr.exe, que não vem no pacote; sem ele dá para desenhar e salvar o projeto, mas não exportar. Precisa de Java 8, que o hub instala junto.",
+    "en-US": "To draw maps from scratch, which DSPRE does not do: it edits collisions and buildings, but points to this tool for new maps. It does not open the game's original maps. To produce the .nsbmd that goes into the ROM it asks for g3dcvtr.exe, which is not in the package; without it you can draw and save the project, but not export. Needs Java 8, which the hub installs alongside."
+  },
+  "cost": {
+    "pt-BR": "34 MB da ferramenta + 38 MB do Java 8 em runtimes/, uns 2 minutos.",
+    "en-US": "34 MB for the tool + 38 MB for Java 8 in runtimes/, about 2 minutes."
+  },
+  "homepage": "https://github.com/Trifindo/Pokemon-DS-Map-Studio",
+  "license": "Sem licença declarada",
+  "contexts": [
+    "maps"
+  ],
+  "generations": [
+    4
+  ],
+  "scope": "hub",
+  "source": {
+    "type": "gitHubRelease",
+    "repo": "Trifindo/Pokemon-DS-Map-Studio",
+    "assetPattern": "^Pokemon\\.DS\\.Map\\.Studio-.*\\.zip$",
+    "executable": "Pokemon DS Map Studio.bat"
+  },
+  "launch": {
+    "args": []
+  },
+  "requires": [
+    "java8"
+  ],
+  "notes": {
+    "pt-BR": "Última versão 2.2 (2021). O hub só instala e abre; sem licença declarada, o código dela não pode ser incorporado. GEN5: também faz mapas de BW/B2W2.",
+    "en-US": "Latest version 2.2 (2021). The hub only installs and opens it; with no declared license its code cannot be incorporated. GEN5: it also makes BW/B2W2 maps."
+  }
+}
