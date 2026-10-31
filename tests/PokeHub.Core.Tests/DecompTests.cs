@@ -16,6 +16,7 @@ public class DecompTests
         Assert.Contains("cygpath -u 'D:/PokeHub/projects/x/decomp/pokeplatinum'", args[1]);
         Assert.EndsWith("&& make rom", args[1]);
         Assert.Equal("MSYS", env["MSYSTEM"]);
+        Assert.Contains("/usr/local/lib/pkgconfig", args[1]);
         Assert.Equal("1", env["CHERE_INVOKING"]);
     }
 
@@ -40,7 +41,7 @@ public class DecompTests
     public void Decomp_manifests_declare_build()
     {
         var catalog = PluginCatalog.LoadFromDirectory(Path.Combine(AppContext.BaseDirectory, "plugins"));
-        foreach (var m in catalog.ForContext(ToolContext.Decomp))
+        foreach (var m in catalog.ForContext(ToolContext.Decomp).Where(m => m.Source.Type == SourceType.GitClone))
         {
             Assert.NotNull(m.Build);
             Assert.EndsWith(".nds", m.Build!.Output);

@@ -16,7 +16,12 @@ public sealed record UnixShell(UnixShellKind Kind, string Location, string Descr
         {
             UnixShellKind.Msys2 => (
                 Path.Combine(Location, "usr", "bin", "bash.exe"),
-                ["-lc", $"cd \"$(cygpath -u '{dir}')\" && {command}"],
+                // Shell MSYS: as ferramentas nativas das decomps usam APIs POSIX (fnmatch, mkdir de 2 argumentos) e só compilam com o gcc do msys.
+                // A libpng do mingw64 que o INSTALL.md sugere não serve: nitrogfx passa FILE* do msys para ela (png_init_io) e cai com
+                // segmentation fault. Por isso a toolchain do hub compila uma libpng estática para o msys em /usr/local (ver DecompBuildService),
+                // e PKG_CONFIG_PATH (e a variante FOR_BUILD, que o meson consulta em build cruzado) apontam para lá.
+                // PATH e PKG_CONFIG_PATH são exportados no comando porque o /etc/profile do MSYS2 os redefine depois do ambiente.
+                ["-lc", $"export PATH=\"$PATH:/ucrt64/bin:/mingw64/bin\" PKG_CONFIG_PATH=\"/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH\"; export PKG_CONFIG_PATH_FOR_BUILD=\"$PKG_CONFIG_PATH\"; cd \"$(cygpath -u '{dir}')\" && {command}"],
                 new Dictionary<string, string> { ["MSYSTEM"] = "MSYS", ["CHERE_INVOKING"] = "1", ["MSYS2_PATH_TYPE"] = "inherit" }),
             UnixShellKind.Wsl => (
                 "wsl.exe",
@@ -27,12 +32,13 @@ public sealed record UnixShell(UnixShellKind Kind, string Location, string Descr
     }
 
     /// <summary>Procura MSYS2 nas pastas usuais e distros do WSL. MSYS2 vem primeiro: compila no sistema de arquivos do Windows sem a lentidão do /mnt.</summary>
-    public static async Task<IReadOnlyList<UnixShell>> DetectAsync()
+    public static async Task<IReadOnlyList<UnixShell>> DetectAsync(string? hubRuntimesDir = null)
     {
         var found = new List<UnixShell>();
 
         var candidates = new[]
         {
+            hubRuntimesDir is null ? null : Path.Combine(hubRuntimesDir, "msys2", "msys64"), // instalado pelo hub: tem prioridade
             Environment.GetEnvironmentVariable("MSYS2_ROOT"),
             @"C:\msys64",
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "msys64"),
@@ -41,7 +47,7 @@ public sealed record UnixShell(UnixShellKind Kind, string Location, string Descr
         };
         foreach (var root in candidates.Where(c => !string.IsNullOrEmpty(c)).Distinct(StringComparer.OrdinalIgnoreCase))
             if (File.Exists(Path.Combine(root!, "usr", "bin", "bash.exe")))
-                found.Add(new UnixShell(UnixShellKind.Msys2, root!, $"MSYS2 em {root}"));
+                found.Add(new UnixShell(UnixShellKind.Msys2, root!, hubRuntimesDir is not null && root!.StartsWith(hubRuntimesDir, StringComparison.OrdinalIgnoreCase) ? "MSYS2 do hub" : $"MSYS2 em {root}"));
 
         try
         {

@@ -1,0 +1,19 @@
+{
+  "id": "msys2",
+  "name": "MSYS2 + toolchain das decomps",
+  "description": "Shell Unix portátil com gcc, make, ninja, python, libpng e as demais dependências do INSTALL.md das decomps da pret. Extraído em runtimes/msys2 sem instalador nem administrador.",
+  "homepage": "https://www.msys2.org/",
+  "license": "BSD-3-Clause (MSYS2); pacotes com licenças próprias",
+  "contexts": ["decomp"],
+  "generations": [4],
+  "scope": "hub",
+  "source": { "type": "runtime", "runtimeId": "msys2" },
+  "setup": {
+    "pacman": [
+      "bison", "flex", "gcc", "git", "make", "ninja", "python", "wget", "p7zip", "pkgconf", "zlib-devel",
+      "mingw-w64-ucrt-x86_64-arm-none-eabi-gcc"
+    ],
+    "libpngVersion": "1.6.50"
+  },
+  "notes": "Baixa 40 MB, instala a toolchain pelo pacman e compila uma libpng estática para o msys (a do mingw64 sugerida pelo INSTALL.md derruba o nitrogfx). Ocupa cerca de 2 GB e leva uns 5 minutos. O botão 'Compilar ROM' das decomps passa a usar este MSYS2."
+}

@@ -19,6 +19,8 @@ public enum SourceType
     System,
     /// <summary>Editor do próprio hub; nada a instalar. O id do manifesto identifica o editor.</summary>
     Builtin,
+    /// <summary>Runtime gerenciado (ver RuntimeManager.Known); source.runtimeId diz qual.</summary>
+    Runtime,
 }
 
 /// <summary>Descrição de uma ferramenta suportada, carregada de plugins/*.json.</summary>
@@ -37,6 +39,8 @@ public sealed class PluginManifest
     public LaunchSpec? Launch { get; set; }
     /// <summary>Para decomps: como compilar e onde sai a ROM.</summary>
     public BuildSpec? Build { get; set; }
+    /// <summary>Para runtimes: o que rodar depois de instalar.</summary>
+    public SetupSpec? Setup { get; set; }
     /// <summary>Dependências: "java21"/"java17" o hub instala; "unix-shell" exige MSYS2 ou WSL; o resto é informativo.</summary>
     public List<string> Requires { get; set; } = [];
     public string? Notes { get; set; }
@@ -53,6 +57,16 @@ public sealed class PluginSource
     public string? Executable { get; set; }
     public string? Branch { get; set; }
     public bool Recursive { get; set; } = true;
+    /// <summary>Para type = runtime: id em RuntimeManager.Known (ex.: "msys2").</summary>
+    public string? RuntimeId { get; set; }
+}
+
+/// <summary>Preparação após instalar (hoje: pacotes pacman para o MSYS2).</summary>
+public sealed class SetupSpec
+{
+    public List<string> Pacman { get; set; } = [];
+    /// <summary>Versão da libpng a compilar estaticamente para o runtime msys (ex.: "1.6.50"); null = não compilar.</summary>
+    public string? LibpngVersion { get; set; }
 }
 
 public sealed class BuildSpec

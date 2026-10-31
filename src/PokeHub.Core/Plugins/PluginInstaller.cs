@@ -18,6 +18,7 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
 
     public InstalledTool? GetInstalled(PluginManifest m, Project? project) =>
         m.Source.Type == SourceType.Builtin ? BuiltinTool
+        : m.Source.Type == SourceType.Runtime ? Runtimes.GetInstalled(m.Source.RuntimeId ?? m.Id)
         : m.Scope == PluginScope.Project
             ? project?.Config.ProjectTools.GetValueOrDefault(m.Id)
             : config.InstalledTools.GetValueOrDefault(m.Id);
@@ -35,11 +36,18 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
             SourceType.GitHubRelease => await InstallFromReleaseAsync(m, project, log, ct),
             SourceType.GitClone => await InstallFromGitAsync(m, project, log, ct),
             SourceType.System => throw new InvalidOperationException("Ferramenta de sistema: use RegisterSystemTool com o caminho do executável."),
+            SourceType.Runtime => await InstallRuntimeAsync(m, log, ct),
             _ => throw new NotSupportedException(m.Source.Type.ToString()),
         };
-        Record(m, project, tool);
+        if (m.Source.Type != SourceType.Runtime) Record(m, project, tool); // runtimes se registram sozinhos em installedRuntimes
         log.Report($"{m.Name} instalado: {tool.Version}");
         return tool;
+    }
+
+    private async Task<InstalledTool> InstallRuntimeAsync(PluginManifest m, IProgress<string> log, CancellationToken ct)
+    {
+        var id = m.Source.RuntimeId ?? m.Id;
+        return Runtimes.GetInstalled(id) ?? await Runtimes.InstallAsync(id, log, ct);
     }
 
     public InstalledTool RegisterSystemTool(PluginManifest m, Project? project, string executablePath)

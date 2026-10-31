@@ -60,8 +60,8 @@ public sealed class DependencyChecker(RuntimeManager runtimes, DecompBuildServic
         if (shells is null) return new(id, "MSYS2 ou WSL2", null, "verificando...", null);
         bool ok = shells.Count > 0;
         return new(id, "MSYS2 ou WSL2", ok,
-            ok ? $"encontrado: {string.Join(", ", shells.Select(s => s.Description))}" : "nenhum encontrado",
-            ok ? null : "https://www.msys2.org/");
+            ok ? $"encontrado: {string.Join(", ", shells.Select(s => s.Description))}" : "nenhum encontrado: instale pelo card 'MSYS2 + toolchain' nesta aba",
+            null);
     }
 
     /// <summary>Valor "Release" de HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full, ou null se não há .NET 4.x.</summary>

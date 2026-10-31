@@ -1,0 +1,12 @@
+{
+  "id": "pokedex-area-editor",
+  "name": "Editor de áreas da Pokédex (PokeHub)",
+  "description": "Editor embutido: em quais rotas, cidades, cavernas e prédios cada Pokémon aparece na Pokédex, por período do dia. Portado do pk_dex_editor. Só HeartGold/SoulSilver.",
+  "license": "GPL-3.0",
+  "contexts": ["pokemon"],
+  "generations": [4],
+  "scope": "hub",
+  "source": { "type": "builtin" },
+  "launch": { "args": [] },
+  "notes": "Edita o NARC a/1/3/3. Grava direto no workspace e salva uma versão no git a cada salvamento. Reempacote para testar."
+}

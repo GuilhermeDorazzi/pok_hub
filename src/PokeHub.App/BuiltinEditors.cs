@@ -20,6 +20,13 @@ public static class BuiltinEditors
             var vm = new TrainerEditorViewModel(repo, log, snapshot);
             new TrainerEditorWindow(vm) { Owner = Application.Current.MainWindow }.Show();
         },
+        ["pokedex-area-editor"] = (project, log, snapshot) =>
+        {
+            var repo = PokedexAreaRepository.Load(project);
+            log($"Editor de áreas da Pokédex: {PokedexAreaRepository.SpeciesCount} espécies, {PokedexAreaRepository.NormalLocations.Count} áreas normais, {PokedexAreaRepository.SpecialLocations.Count} especiais.");
+            var vm = new PokedexAreaEditorViewModel(repo, log, snapshot);
+            new PokedexAreaEditorWindow(vm) { Owner = Application.Current.MainWindow }.Show();
+        },
         // GEN5: editores de Gen 5 entram aqui com o mesmo mecanismo
     };
 

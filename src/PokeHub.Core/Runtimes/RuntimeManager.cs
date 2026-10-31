@@ -12,7 +12,8 @@ public enum RuntimeSource { Adoptium, GitHubRelease }
 /// <summary>Um runtime que o hub sabe instalar em runtimes/&lt;id&gt;.</summary>
 public sealed record RuntimeSpec(
     string Id, string Name, RuntimeSource Source, string ExecutableName,
-    int JavaFeatureVersion = 0, string? Repo = null, string? AssetPattern = null, string? ExecutableRelativePath = null);
+    int JavaFeatureVersion = 0, string? Repo = null, string? AssetPattern = null, string? ExecutableRelativePath = null,
+    bool SfxExtract = false);
 
 /// <summary>
 /// Instala e localiza runtimes: JREs Temurin (API do Adoptium) e o Git portátil (MinGit, release do Git for Windows).
@@ -22,6 +23,7 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
 {
     public const string GitId = "git";
     public const string DsRomId = "dsrom";
+    public const string Msys2Id = "msys2";
 
     public static readonly IReadOnlyDictionary<string, RuntimeSpec> Known = new Dictionary<string, RuntimeSpec>(StringComparer.OrdinalIgnoreCase)
     {
@@ -31,6 +33,10 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
             Repo: "git-for-windows/git", AssetPattern: @"^MinGit-[\d.]+-64-bit\.zip$", ExecutableRelativePath: @"cmd\git.exe"),
         [DsRomId] = new(DsRomId, "ds-rom (extrai e monta ROMs, formato do DSPRE)", RuntimeSource.GitHubRelease, "dsrom.exe",
             Repo: "AetiasHax/ds-rom", AssetPattern: @"^dsrom-windows-x86_64\.exe$"),
+        // pacote auto-extraível (7-Zip SFX): descompacta msys64/ sem instalador nem administrador
+        [Msys2Id] = new(Msys2Id, "MSYS2 (shell Unix para compilar as decomps)", RuntimeSource.GitHubRelease, "bash.exe",
+            Repo: "msys2/msys2-installer", AssetPattern: @"^msys2-base-x86_64-latest\.sfx\.exe$",
+            ExecutableRelativePath: @"msys64\usr\bin\bash.exe", SfxExtract: true),
     };
 
     public static bool IsManaged(string requirement) => Known.ContainsKey(requirement);
@@ -74,7 +80,15 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
         Directory.CreateDirectory(target);
 
         string exe;
-        if (!cacheFile.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        if (spec.SfxExtract)
+        {
+            log.Report($"Extraindo pacote auto-extraível para {target} (pode levar um minuto)...");
+            var code = await ProcessRunner.RunAsync(cacheFile, ["-y", "-o" + target], target, log, ct);
+            if (code != 0) throw new InvalidOperationException($"A extração do {spec.Name} falhou (código {code}).");
+            exe = Path.Combine(target, spec.ExecutableRelativePath!);
+            if (!File.Exists(exe)) throw new FileNotFoundException($"{spec.ExecutableName} não encontrado após extrair o {spec.Name}.", exe);
+        }
+        else if (!cacheFile.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
         {
             // asset é o próprio executável
             exe = Path.Combine(target, spec.ExecutableName);

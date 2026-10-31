@@ -107,10 +107,13 @@ public sealed partial class ToolItemViewModel : ObservableObject
     public bool HasNotes => !string.IsNullOrWhiteSpace(Manifest.Notes);
     public bool IsInstalled => Installed is not null;
     public bool IsBuiltin => Manifest.Source.Type == SourceType.Builtin;
+    public bool IsRuntime => Manifest.Source.Type == SourceType.Runtime;
     public bool CanInstallOrUpdate => !IsBuiltin;
+    public string InstallButtonText => IsSystemSource ? "Apontar executável"
+        : IsRuntime && IsInstalled ? "Preparar toolchain de novo"
+        : IsInstalled ? "Atualizar" : "Instalar";
     public bool CanLaunch => IsInstalled && Manifest.Launch is not null && !IsBusy && (!IsBuiltin || _currentProject() is not null);
     public bool IsSystemSource => Manifest.Source.Type == SourceType.System;
-    public string InstallButtonText => IsSystemSource ? "Apontar executável" : IsInstalled ? "Atualizar" : "Instalar";
 
     public void Refresh()
     {
@@ -161,6 +164,16 @@ public sealed partial class ToolItemViewModel : ObservableObject
                 StatusText = "Instalando...";
                 var progress = new Progress<string>(_log);
                 Installed = await _installer.InstallAsync(Manifest, project, progress);
+                if (Manifest.Source.Type == SourceType.Runtime && Manifest.Setup?.Pacman is { Count: > 0 } packages)
+                {
+                    StatusText = "Preparando toolchain...";
+                    var shells = await _builds.GetShellsAsync(refresh: true);
+                    var msysRoot = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(Installed.ExecutablePath)!, "..", ".."));
+                    var shell = shells.FirstOrDefault(s => s.Kind == UnixShellKind.Msys2 && string.Equals(Path.GetFullPath(s.Location), msysRoot, StringComparison.OrdinalIgnoreCase))
+                        ?? throw new InvalidOperationException("MSYS2 extraído mas não detectado.");
+                    await _builds.PrepareMsys2ToolchainAsync(shell, packages, progress, libpngVersion: Manifest.Setup.LibpngVersion);
+                    await _builds.GetShellsAsync(refresh: true);
+                }
             }
         }
         catch (Exception ex)
