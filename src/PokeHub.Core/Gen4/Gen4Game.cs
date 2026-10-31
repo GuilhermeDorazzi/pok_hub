@@ -25,6 +25,7 @@ public sealed class Gen4Game
 
     public string TrainerDataPath => Path.Combine(FilesRoot, IsHgss ? @"a\0\5\5" : @"poketool\trainer\trdata.narc");
     public string TrainerPartyPath => Path.Combine(FilesRoot, IsHgss ? @"a\0\5\6" : @"poketool\trainer\trpoke.narc");
+    public string TrainerGraphicsPath => Path.Combine(FilesRoot, IsHgss ? @"a\0\5\8" : @"poketool\trgra\trfgra.narc");
     public string TextArchivePath => Path.Combine(FilesRoot, IsHgss ? @"a\0\2\7" : IsPlatinum ? @"msgdata\pl_msg.narc" : @"msgdata\msg.narc");
     public string EncountersPath => Path.Combine(FilesRoot, Game switch
     {

@@ -25,6 +25,8 @@
             <TextBlock DockPanel.Dock="Top" Text="{Binding GameLabel}" Foreground="Gray" Margin="0,0,0,6" />
             <TextBox DockPanel.Dock="Top" Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"
                      ToolTip="{loc:T tr.filterTip}" />
+            <Image DockPanel.Dock="Bottom" Source="{Binding Sprite}" Width="160" Height="160" Margin="0,8,0,0" HorizontalAlignment="Center"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor" ToolTip="{loc:T tr.spriteTip}" />
             <ListBox ItemsSource="{Binding FilteredTrainers}" SelectedItem="{Binding Selected}" DisplayMemberPath="Display"
                      VirtualizingPanel.IsVirtualizing="True" FontFamily="Consolas" />
         </DockPanel>

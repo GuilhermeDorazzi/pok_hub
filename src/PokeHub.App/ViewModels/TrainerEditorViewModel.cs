@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PokeHub.Core.Gen4;
@@ -93,6 +94,7 @@ public sealed partial class TrainerEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(Current));
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(TrainerClass));
+        OnPropertyChanged(nameof(Sprite));
         OnPropertyChanged(nameof(HasItems));
         OnPropertyChanged(nameof(HasMoves));
         OnPropertyChanged(nameof(DoubleBattle));
@@ -122,8 +124,11 @@ public sealed partial class TrainerEditorViewModel : ObservableObject
     public int TrainerClass
     {
         get => Current?.Class ?? 0;
-        set { if (Current is null) return; Current.Class = (byte)value; Selected!.Refresh(); OnPropertyChanged(); MarkDirty(); }
+        set { if (Current is null) return; Current.Class = (byte)value; Selected!.Refresh(); OnPropertyChanged(); OnPropertyChanged(nameof(Sprite)); MarkDirty(); }
     }
+
+    /// <summary>A sprite vem da classe: treinadores da mesma classe têm a mesma imagem.</summary>
+    public BitmapSource? Sprite => Current is { } t ? _repo.Sprites?.Render(t.Class)?.ToBitmap() : null;
 
     public bool HasItems { get => Current?.HasItems ?? false; set { if (Current is null) return; Current.HasItems = value; OnPropertyChanged(); MarkDirty(); } }
     public bool HasMoves { get => Current?.HasMoves ?? false; set { if (Current is null) return; Current.HasMoves = value; OnPropertyChanged(); MarkDirty(); } }

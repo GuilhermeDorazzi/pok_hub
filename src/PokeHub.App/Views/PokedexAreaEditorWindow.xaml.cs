@@ -27,25 +27,12 @@ public partial class PokedexAreaEditorWindow : Window
         DataContext = vm;
         if (vm.Map is { } map)
         {
-            MapImage.Source = ToBitmap(map.Image);
+            MapImage.Source = map.Image.ToBitmap();
             MapCanvas.Width = map.Image.Width;
             MapCanvas.Height = map.Image.Height;
             vm.MapChanged += DrawOverlay;
             DrawOverlay();
         }
-    }
-
-    /// <summary>RGBA do Core para um BitmapSource (WPF usa BGRA).</summary>
-    private static BitmapSource ToBitmap(RgbaImage img)
-    {
-        var bgra = new byte[img.Pixels.Length];
-        for (int i = 0; i < bgra.Length; i += 4)
-        {
-            bgra[i] = img.Pixels[i + 2]; bgra[i + 1] = img.Pixels[i + 1]; bgra[i + 2] = img.Pixels[i]; bgra[i + 3] = img.Pixels[i + 3];
-        }
-        var bmp = BitmapSource.Create(img.Width, img.Height, 96, 96, PixelFormats.Bgra32, null, bgra, img.Width * 4);
-        bmp.Freeze();
-        return bmp;
     }
 
     /// <summary>Desenha as áreas marcadas do bloco mostrado (amarelo) e o contorno da área sob o mouse.</summary>

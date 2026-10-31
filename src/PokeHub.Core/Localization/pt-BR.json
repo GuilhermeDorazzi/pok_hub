@@ -660,6 +660,7 @@
  "ev.action.write": "altera",
  "ev.action.compare": "compara",
  "ev.action.condition": "condição de trigger",
+ "tr.spriteTip": "Sprite da classe, lida da ROM. Muda junto com a classe do treinador.",
  "feature.inject": "Injeção de código",
  "feature.inject.text": "Código novo em C ou assembly no jogo, sem sair do workspace: mude mecânicas e continue usando os editores.",
  "inject.title": "Injeção de código",

@@ -20,6 +20,8 @@ public sealed class TrainerRepository
     public IReadOnlyList<string> Species { get; }
     public IReadOnlyList<string> Items { get; }
     public IReadOnlyList<string> Moves { get; }
+    /// <summary>Só leitura; null se o jogo não tiver o arquivo.</summary>
+    public TrainerSprites? Sprites { get; }
 
     private TrainerRepository(Gen4Game game, Narc trData, Narc trParty, Narc text)
     {
@@ -34,6 +36,7 @@ public sealed class TrainerRepository
         Species = ReadBank(game.SpeciesBank);
         Items = ReadBank(game.ItemsBank);
         Moves = ReadBank(game.MovesBank);
+        Sprites = TrainerSprites.Load(game);
 
         for (int i = 0; i < trData.Files.Count; i++)
             Trainers.Add(Trainer.Parse(i, trData.Files[i], i < trParty.Files.Count ? trParty.Files[i] : [], game.HasBallSeal));

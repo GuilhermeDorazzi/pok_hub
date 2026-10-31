@@ -660,6 +660,7 @@
  "ev.action.write": "writes",
  "ev.action.compare": "compares",
  "ev.action.condition": "trigger condition",
+ "tr.spriteTip": "The class's sprite, read from the ROM. It changes with the trainer's class.",
  "feature.inject": "Code injection",
  "feature.inject.text": "New C or assembly code in the game, without leaving the workspace: change mechanics and keep using the editors.",
  "inject.title": "Code injection",

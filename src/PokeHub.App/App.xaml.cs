@@ -53,7 +53,7 @@ public partial class App : Application
             {
                 try
                 {
-                    foreach (var (id, suffix) in new[] { ("pokedex-area-editor", "pokedex"), ("event-map", "events") })
+                    foreach (var (id, suffix) in new[] { ("pokedex-area-editor", "pokedex"), ("event-map", "events"), ("trainer-editor", "trainers") })
                     {
                         BuiltinEditors.Open(id, project, _ => { }, _ => Task.CompletedTask);
                         var win = Windows.OfType<Window>().LastOrDefault(w => w != window);
