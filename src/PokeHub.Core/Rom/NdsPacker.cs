@@ -141,9 +141,18 @@ public static class NdsPacker
         rom.Position = 0;
         rom.Write(headerFull);
 
+        // preenche com 0xFF até o tamanho do chip (128 KB << capacidade), como o cartucho original
+        uint chipSize = 128u * 1024u << header[NdsHeader.Capacity];
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputRom))!);
-        File.WriteAllBytes(outputRom, buffer.AsSpan(0, (int)total).ToArray());
-        log?.Report($"ROM gerada: {outputRom} ({total / 1024 / 1024} MB, {files.Count} arquivos, {overlayEntries.Count} overlays)");
+        using (var fs = File.Create(outputRom))
+        {
+            fs.Write(buffer, 0, (int)total);
+            var fill = new byte[1 << 16];
+            Array.Fill(fill, Fill);
+            long remaining = chipSize - total;
+            while (remaining > 0) { int chunk = (int)Math.Min(remaining, fill.Length); fs.Write(fill, 0, chunk); remaining -= chunk; }
+        }
+        log?.Report($"ROM gerada: {outputRom} ({total / 1024 / 1024} MB usados de {chipSize / 1024 / 1024} MB, {files.Count} arquivos, {overlayEntries.Count} overlays)");
 
         void WriteOverlays(byte[] table)
         {

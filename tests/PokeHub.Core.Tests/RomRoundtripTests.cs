@@ -72,7 +72,9 @@ public class RomRoundtripTests : IDisposable
         Assert.Equal("CPUE", header.GameCode);
         Assert.Equal(BaseGame.Platinum, header.Game);
         var romBytes = File.ReadAllBytes(rom1);
-        Assert.Equal((uint)romBytes.Length, header.RomSize);
+        Assert.True(header.RomSize <= romBytes.Length);
+        Assert.Equal(128 * 1024 << NdsPacker.CapacityByte(header.RomSize), romBytes.Length); // preenchida até o chip
+        Assert.All(romBytes.Skip((int)header.RomSize), b => Assert.Equal(0xFF, b));
         Assert.Equal(Crc16.Compute(romBytes.AsSpan(0, NdsHeader.HeaderCrc)), BitConverter.ToUInt16(romBytes, NdsHeader.HeaderCrc));
         Assert.Equal(0x4000u, BitConverter.ToUInt32(romBytes, NdsHeader.Arm9Offset));
         Assert.Equal(0x5000u, BitConverter.ToUInt32(romBytes, NdsHeader.Arm9Size)); // footer não conta
@@ -163,11 +165,11 @@ public class RomRoundtripTests : IDisposable
         var original = File.ReadAllBytes(romPath);
         var rebuilt = File.ReadAllBytes(output);
         uint used = BitConverter.ToUInt32(original, NdsHeader.TotalUsedSize);
-        Assert.Equal(used, (uint)rebuilt.Length);
         int firstDiff = original.AsSpan(0, (int)used).CommonPrefixLength(rebuilt);
         Assert.True(firstDiff == used, $"primeira diferença em 0x{firstDiff:X} (manifesto: {manifest.FileOrder?.Count} arquivos ordenados)");
-        // o restante do dump original é só o preenchimento 0xFF até a capacidade do chip
-        Assert.All(original.Skip((int)used), b => Assert.Equal(0xFF, b));
+        // preenchida até a capacidade do chip: idêntica ao dump inteiro, inclusive o 0xFF final
+        Assert.Equal(original.Length, rebuilt.Length);
+        Assert.True(original.AsSpan().SequenceEqual(rebuilt), "ROM gerada difere do dump após a área usada");
     }
 
     [Fact]
