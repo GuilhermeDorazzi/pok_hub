@@ -1,0 +1,36 @@
+{
+  "id": "files",
+  "group": "advanced",
+  "feature": "files",
+  "tools": [
+    "tinke"
+  ],
+  "title": {
+    "pt-BR": "Explorar arquivos com o Tinke",
+    "en-US": "Browse files with Tinke"
+  },
+  "intro": {
+    "pt-BR": "O Tinke abre a ROM ou o workspace e mostra a árvore de arquivos, reconhecendo formatos (NARC, NCLR, NCGR, texto, SDAT). Serve para achar, ver e extrair qualquer coisa.",
+    "en-US": "Tinke opens the ROM or the workspace and shows the file tree, recognizing formats (NARC, NCLR, NCGR, text, SDAT). Use it to find, view and extract anything."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra pelo card Explorar arquivos; o hub passa a ROM base do projeto. Para ver o workspace atual, empacote antes e abra a ROM de builds/ pelo File > Open do Tinke.",
+      "en-US": "Open from the Browse files card; the hub passes the project's base ROM. To see the current workspace, pack first and open the ROM from builds/ with Tinke's File > Open."
+    },
+    {
+      "pt-BR": "Navegue pela árvore. Um NARC se abre como pasta (Unpack); dentro, selecione um arquivo e clique em View para ver gráficos e textos.",
+      "en-US": "Browse the tree. A NARC opens like a folder (Unpack); inside, select a file and click View to see graphics and text."
+    },
+    {
+      "pt-BR": "Extract salva o arquivo selecionado; para editar, use o caminho correspondente no workspace (mesmo nome de pasta, ex.: a/0/0/4).",
+      "en-US": "Extract saves the selected file; to edit, use the matching path in the workspace (same folder name, e.g. a/0/0/4)."
+    },
+    {
+      "pt-BR": "Prefira editar os arquivos do workspace diretamente, em vez de usar o Save ROM do Tinke, para o hub continuar controlando as versões.",
+      "en-US": "Prefer editing workspace files directly rather than Tinke's Save ROM, so the hub keeps controlling versions."
+    }
+  ],
+  "tips": [],
+  "links": []
+}

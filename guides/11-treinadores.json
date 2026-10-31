@@ -1,0 +1,49 @@
+{
+  "id": "trainers",
+  "group": "edit",
+  "feature": "trainers",
+  "tools": [
+    "trainer-editor"
+  ],
+  "title": {
+    "pt-BR": "Editor de treinadores",
+    "en-US": "Trainer editor"
+  },
+  "intro": {
+    "pt-BR": "Editor nativo do hub: muda o time, os itens e a IA de qualquer treinador do jogo, lendo e gravando os mesmos arquivos que o jogo usa.",
+    "en-US": "Native hub editor: changes the team, items and AI of any trainer in the game, reading and writing the same files the game uses."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra pelo card Treinadores (precisa de um projeto com workspace extraído).",
+      "en-US": "Open from the Trainers card (needs a project with an extracted workspace)."
+    },
+    {
+      "pt-BR": "Filtre pela caixa de busca (nome ou classe, por exemplo Falkner ou Leader) e selecione o treinador na lista.",
+      "en-US": "Filter with the search box (name or class, for example Falkner or Leader) and select the trainer in the list."
+    },
+    {
+      "pt-BR": "À direita: classe, flags de IA, batalha dupla e os quatro itens. Abaixo, o time: espécie, nível, dificuldade (IVs), item, golpes, gênero/habilidade.",
+      "en-US": "On the right: class, AI flags, double battle and the four items. Below, the team: species, level, difficulty (IVs), item, moves, gender/ability."
+    },
+    {
+      "pt-BR": "Adicionar e remover Pokémon muda o tamanho do time (até 6). Golpes só são gravados se o treinador tiver 'golpes personalizados' marcado.",
+      "en-US": "Adding and removing Pokémon changes the team size (up to 6). Moves are only stored when the trainer has 'custom moves' checked."
+    },
+    {
+      "pt-BR": "Salvar grava no workspace e cria uma versão. Testar para conferir a batalha.",
+      "en-US": "Save writes to the workspace and creates a version. Test to check the battle."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Treinadores não alterados são regravados byte a byte: o resto do arquivo não muda.",
+      "en-US": "Untouched trainers are rewritten byte for byte: the rest of the file does not change."
+    },
+    {
+      "pt-BR": "Não dá para criar treinadores novos ainda (precisa expandir tabelas no arm9).",
+      "en-US": "New trainers cannot be created yet (that needs expanding arm9 tables)."
+    }
+  ],
+  "links": []
+}

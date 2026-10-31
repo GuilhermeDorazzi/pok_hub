@@ -46,6 +46,9 @@ public sealed partial class FeatureCardViewModel : ObservableObject
     [ObservableProperty] private bool _hasAction;
     [ObservableProperty] private ICommand? _actionCommand;
     [ObservableProperty] private bool _needsInstall;
+    /// <summary>Guia da seção Ajuda para este recurso, quando existe.</summary>
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasGuide))] private string? _guideId;
+    public bool HasGuide => GuideId is not null;
 
     public void Refresh()
     {

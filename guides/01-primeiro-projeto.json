@@ -1,0 +1,47 @@
+{
+  "id": "getting-started",
+  "group": "start",
+  "feature": null,
+  "tools": [],
+  "title": {
+    "pt-BR": "Primeiros passos: criar um projeto",
+    "en-US": "Getting started: create a project"
+  },
+  "intro": {
+    "pt-BR": "O PokeHub guarda sua ROM base e trabalha numa cópia extraída (o workspace). Todas as ferramentas apontam para esse workspace, e cada mudança pode ser salva como uma versão.",
+    "en-US": "PokeHub keeps your base ROM and works on an extracted copy (the workspace). Every tool points at that workspace, and each change can be saved as a version."
+  },
+  "steps": [
+    {
+      "pt-BR": "Na primeira abertura, escolha a pasta do hub. Tudo (ferramentas, runtimes, projetos) fica dentro dela.",
+      "en-US": "On first launch, choose the hub folder. Everything (tools, runtimes, projects) lives inside it."
+    },
+    {
+      "pt-BR": "Clique em Novo projeto, dê um nome e escolha a ROM .nds (Diamond, Pearl, Platinum, HeartGold ou SoulSilver). O hub identifica o jogo pelo cabeçalho.",
+      "en-US": "Click New project, give it a name and pick the .nds ROM (Diamond, Pearl, Platinum, HeartGold or SoulSilver). The hub identifies the game from the header."
+    },
+    {
+      "pt-BR": "Aguarde a extração: a ROM é copiada para base.nds e aberta em workspace/. Quando houver Git, a primeira versão é salva automaticamente.",
+      "en-US": "Wait for extraction: the ROM is copied to base.nds and unpacked into workspace/. When Git is available, the first version is saved automatically."
+    },
+    {
+      "pt-BR": "Na tela Início, cada card é um recurso. Pronto = pode abrir; Não instalado = clique em Instalar; Abra um projeto = precisa de um projeto selecionado.",
+      "en-US": "On the Home screen each card is a feature. Ready = can open; Not installed = click Install; Open a project = needs a selected project."
+    },
+    {
+      "pt-BR": "Fluxo normal: editar com um card, Salvar versão, Testar no emulador. Deu errado? Versões, escolha um ponto e restaure.",
+      "en-US": "Normal flow: edit with a card, Save version, Test in the emulator. Something broke? Versions, pick a point and restore."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "A ROM base nunca é alterada. Empacotar gera uma ROM nova em builds/.",
+      "en-US": "The base ROM is never changed. Pack builds a new ROM in builds/."
+    },
+    {
+      "pt-BR": "Mude o idioma em Configurações. Os guias e os avisos acompanham.",
+      "en-US": "Change the language under Settings. Guides and notices follow."
+    }
+  ],
+  "links": []
+}

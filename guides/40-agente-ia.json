@@ -1,0 +1,46 @@
+{
+  "id": "ai-agent",
+  "group": "advanced",
+  "feature": null,
+  "tools": [],
+  "title": {
+    "pt-BR": "Agente de IA operando o hub",
+    "en-US": "AI agent operating the hub"
+  },
+  "intro": {
+    "pt-BR": "O PokeHub tem um servidor MCP: um agente como o Claude Code pode listar projetos, ler treinadores e encontros, salvar e restaurar versões, instalar ferramentas e testar no emulador, pela mesma lógica do hub.",
+    "en-US": "PokeHub ships an MCP server: an agent such as Claude Code can list projects, read trainers and encounters, save and restore versions, install tools and test in the emulator, through the hub's own logic."
+  },
+  "steps": [
+    {
+      "pt-BR": "Compile uma vez: dotnet build src/PokeHub.Mcp na pasta do repositório.",
+      "en-US": "Build once: dotnet build src/PokeHub.Mcp in the repository folder."
+    },
+    {
+      "pt-BR": "Abra o Claude Code na pasta do repositório. O arquivo .mcp.json já registra o servidor 'pokehub'; confira com /mcp.",
+      "en-US": "Open Claude Code in the repository folder. The .mcp.json file already registers the 'pokehub' server; check with /mcp."
+    },
+    {
+      "pt-BR": "Peça em linguagem natural: 'liste os treinadores com Pidgey', 'quais Pokémon aparecem na Rota 29 à noite', 'salve uma versão e teste no melonDS'.",
+      "en-US": "Ask in plain language: 'list trainers with Pidgey', 'which Pokémon appear on Route 29 at night', 'save a version and test in melonDS'."
+    },
+    {
+      "pt-BR": "Ações destrutivas ou pesadas (restaurar versão, instalar MSYS2) só acontecem quando o agente repete a chamada com confirm=true, depois de perguntar a você.",
+      "en-US": "Destructive or heavy actions (restore a version, install MSYS2) only happen when the agent repeats the call with confirm=true, after asking you."
+    },
+    {
+      "pt-BR": "Tudo que o agente faz fica no histórico de versões do projeto.",
+      "en-US": "Everything the agent does lands in the project's version history."
+    }
+  ],
+  "tips": [],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "Documentação do servidor MCP",
+        "en-US": "MCP server documentation"
+      },
+      "url": "https://github.com/GuilhermeDorazzi/pok_hub/blob/main/docs/03-servidor-mcp.md"
+    }
+  ]
+}

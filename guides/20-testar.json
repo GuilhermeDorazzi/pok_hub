@@ -1,0 +1,65 @@
+{
+  "id": "emulator",
+  "group": "test",
+  "feature": "emulator",
+  "tools": [
+    "melonds",
+    "desmume"
+  ],
+  "title": {
+    "pt-BR": "Testar no emulador",
+    "en-US": "Test in the emulator"
+  },
+  "intro": {
+    "pt-BR": "O botão Testar empacota o workspace numa ROM nova em builds/ e abre no emulador escolhido. Parar fecha o emulador aberto pelo hub.",
+    "en-US": "The Test button packs the workspace into a new ROM in builds/ and opens it in the chosen emulator. Stop closes the emulator the hub opened."
+  },
+  "steps": [
+    {
+      "pt-BR": "Instale um emulador em Ferramentas: melonDS (rápido e preciso) ou DeSmuME (tem depurador e visualizadores de memória).",
+      "en-US": "Install an emulator under Tools: melonDS (fast and accurate) or DeSmuME (has a debugger and memory viewers)."
+    },
+    {
+      "pt-BR": "Escolha o emulador no seletor ao lado de Testar (ou o padrão em Configurações).",
+      "en-US": "Pick the emulator in the selector next to Test (or the default under Settings)."
+    },
+    {
+      "pt-BR": "Clique em Testar. O hub salva uma versão, empacota (alguns segundos) e abre a ROM.",
+      "en-US": "Click Test. The hub saves a version, packs (a few seconds) and opens the ROM."
+    },
+    {
+      "pt-BR": "No melonDS: Config > Emu settings para BIOS/firmware (não são necessários para jogos comerciais); System > Save state para guardar um ponto do jogo; Ctrl+F para tela cheia.",
+      "en-US": "In melonDS: Config > Emu settings for BIOS/firmware (not needed for commercial games); System > Save state to keep a point in the game; Ctrl+F for fullscreen."
+    },
+    {
+      "pt-BR": "Para repetir o teste depois de uma edição, clique em Parar e Testar de novo: o emulador precisa recarregar a ROM.",
+      "en-US": "To repeat the test after an edit, click Stop and Test again: the emulator must reload the ROM."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "A ROM gerada fica em projects/<nome>/builds/ e pode ser copiada para um flashcard.",
+      "en-US": "The built ROM is at projects/<name>/builds/ and can be copied to a flashcart."
+    },
+    {
+      "pt-BR": "Saves do melonDS ficam ao lado da ROM (.sav). Empacotar de novo não apaga o save.",
+      "en-US": "melonDS saves sit next to the ROM (.sav). Packing again does not erase the save."
+    }
+  ],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "melonDS",
+        "en-US": "melonDS"
+      },
+      "url": "https://melonds.kuribo64.net/"
+    },
+    {
+      "label": {
+        "pt-BR": "DeSmuME",
+        "en-US": "DeSmuME"
+      },
+      "url": "https://desmume.org/"
+    }
+  ]
+}

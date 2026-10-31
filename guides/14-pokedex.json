@@ -1,0 +1,36 @@
+{
+  "id": "pokedex",
+  "group": "edit",
+  "feature": "pokedex",
+  "tools": [
+    "pokedex-area-editor"
+  ],
+  "title": {
+    "pt-BR": "Áreas da Pokédex",
+    "en-US": "Pokédex areas"
+  },
+  "intro": {
+    "pt-BR": "Controla onde a Pokédex diz que cada Pokémon aparece (mapa de área), por horário e por tipo de encontro normal ou especial. Só HeartGold/SoulSilver.",
+    "en-US": "Controls where the Pokédex says each Pokémon appears (area map), by time of day and by normal or special encounter. HeartGold/SoulSilver only."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra pelo card Pokédex e escolha a espécie.",
+      "en-US": "Open from the Pokédex card and pick the species."
+    },
+    {
+      "pt-BR": "Para cada bloco (normal/especial × manhã/dia/noite/qualquer hora), marque as áreas onde a espécie deve aparecer.",
+      "en-US": "For each block (normal/special × morning/day/night/any time), check the areas where the species should appear."
+    },
+    {
+      "pt-BR": "Depois de mudar encontros numa rota, atualize aqui, senão a Pokédex mostra áreas antigas.",
+      "en-US": "After changing a route's encounters, update here too, or the Pokédex shows the old areas."
+    },
+    {
+      "pt-BR": "Salvar grava e cria uma versão.",
+      "en-US": "Save writes and creates a version."
+    }
+  ],
+  "tips": [],
+  "links": []
+}

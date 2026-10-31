@@ -1,0 +1,53 @@
+{
+  "id": "audio",
+  "group": "edit",
+  "feature": "audio",
+  "tools": [
+    "nitrostudio2"
+  ],
+  "title": {
+    "pt-BR": "Áudio com o Nitro Studio 2",
+    "en-US": "Audio with Nitro Studio 2"
+  },
+  "intro": {
+    "pt-BR": "Músicas e efeitos sonoros ficam num único arquivo SDAT. O Nitro Studio 2 abre esse arquivo, toca as sequências e importa e exporta MIDI e amostras.",
+    "en-US": "Music and sound effects live in a single SDAT file. Nitro Studio 2 opens that file, plays the sequences, and imports and exports MIDI and samples."
+  },
+  "steps": [
+    {
+      "pt-BR": "O Nitro Studio 2 não tem download automático: baixe do site do autor e, no card Áudio, clique em Apontar executável.",
+      "en-US": "Nitro Studio 2 has no automatic download: get it from the author's site and, on the Audio card, click Point to executable."
+    },
+    {
+      "pt-BR": "Abra o Nitro Studio e use File > Open SDAT. No HGSS o arquivo é workspace/files/data/sound/gs_sound_data.sdat (ds-rom) ou workspace/data/data/sound/ (ndstool).",
+      "en-US": "Open Nitro Studio and use File > Open SDAT. In HGSS the file is workspace/files/data/sound/gs_sound_data.sdat (ds-rom) or workspace/data/data/sound/ (ndstool)."
+    },
+    {
+      "pt-BR": "Sequences são as músicas (SSEQ); Banks e Wave Archives são os instrumentos. Selecione uma sequência para ouvir.",
+      "en-US": "Sequences are the songs (SSEQ); Banks and Wave Archives are the instruments. Select a sequence to listen."
+    },
+    {
+      "pt-BR": "Para trocar uma música: exporte a sequência como MIDI, edite, importe de volta sobre a mesma entrada, mantendo o banco.",
+      "en-US": "To replace a song: export the sequence as MIDI, edit, import it back over the same entry, keeping the bank."
+    },
+    {
+      "pt-BR": "Salve o SDAT no mesmo lugar, salve uma versão no hub e Testar.",
+      "en-US": "Save the SDAT in place, save a version in the hub and Test."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Faça uma versão antes de mexer no SDAT: um arquivo corrompido trava o jogo no boot.",
+      "en-US": "Save a version before touching the SDAT: a corrupted file freezes the game at boot."
+    }
+  ],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "Site do Nitro Studio 2",
+        "en-US": "Nitro Studio 2 site"
+      },
+      "url": "https://gota7.github.io/NitroStudio2/"
+    }
+  ]
+}

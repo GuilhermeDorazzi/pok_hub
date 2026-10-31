@@ -1,0 +1,40 @@
+{
+  "id": "encounters",
+  "group": "edit",
+  "feature": "encounters",
+  "tools": [
+    "encounter-editor"
+  ],
+  "title": {
+    "pt-BR": "Editor de encontros selvagens",
+    "en-US": "Wild encounter editor"
+  },
+  "intro": {
+    "pt-BR": "Define quais Pokémon aparecem em cada rota: grama por horário (HGSS) ou por slot (DP/Pt), surf, rock smash, varas de pesca, enxame e sons de GBA.",
+    "en-US": "Defines which Pokémon appear on each route: grass by time of day (HGSS) or by slot (DP/Pt), surf, rock smash, fishing rods, swarm and GBA sounds."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra pelo card Encontros. A lista mostra cada tabela com os mapas e locais que a usam (ex.: 001 Route 29).",
+      "en-US": "Open from the Encounters card. The list shows each table with the maps and locations that use it (e.g. 001 Route 29)."
+    },
+    {
+      "pt-BR": "Cada slot tem uma chance fixa do jogo (20%, 20%, 10%... na grama; 60%, 30%, 5%, 4%, 1% no surf). Troque a espécie e o nível, não a chance.",
+      "en-US": "Each slot has a fixed chance set by the game (20%, 20%, 10%... in grass; 60%, 30%, 5%, 4%, 1% when surfing). Change species and level, not the chance."
+    },
+    {
+      "pt-BR": "As taxas (0 a 100) dizem com que frequência um encontro acontece ao andar, surfar ou pescar. Zero desliga o tipo de encontro.",
+      "en-US": "Rates (0 to 100) say how often an encounter happens when walking, surfing or fishing. Zero disables that encounter type."
+    },
+    {
+      "pt-BR": "No HGSS, manhã, dia e noite têm espécies próprias; o nível é o mesmo para os três. Sons de Hoenn/Sinnoh são os slots do rádio.",
+      "en-US": "In HGSS, morning, day and night have their own species; the level is shared. Hoenn/Sinnoh sounds are the radio slots."
+    },
+    {
+      "pt-BR": "Salvar grava só as tabelas alteradas e cria uma versão.",
+      "en-US": "Save writes only the changed tables and creates a version."
+    }
+  ],
+  "tips": [],
+  "links": []
+}

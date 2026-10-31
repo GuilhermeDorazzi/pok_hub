@@ -1,0 +1,39 @@
+{
+  "id": "versions",
+  "group": "start",
+  "feature": null,
+  "tools": [],
+  "title": {
+    "pt-BR": "Versões: salvar e restaurar",
+    "en-US": "Versions: save and restore"
+  },
+  "intro": {
+    "pt-BR": "O workspace de cada projeto tem um repositório Git interno. O hub salva versões sozinho nos momentos importantes e você pode salvar quando quiser.",
+    "en-US": "Each project workspace has an internal Git repository. The hub saves versions by itself at key moments, and you can save whenever you want."
+  },
+  "steps": [
+    {
+      "pt-BR": "Salvar versão (tela Início ou Projeto) guarda o estado atual com data e hora.",
+      "en-US": "Save version (Home or Project screen) stores the current state with date and time."
+    },
+    {
+      "pt-BR": "Versões automáticas: ao extrair, antes de empacotar ou testar, ao fechar uma ferramenta externa e ao salvar num editor do hub.",
+      "en-US": "Automatic versions: on extract, before packing or testing, when an external tool closes, and when a hub editor saves."
+    },
+    {
+      "pt-BR": "Versões (navegação lateral) lista o histórico. Selecione uma e clique em Restaurar: o estado atual é guardado antes, então nada se perde.",
+      "en-US": "Versions (side navigation) lists the history. Select one and click Restore: the current state is saved first, so nothing is lost."
+    },
+    {
+      "pt-BR": "Sem Git? Configurações mostra o estado e oferece Instalar Git (o hub baixa uma cópia portátil).",
+      "en-US": "No Git? Settings shows the state and offers Install Git (the hub downloads a portable copy)."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "O histórico fica em projects/<nome>/workspace/.git e funciona com qualquer cliente Git.",
+      "en-US": "History lives in projects/<name>/workspace/.git and works with any Git client."
+    }
+  ],
+  "links": []
+}

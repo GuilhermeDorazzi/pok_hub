@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\plugins\*.json" Link="plugins\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\guides\*.json" Link="guides\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

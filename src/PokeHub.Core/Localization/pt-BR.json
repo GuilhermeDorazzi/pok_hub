@@ -476,5 +476,17 @@
  "settings.recheck": "Verificar de novo",
  "settings.about": "Sobre",
  "settings.version": "PokeHub {0} · GPL-3",
- "settings.aboutText": "Hub para ferramentas de ROM hacking de Pokémon no Nintendo DS. Gen 4: Diamond, Pearl, Platinum, HeartGold e SoulSilver."
+ "settings.aboutText": "Hub para ferramentas de ROM hacking de Pokémon no Nintendo DS. Gen 4: Diamond, Pearl, Platinum, HeartGold e SoulSilver.",
+ "nav.help": "Ajuda",
+ "help.intro": "Passo a passo de cada recurso e o mínimo que você precisa saber de cada ferramenta.",
+ "help.group.start": "Começando",
+ "help.group.edit": "Editar o jogo",
+ "help.group.test": "Testar",
+ "help.group.advanced": "Avançado",
+ "help.steps": "Passo a passo",
+ "help.tips": "Dicas",
+ "help.links": "Links",
+ "help.open": "Abrir recurso",
+ "feature.howTo": "Como usar?",
+ "tools.guide": "Guia"
 }

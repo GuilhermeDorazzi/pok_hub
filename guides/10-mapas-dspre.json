@@ -1,0 +1,65 @@
+{
+  "id": "maps",
+  "group": "edit",
+  "feature": "maps",
+  "tools": [
+    "dspre"
+  ],
+  "title": {
+    "pt-BR": "Mapas, eventos e scripts com o DSPRE",
+    "en-US": "Maps, events and scripts with DSPRE"
+  },
+  "intro": {
+    "pt-BR": "O DSPRE Reloaded é o editor principal de Gen 4. O hub o abre já apontando para o workspace do projeto (formato ds-rom), então não precisa abrir a ROM dentro dele.",
+    "en-US": "DSPRE Reloaded is the main Gen 4 editor. The hub opens it already pointed at the project workspace (ds-rom format), so there is no need to open the ROM inside it."
+  },
+  "steps": [
+    {
+      "pt-BR": "Instale o DSPRE pelo card Mapas e eventos ou em Ferramentas. Ele precisa do .NET Framework 4.8 (o hub avisa se faltar).",
+      "en-US": "Install DSPRE from the Maps and events card or under Tools. It needs .NET Framework 4.8 (the hub warns if missing)."
+    },
+    {
+      "pt-BR": "Clique em Abrir. Se o workspace ainda estiver no formato antigo (ndstool), use Extrair ROM antes: o DSPRE 2.x só lê o formato ds-rom.",
+      "en-US": "Click Open. If the workspace is still in the old (ndstool) layout, run Extract ROM first: DSPRE 2.x only reads the ds-rom layout."
+    },
+    {
+      "pt-BR": "No DSPRE, o projeto já aparece carregado. Se ele perguntar sobre reabrir a pasta, confirme.",
+      "en-US": "In DSPRE the project shows up loaded. If it asks about reopening the folder, confirm."
+    },
+    {
+      "pt-BR": "Header Editor: cada mapa do jogo (nome, música, clima, tabela de encontros). Matrix Editor: como os mapas se encaixam no mundo. Map Editor: terreno, colisões e prédios de um mapa.",
+      "en-US": "Header Editor: every map in the game (name, music, weather, encounter table). Matrix Editor: how maps fit together in the world. Map Editor: terrain, collisions and buildings of one map."
+    },
+    {
+      "pt-BR": "Event Editor: NPCs, warps (portas), triggers e itens no chão de cada mapa. Script Editor: a lógica que os eventos executam.",
+      "en-US": "Event Editor: NPCs, warps (doors), triggers and ground items of each map. Script Editor: the logic events run."
+    },
+    {
+      "pt-BR": "Salve dentro do DSPRE (Save no editor em uso) antes de fechar. Ao fechar, o hub salva uma versão com as mudanças.",
+      "en-US": "Save inside DSPRE (Save in the editor you are using) before closing. When it closes, the hub saves a version with the changes."
+    },
+    {
+      "pt-BR": "Volte ao hub e clique em Testar para ver o resultado no emulador.",
+      "en-US": "Back in the hub, click Test to see the result in the emulator."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Treinadores, encontros, textos e áreas da Pokédex também existem no DSPRE, mas o hub tem editores próprios para eles que salvam versão automaticamente.",
+      "en-US": "Trainers, encounters, text and Pokédex areas also exist in DSPRE, but the hub has its own editors for them that save versions automatically."
+    },
+    {
+      "pt-BR": "Não edite o mesmo arquivo no DSPRE e num editor do hub ao mesmo tempo: o último a salvar vence.",
+      "en-US": "Do not edit the same file in DSPRE and in a hub editor at the same time: the last one to save wins."
+    }
+  ],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "Wiki do DSPRE (inglês)",
+        "en-US": "DSPRE wiki (English)"
+      },
+      "url": "https://github.com/DS-Pokemon-Rom-Editor/DS-Pokemon-Rom-Editor-Reloaded/wiki"
+    }
+  ]
+}

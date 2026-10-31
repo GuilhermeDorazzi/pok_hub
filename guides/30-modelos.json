@@ -1,0 +1,48 @@
+{
+  "id": "models",
+  "group": "advanced",
+  "feature": "models",
+  "tools": [
+    "apicula"
+  ],
+  "title": {
+    "pt-BR": "Modelos 3D com o apicula",
+    "en-US": "3D models with apicula"
+  },
+  "intro": {
+    "pt-BR": "O apicula converte modelos, texturas e animações do DS (NSBMD, NSBTX, NSBCA) para glTF ou COLLADA, para abrir no Blender, e tem um visualizador próprio. É uma ferramenta de linha de comando.",
+    "en-US": "apicula converts DS models, textures and animations (NSBMD, NSBTX, NSBCA) to glTF or COLLADA for Blender, and has its own viewer. It is a command-line tool."
+  },
+  "steps": [
+    {
+      "pt-BR": "Instale pelo card Modelos 3D (precisa do Visual C++ Redistributable; o hub avisa).",
+      "en-US": "Install from the 3D models card (needs the Visual C++ Redistributable; the hub warns)."
+    },
+    {
+      "pt-BR": "Extraia o modelo do workspace com o Tinke (prédios e personagens ficam em NARCs de mapa e de overworld).",
+      "en-US": "Extract the model from the workspace with Tinke (buildings and characters sit in map and overworld NARCs)."
+    },
+    {
+      "pt-BR": "Abra um terminal na pasta do apicula (Ferramentas > Pasta) e rode: apicula view modelo.nsbmd para ver; apicula convert modelo.nsbmd -o saida/ para gerar glTF.",
+      "en-US": "Open a terminal in the apicula folder (Tools > Folder) and run: apicula view model.nsbmd to view; apicula convert model.nsbmd -o out/ to produce glTF."
+    },
+    {
+      "pt-BR": "Inclua texturas e animações no mesmo comando (apicula convert modelo.nsbmd texturas.nsbtx anim.nsbca -o saida/).",
+      "en-US": "Include textures and animations in the same command (apicula convert model.nsbmd textures.nsbtx anim.nsbca -o out/)."
+    },
+    {
+      "pt-BR": "Abra o glTF no Blender. O apicula ainda não converte de volta para o DS.",
+      "en-US": "Open the glTF in Blender. apicula does not yet convert back to DS format."
+    }
+  ],
+  "tips": [],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "apicula no GitHub",
+        "en-US": "apicula on GitHub"
+      },
+      "url": "https://github.com/scurest/apicula"
+    }
+  ]
+}

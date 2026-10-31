@@ -36,6 +36,10 @@ public sealed partial class ToolItemViewModel : ObservableObject
     /// <summary>Versão mais nova encontrada por "Verificar atualizações" (releases do GitHub).</summary>
     [ObservableProperty] private string? _latestVersion;
 
+    /// <summary>Guia da seção Ajuda que cobre esta ferramenta, quando existe.</summary>
+    public string? GuideId { get; init; }
+    public bool HasGuide => GuideId is not null;
+
     public bool UpdateAvailable => LatestVersion is { } latest && Installed is { } i && !string.Equals(latest, i.Version, StringComparison.OrdinalIgnoreCase);
     public string UpdateText => UpdateAvailable ? Loc.T("tools.updateAvailable", LatestVersion) : "";
     public string ContextsText => string.Join(" · ", Manifest.Contexts.Select(c => Loc.T("ctx." + c.ToString().ToLowerInvariant())));

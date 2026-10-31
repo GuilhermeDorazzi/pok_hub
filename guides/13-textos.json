@@ -1,0 +1,41 @@
+{
+  "id": "text",
+  "group": "edit",
+  "feature": "text",
+  "tools": [
+    "text-editor"
+  ],
+  "title": {
+    "pt-BR": "Editor de textos",
+    "en-US": "Text editor"
+  },
+  "intro": {
+    "pt-BR": "Edita diálogos, nomes e mensagens do jogo. Os textos ficam em bancos numerados; os mais usados vêm rotulados (espécies, itens, golpes, treinadores, locais).",
+    "en-US": "Edits dialogues, names and game messages. Text lives in numbered banks; the common ones come labelled (species, items, moves, trainers, locations)."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra pelo card Textos e escolha um banco na lista da esquerda, ou use Buscar em todos para achar uma frase.",
+      "en-US": "Open from the Text card and pick a bank in the left list, or use Search all to find a phrase."
+    },
+    {
+      "pt-BR": "Clique na mensagem e edite. Códigos de controle como quebra de linha e nome do jogador aparecem entre chaves; mantenha-os.",
+      "en-US": "Click the message and edit. Control codes such as line breaks and the player's name appear in braces; keep them."
+    },
+    {
+      "pt-BR": "Caracteres fora da tabela do jogo são recusados na hora. Nomes de treinador são comprimidos e não aceitam códigos.",
+      "en-US": "Characters outside the game's table are refused immediately. Trainer names are compressed and do not accept codes."
+    },
+    {
+      "pt-BR": "Salvar grava só os bancos alterados; mensagens intactas voltam byte a byte.",
+      "en-US": "Save writes only the changed banks; untouched messages go back byte for byte."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Textos de mapa e de script também estão aqui, mas descobrir qual banco é qual pode exigir buscar uma frase conhecida.",
+      "en-US": "Map and script text is here too, but finding which bank is which may take searching for a known phrase."
+    }
+  ],
+  "links": []
+}

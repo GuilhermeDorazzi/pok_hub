@@ -112,6 +112,8 @@ Fase 2 concluída em 2026-10-30.
    - **Projeto**: dados do projeto aberto (jogo, geração, formato do workspace, pasta), ações e a lista de projetos.
    - Depuração de layout: `PokeHub.exe --screenshot <pasta>\ui.png` renderiza as quatro seções em `ui-home.png`, `ui-project.png`, `ui-tools.png`, `ui-settings.png` e fecha (usado para validar sem clicar).
 
+14. **Ajuda passo a passo** (2026-10-31). Seção Ajuda na navegação, com 16 guias em `guides/*.json` (`Core/Help/Guide.cs`, textos `LocalizedText` pt-BR e en-US, teste garante os dois idiomas): Começando (primeiro projeto, versões), Editar o jogo (DSPRE, treinadores, encontros, textos, Pokédex, PokEditor, gráficos com NitroPaint e Tinke, áudio com Nitro Studio 2), Testar (emuladores) e Avançado (apicula, decomp, Randomizer, Tinke, agente de IA). Cada guia tem introdução, passos numerados, dicas e links, com o mínimo traduzido da documentação de cada ferramenta externa. Os cards da tela inicial ganharam "Como usar?" (`guide.feature`) e as linhas de Ferramentas o botão Guia (`guide.tools`); ambos abrem a Ajuda no guia certo. Todo plugin instalável precisa de um guia (teste).
+
 Publicado em github.com/GuilhermeDorazzi/pok_hub (privado por enquanto).
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)

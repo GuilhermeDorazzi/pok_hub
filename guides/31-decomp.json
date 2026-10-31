@@ -1,0 +1,66 @@
+{
+  "id": "decomp",
+  "group": "advanced",
+  "feature": "decomp",
+  "tools": [
+    "msys2",
+    "pokeheartgold",
+    "pokeplatinum"
+  ],
+  "title": {
+    "pt-BR": "Compilar a decomp (pokeheartgold, pokeplatinum)",
+    "en-US": "Build the decomp (pokeheartgold, pokeplatinum)"
+  },
+  "intro": {
+    "pt-BR": "As decomps da pret são o código-fonte reconstruído do jogo. Compilar gera uma ROM idêntica à original e permite mudar o jogo em C. É opcional: quem só edita dados não precisa.",
+    "en-US": "pret's decomps are the game's reconstructed source code. Building produces a ROM identical to the original and lets you change the game in C. It is optional: data-only editing does not need it."
+  },
+  "steps": [
+    {
+      "pt-BR": "Em Ferramentas, instale o MSYS2 (toolchain): 40 MB de download, cerca de 2 GB em disco e alguns minutos de preparação. O hub faz tudo sem instalador.",
+      "en-US": "Under Tools, install MSYS2 (toolchain): 40 MB download, about 2 GB on disk and a few minutes of setup. The hub does it all without an installer."
+    },
+    {
+      "pt-BR": "Instale a decomp do seu jogo (pokeheartgold para HG/SS, pokeplatinum para Platinum). É um git clone dentro de projects/<nome>/decomp/.",
+      "en-US": "Install your game's decomp (pokeheartgold for HG/SS, pokeplatinum for Platinum). It is a git clone inside projects/<name>/decomp/."
+    },
+    {
+      "pt-BR": "No card Decomp clique em Compilar ROM. A primeira compilação leva de 20 a 50 minutos; as seguintes são incrementais.",
+      "en-US": "On the Decomp card click Build ROM. The first build takes 20 to 50 minutes; later ones are incremental."
+    },
+    {
+      "pt-BR": "A ROM gerada vai para builds/ e pode ser testada como qualquer outra.",
+      "en-US": "The built ROM goes to builds/ and can be tested like any other."
+    },
+    {
+      "pt-BR": "Para alterar o jogo, edite os arquivos .c em decomp/<nome>/src com qualquer editor e compile de novo.",
+      "en-US": "To change the game, edit the .c files in decomp/<name>/src with any editor and build again."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "O log mostra o progresso (ex.: [1234/16680]). Deixe compilar; fechar o hub no meio obriga a recomeçar parte do trabalho.",
+      "en-US": "The log shows progress (e.g. [1234/16680]). Let it build; closing the hub midway redoes part of the work."
+    },
+    {
+      "pt-BR": "Mudanças de dados feitas no workspace não entram na decomp: são dois caminhos diferentes para a mesma ROM.",
+      "en-US": "Data changes made in the workspace do not go into the decomp: they are two different routes to the same ROM."
+    }
+  ],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "pokeheartgold",
+        "en-US": "pokeheartgold"
+      },
+      "url": "https://github.com/pret/pokeheartgold"
+    },
+    {
+      "label": {
+        "pt-BR": "pokeplatinum",
+        "en-US": "pokeplatinum"
+      },
+      "url": "https://github.com/pret/pokeplatinum"
+    }
+  ]
+}

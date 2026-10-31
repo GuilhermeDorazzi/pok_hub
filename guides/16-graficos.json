@@ -1,0 +1,65 @@
+{
+  "id": "graphics",
+  "group": "edit",
+  "feature": "graphics",
+  "tools": [
+    "nitropaint",
+    "tinke"
+  ],
+  "title": {
+    "pt-BR": "Gráficos com o NitroPaint e o Tinke",
+    "en-US": "Graphics with NitroPaint and Tinke"
+  },
+  "intro": {
+    "pt-BR": "Sprites, tiles e paletas do DS ficam em arquivos NCLR (paleta), NCGR (tiles/sprite) e NSCR (tela). O NitroPaint edita esses formatos; o Tinke localiza e extrai os arquivos dentro do workspace.",
+    "en-US": "DS sprites, tiles and palettes live in NCLR (palette), NCGR (tiles/sprite) and NSCR (screen) files. NitroPaint edits those formats; Tinke finds and extracts the files inside the workspace."
+  },
+  "steps": [
+    {
+      "pt-BR": "Instale o NitroPaint pelo card Gráficos. O Tinke fica em Ferramentas.",
+      "en-US": "Install NitroPaint from the Graphics card. Tinke is under Tools."
+    },
+    {
+      "pt-BR": "Ache o arquivo: muitos gráficos estão dentro de NARCs (pacotes). Abra o Tinke pelo card Explorar arquivos, navegue até o NARC e extraia o conteúdo para uma pasta de trabalho.",
+      "en-US": "Find the file: many graphics sit inside NARCs (packages). Open Tinke from the Browse files card, navigate to the NARC and extract its contents to a working folder."
+    },
+    {
+      "pt-BR": "No NitroPaint: File > Open, abra primeiro a paleta (NCLR) e depois o gráfico (NCGR). Edite os pixels ou importe uma imagem com File > Import.",
+      "en-US": "In NitroPaint: File > Open, open the palette (NCLR) first and then the graphic (NCGR). Edit pixels or import an image with File > Import."
+    },
+    {
+      "pt-BR": "Salve com o mesmo nome e formato; depois recoloque o arquivo no NARC pelo Tinke (Pack) ou copie para o caminho original no workspace.",
+      "en-US": "Save with the same name and format; then put the file back into the NARC with Tinke (Pack) or copy it to the original path in the workspace."
+    },
+    {
+      "pt-BR": "Salvar versão no hub e Testar.",
+      "en-US": "Save a version in the hub and Test."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Respeite o número de cores da paleta original (16 ou 256), senão o jogo mostra cores erradas.",
+      "en-US": "Keep the original palette size (16 or 256 colors), or the game shows wrong colors."
+    },
+    {
+      "pt-BR": "Sprites de Pokémon no HGSS ficam em a/0/0/4 (ds-rom: files/a/0/0/4).",
+      "en-US": "Pokémon sprites in HGSS live in a/0/0/4 (ds-rom: files/a/0/0/4)."
+    }
+  ],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "NitroPaint no GitHub",
+        "en-US": "NitroPaint on GitHub"
+      },
+      "url": "https://github.com/Garhoogin/NitroPaint"
+    },
+    {
+      "label": {
+        "pt-BR": "Tinke no GitHub",
+        "en-US": "Tinke on GitHub"
+      },
+      "url": "https://github.com/pleonex/tinke"
+    }
+  ]
+}

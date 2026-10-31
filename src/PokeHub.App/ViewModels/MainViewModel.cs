@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -7,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using PokeHub.App.Views;
 using PokeHub.Core.Decomp;
+using PokeHub.Core.Help;
 using PokeHub.Core.Hub;
 using PokeHub.Core.Localization;
 using PokeHub.Core.Plugins;
@@ -17,7 +19,7 @@ using PokeHub.Core.Runtimes;
 
 namespace PokeHub.App.ViewModels;
 
-public enum HubSection { Home, Project, Tools, Settings }
+public enum HubSection { Home, Project, Tools, Help, Settings }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -32,6 +34,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly WorkspaceService _workspace;
     private readonly ProjectService _projects;
     private readonly GitHubReleaseClient _releases = new();
+    private readonly GuideCatalog _guides = GuideCatalog.LoadFromDirectory(Path.Combine(AppContext.BaseDirectory, "guides"));
     private readonly StringBuilder _log = new();
 
     public IReadOnlyList<LanguageOption> Languages => LanguageOption.All;
@@ -56,6 +59,7 @@ public sealed partial class MainViewModel : ObservableObject
     public bool IsHome { get => Section == HubSection.Home; set { if (value) Section = HubSection.Home; } }
     public bool IsProjectSection { get => Section == HubSection.Project; set { if (value) Section = HubSection.Project; } }
     public bool IsTools { get => Section == HubSection.Tools; set { if (value) Section = HubSection.Tools; } }
+    public bool IsHelp { get => Section == HubSection.Help; set { if (value) Section = HubSection.Help; } }
     public bool IsSettings { get => Section == HubSection.Settings; set { if (value) Section = HubSection.Settings; } }
 
     partial void OnSectionChanged(HubSection value)
@@ -63,11 +67,42 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(IsHome));
         OnPropertyChanged(nameof(IsProjectSection));
         OnPropertyChanged(nameof(IsTools));
+        OnPropertyChanged(nameof(IsHelp));
         OnPropertyChanged(nameof(IsSettings));
     }
 
     [RelayCommand]
     private void ShowTools() => Section = HubSection.Tools;
+
+    // ----- ajuda -----
+
+    public ObservableCollection<GuideViewModel> Guides { get; } = [];
+    /// <summary>Guias agrupados (Começando, Editar o jogo, Testar, Avançado) para a lista da seção Ajuda.</summary>
+    public System.ComponentModel.ICollectionView GuidesView { get; }
+    [ObservableProperty] private GuideViewModel? _selectedGuide;
+
+    private void RebuildGuides()
+    {
+        var current = SelectedGuide?.Id;
+        Guides.Clear();
+        foreach (var g in _guides.All.OrderBy(g => Array.IndexOf(GuideCatalog.GroupOrder, g.Group))) Guides.Add(new GuideViewModel(g));
+        SelectedGuide = Guides.FirstOrDefault(g => g.Id == current) ?? Guides.FirstOrDefault();
+    }
+
+    /// <summary>Abre a seção Ajuda num guia (id do guia, chave de card ou id de plugin).</summary>
+    [RelayCommand]
+    private void ShowGuide(string? key)
+    {
+        if (key is not null)
+        {
+            var g = _guides.Get(key) ?? _guides.ForFeature(key) ?? _guides.ForTool(key);
+            if (g is not null) SelectedGuide = Guides.FirstOrDefault(v => v.Id == g.Id);
+        }
+        Section = HubSection.Help;
+    }
+
+    public string? GuideIdFor(string featureKey) => _guides.ForFeature(featureKey)?.Id;
+    public string? GuideIdForTool(string pluginId) => _guides.ForTool(pluginId)?.Id;
 
     // ----- projeto -----
 
@@ -247,11 +282,14 @@ public sealed partial class MainViewModel : ObservableObject
 
         ToolsFilters = BuildFilters();
         SelectedToolsFilter = ToolsFilters[0];
+        GuidesView = System.Windows.Data.CollectionViewSource.GetDefaultView(Guides);
+        GuidesView.GroupDescriptions.Add(new System.Windows.Data.PropertyGroupDescription(nameof(GuideViewModel.GroupTitle)));
         Log(Loc.T("vm.started", paths.Root));
         Log(Loc.T("vm.plugins", catalog.All.Count, string.Join(", ", catalog.All.Select(p => p.Id))));
         var dotnet = DependencyChecker.ReadDotNetRelease();
         Log(dotnet is null ? Loc.T("vm.dotnetMissing") : Loc.T("vm.dotnetPresent", dotnet, dotnet >= 528040 ? Loc.T("vm.dotnet48") : Loc.T("vm.dotnetOld")));
         ReloadProjects();
+        RebuildGuides();
         if (config.LastProject is { } last) CurrentProject = Projects.FirstOrDefault(p => p.Name == last);
         RebuildTools();
         RefreshGitStatus();
@@ -450,6 +488,7 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(PlayButtonText));
         OnPropertyChanged(nameof(AppVersion));
         OnPropertyChanged(nameof(RuntimesSummary));
+        RebuildGuides();
         RebuildTools();
     }
 
@@ -470,7 +509,7 @@ public sealed partial class MainViewModel : ObservableObject
         var gen = CurrentProject?.Config.Generation;
         foreach (var m in _catalog.All.Where(m => gen is null || m.Generations.Contains(gen.Value)).OrderBy(m => m.Name))
         {
-            var t = new ToolItemViewModel(m, _installer, _launcher, _builds, _deps, () => CurrentProject, Log, SnapshotForEditorAsync, RefreshEmulators);
+            var t = new ToolItemViewModel(m, _installer, _launcher, _builds, _deps, () => CurrentProject, Log, SnapshotForEditorAsync, RefreshEmulators) { GuideId = GuideIdForTool(m.Id) };
             if (latest.TryGetValue(m.Id, out var v)) t.LatestVersion = v;
             AllTools.Add(t);
         }
@@ -518,6 +557,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void RefreshCards()
     {
+        foreach (var c in EditCards.Concat(AdvancedCards)) c.GuideId = GuideIdFor(c.Key);
         foreach (var c in EditCards) c.Refresh();
         foreach (var c in AdvancedCards) c.Refresh();
     }

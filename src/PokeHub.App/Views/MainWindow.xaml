@@ -57,7 +57,12 @@
                         </DockPanel>
                         <StackPanel>
                             <TextBlock Text="{Binding Text}" Style="{StaticResource Muted}" LineHeight="18" />
-                            <TextBlock Text="{Binding Via}" Foreground="{StaticResource FaintBrush}" FontSize="11" Margin="0,4,0,0" />
+                            <DockPanel Margin="0,4,0,0">
+                                <Button DockPanel.Dock="Right" Content="{loc:T feature.howTo}" Style="{StaticResource LinkButton}" FontSize="11"
+                                        Command="{Binding DataContext.ShowGuideCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Key}"
+                                        Visibility="{Binding HasGuide, Converter={StaticResource BoolToVis}}" />
+                                <TextBlock Text="{Binding Via}" Foreground="{StaticResource FaintBrush}" FontSize="11" />
+                            </DockPanel>
                         </StackPanel>
                     </DockPanel>
                 </Border>
@@ -125,6 +130,9 @@
                                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}" />
                             </StackPanel>
                             <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="{loc:T tools.guide}" Style="{StaticResource SmallButton}"
+                                        Command="{Binding DataContext.ShowGuideCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Manifest.Id}"
+                                        Visibility="{Binding HasGuide, Converter={StaticResource BoolToVis}}" />
                                 <ToggleButton Content="{loc:T main.whatFor}" IsChecked="{Binding IsPurposeOpen}"
                                               Visibility="{Binding HasPurpose, Converter={StaticResource BoolToVis}}" />
                                 <Button Content="{loc:T main.open}" Command="{Binding LaunchCommand}" Style="{StaticResource SmallButton}"
@@ -214,6 +222,12 @@
             <Border Grid.Column="0" Background="{StaticResource NavBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0" Padding="10,12">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Bottom">
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding IsHelp, Mode=TwoWay}" GroupName="nav">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="15" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                                <TextBlock Text="{loc:T nav.help}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                            </StackPanel>
+                        </RadioButton>
                         <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding IsSettings, Mode=TwoWay}" GroupName="nav">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="15" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
@@ -396,6 +410,71 @@
                     </Border>
                 </StackPanel>
             </ScrollViewer>
+
+            <!-- Seção: Ajuda -->
+            <Grid Grid.Column="1" Visibility="{Binding IsHelp, Converter={StaticResource BoolToVis}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="260" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+                    <ListBox ItemsSource="{Binding GuidesView}" SelectedItem="{Binding SelectedGuide}" BorderThickness="0" Background="Transparent" Padding="6,8"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource GroupTitle}" Margin="10,12,0,4" />
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ListBox.GroupStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+                <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="28,20" DataContext="{Binding SelectedGuide}">
+                    <StackPanel MaxWidth="760" HorizontalAlignment="Left">
+                        <TextBlock Text="{Binding GroupTitle}" Style="{StaticResource GroupTitle}" Margin="0,0,0,4" />
+                        <TextBlock Text="{Binding Title}" Style="{StaticResource SectionTitle}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Intro}" Style="{StaticResource Muted}" FontSize="14" LineHeight="20" Margin="0,8,0,18" />
+                        <TextBlock Text="{loc:T help.steps}" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <ItemsControl ItemsSource="{Binding Steps}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,0,0,10">
+                                        <Border DockPanel.Dock="Left" Width="26" Height="26" CornerRadius="13" Background="{StaticResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Top">
+                                            <TextBlock Text="{Binding Number}" Foreground="{StaticResource OnAccentBrush}" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" LineHeight="20" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{loc:T help.tips}" FontSize="15" FontWeight="SemiBold" Margin="0,12,0,8" Visibility="{Binding HasTips, Converter={StaticResource BoolToVis}}" />
+                        <ItemsControl ItemsSource="{Binding Tips}" Visibility="{Binding HasTips, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource NoteBgBrush}" BorderBrush="{StaticResource NoteBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,8">
+                                        <TextBlock Text="{Binding}" TextWrapping="Wrap" LineHeight="19" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{loc:T help.links}" FontSize="15" FontWeight="SemiBold" Margin="0,12,0,6" Visibility="{Binding HasLinks, Converter={StaticResource BoolToVis}}" />
+                        <ItemsControl ItemsSource="{Binding Links}" Visibility="{Binding HasLinks, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Label}" Command="{Binding OpenCommand}" Style="{StaticResource LinkButton}" ToolTip="{Binding Url}" Margin="0,0,0,6" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
 
             <!-- Seção: Configurações -->
             <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="24,20" Visibility="{Binding IsSettings, Converter={StaticResource BoolToVis}}">

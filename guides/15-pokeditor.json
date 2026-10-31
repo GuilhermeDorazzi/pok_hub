@@ -1,0 +1,53 @@
+{
+  "id": "pokemon",
+  "group": "edit",
+  "feature": "pokemon",
+  "tools": [
+    "pokeditor"
+  ],
+  "title": {
+    "pt-BR": "Dados dos Pokémon com o PokEditor",
+    "en-US": "Pokémon data with PokEditor"
+  },
+  "intro": {
+    "pt-BR": "O PokEditor (Java) edita stats base, tipos, habilidades, golpes aprendidos, evoluções e dados de golpes e itens. O hub instala o Java necessário.",
+    "en-US": "PokEditor (Java) edits base stats, types, abilities, learned moves, evolutions, and move and item data. The hub installs the Java it needs."
+  },
+  "steps": [
+    {
+      "pt-BR": "Instale pelo card Dados dos Pokémon. O Java 21 é baixado junto, sem instalador.",
+      "en-US": "Install from the Pokémon data card. Java 21 is downloaded along, no installer."
+    },
+    {
+      "pt-BR": "Clique em Abrir. Na janela do PokEditor, use File > Open e aponte para a pasta do workspace do projeto (Projeto > Abrir pasta mostra onde fica).",
+      "en-US": "Click Open. In the PokEditor window use File > Open and point at the project workspace folder (Project > Open folder shows where it is)."
+    },
+    {
+      "pt-BR": "Abas principais: Personal (stats, tipos, habilidades, itens segurados), Learnsets (golpes por nível), Evolutions, Moves, Items, TM/HM.",
+      "en-US": "Main tabs: Personal (stats, types, abilities, held items), Learnsets (level-up moves), Evolutions, Moves, Items, TM/HM."
+    },
+    {
+      "pt-BR": "Salve com File > Save antes de fechar. Ao fechar, o hub guarda uma versão.",
+      "en-US": "Save with File > Save before closing. When it closes, the hub stores a version."
+    },
+    {
+      "pt-BR": "Testar para conferir no jogo.",
+      "en-US": "Test to check in game."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Mudanças de tipo ou habilidade não alteram os textos da Pokédex; use o editor de textos para isso.",
+      "en-US": "Type or ability changes do not alter Pokédex text; use the text editor for that."
+    }
+  ],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "Repositório do PokEditor",
+        "en-US": "PokEditor repository"
+      },
+      "url": "https://github.com/turtleisaac/PokEditor"
+    }
+  ]
+}

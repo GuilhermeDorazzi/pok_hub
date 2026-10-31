@@ -1,0 +1,48 @@
+{
+  "id": "randomizer",
+  "group": "advanced",
+  "feature": "randomizer",
+  "tools": [
+    "randomizer-zx"
+  ],
+  "title": {
+    "pt-BR": "Randomizer ZX",
+    "en-US": "Randomizer ZX"
+  },
+  "intro": {
+    "pt-BR": "O Universal Pokémon Randomizer ZX embaralha Pokémon selvagens, treinadores, itens, golpes e mais, gerando uma ROM nova a partir de uma ROM pronta.",
+    "en-US": "Universal Pokémon Randomizer ZX shuffles wild Pokémon, trainers, items, moves and more, producing a new ROM from a finished ROM."
+  },
+  "steps": [
+    {
+      "pt-BR": "Instale pelo card Randomizer (Java 17 vem junto) e clique em Abrir.",
+      "en-US": "Install from the Randomizer card (Java 17 comes along) and click Open."
+    },
+    {
+      "pt-BR": "Empacote antes (botão Empacotar) para ter sua ROM atual em builds/. No randomizer, Open ROM e escolha esse arquivo.",
+      "en-US": "Pack first (Pack button) so your current ROM is in builds/. In the randomizer, Open ROM and choose that file."
+    },
+    {
+      "pt-BR": "Marque o que quer embaralhar nas abas (Pokémon Traits, Starters, Wild Pokémon, Trainer Pokémon, Items...). Settings > Save salva a combinação para reutilizar.",
+      "en-US": "Tick what to shuffle in the tabs (Pokémon Traits, Starters, Wild Pokémon, Trainer Pokémon, Items...). Settings > Save keeps the combination for reuse."
+    },
+    {
+      "pt-BR": "Randomize (Save) gera a nova ROM. Guarde o seed mostrado para reproduzir o resultado.",
+      "en-US": "Randomize (Save) writes the new ROM. Keep the seed shown to reproduce the result."
+    },
+    {
+      "pt-BR": "Para continuar editando a ROM randomizada no hub, crie um Novo projeto a partir dela.",
+      "en-US": "To keep editing the randomized ROM in the hub, create a New project from it."
+    }
+  ],
+  "tips": [],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "Randomizer ZX",
+        "en-US": "Randomizer ZX"
+      },
+      "url": "https://github.com/Ajarmar/universal-pokemon-randomizer-zx"
+    }
+  ]
+}
