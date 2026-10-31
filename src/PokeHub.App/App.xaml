@@ -5,6 +5,7 @@
     <Application.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis" />
+        <local:NotNullToBoolConverter x:Key="NotNullToBool" />
         <Style TargetType="Button">
             <Setter Property="Padding" Value="10,4" />
             <Setter Property="Margin" Value="0,0,6,0" />

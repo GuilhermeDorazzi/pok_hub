@@ -210,6 +210,13 @@ public sealed partial class MainViewModel : ObservableObject
         if (win.Restored) NotifyProjectCommands();
     }
 
+    private async Task SnapshotForEditorAsync(Project p, string message)
+    {
+        if (GitMissing || !WorkspaceGit.IsRepo(p)) return;
+        try { await _git.SnapshotAsync(p, message, new Progress<string>(Log)); }
+        catch (Exception ex) { Log($"Falha ao salvar versão: {ex.Message}"); }
+    }
+
     private async Task SnapshotAfterToolAsync(string pluginId)
     {
         try
@@ -263,7 +270,7 @@ public sealed partial class MainViewModel : ObservableObject
         // GEN5: quando houver projeto Gen 5 aberto, o filtro por geração esconde os plugins só de Gen 4.
         var gen = CurrentProject?.Config.Generation;
         foreach (var m in _catalog.ForContext(SelectedContext.Context, gen))
-            Tools.Add(new ToolItemViewModel(m, _installer, _launcher, _builds, _deps, () => CurrentProject, Log));
+            Tools.Add(new ToolItemViewModel(m, _installer, _launcher, _builds, _deps, () => CurrentProject, Log, SnapshotForEditorAsync));
     }
 
     public void Log(string line)

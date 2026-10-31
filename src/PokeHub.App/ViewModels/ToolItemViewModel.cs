@@ -21,6 +21,7 @@ public sealed partial class ToolItemViewModel : ObservableObject
     private readonly DependencyChecker _deps;
     private readonly Func<Project?> _currentProject;
     private readonly Action<string> _log;
+    private readonly Func<Project, string, Task> _snapshot;
 
     public PluginManifest Manifest { get; }
 
@@ -30,13 +31,14 @@ public sealed partial class ToolItemViewModel : ObservableObject
     [ObservableProperty] private string _statusText = "";
 
     public ToolItemViewModel(PluginManifest manifest, PluginInstaller installer, ToolLauncher launcher, DecompBuildService builds,
-        DependencyChecker deps, Func<Project?> currentProject, Action<string> log)
+        DependencyChecker deps, Func<Project?> currentProject, Action<string> log, Func<Project, string, Task> snapshot)
     {
         Manifest = manifest;
         _installer = installer;
         _launcher = launcher;
         _builds = builds;
         _deps = deps;
+        _snapshot = snapshot;
         _currentProject = currentProject;
         _log = log;
         Refresh();
@@ -104,14 +106,17 @@ public sealed partial class ToolItemViewModel : ObservableObject
     public string? Notes => Manifest.Notes;
     public bool HasNotes => !string.IsNullOrWhiteSpace(Manifest.Notes);
     public bool IsInstalled => Installed is not null;
-    public bool CanLaunch => IsInstalled && Manifest.Launch is not null && !IsBusy;
+    public bool IsBuiltin => Manifest.Source.Type == SourceType.Builtin;
+    public bool CanInstallOrUpdate => !IsBuiltin;
+    public bool CanLaunch => IsInstalled && Manifest.Launch is not null && !IsBusy && (!IsBuiltin || _currentProject() is not null);
     public bool IsSystemSource => Manifest.Source.Type == SourceType.System;
     public string InstallButtonText => IsSystemSource ? "Apontar executável" : IsInstalled ? "Atualizar" : "Instalar";
 
     public void Refresh()
     {
         Installed = _installer.GetInstalled(Manifest, _currentProject());
-        StatusText = Installed is null
+        StatusText = IsBuiltin ? (_currentProject() is null ? "Abra um projeto" : "Embutido no hub")
+            : Installed is null
             ? (Manifest.Scope == PluginScope.Project && _currentProject() is null ? "Abra um projeto para instalar" : "Não instalado")
             : $"Instalado: {Installed.Version}";
         NotifyAll();
@@ -175,6 +180,18 @@ public sealed partial class ToolItemViewModel : ObservableObject
     {
         if (Installed is null) return;
         if (!ConfirmDependencies("abrir")) return;
+        if (IsBuiltin)
+        {
+            var project = _currentProject();
+            if (project is null) return;
+            try { BuiltinEditors.Open(Manifest.Id, project, _log, msg => _snapshot(project, msg)); }
+            catch (Exception ex)
+            {
+                _log($"ERRO ao abrir {Manifest.Name}: {ex.Message}");
+                MessageBox.Show(ex.Message, $"Falha ao abrir {Manifest.Name}", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            return;
+        }
         try
         {
             var rt = _launcher.Launch(Manifest, Installed, _currentProject(), new Progress<string>(_log));

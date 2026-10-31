@@ -79,8 +79,17 @@ Fase 2 concluída em 2026-10-30.
 1. **Workspace no formato ds-rom** (2026-10-30). O DSPRE 2.x abandonou o layout ndstool: usa o ds-rom (AetiasHax/ds-rom, MIT, Rust) e oferece converter pastas antigas. Para o DSPRE abrir o workspace sem conversão, o hub passou a extrair com o ds-rom (`Rom/DsRomTool`, runtime `dsrom` instalado da release do GitHub, 5 MB). Layout: `config.yaml`, `header.yaml`, `arm9/` (descomprimido, itcm/dtcm separados), `arm9_overlays/` (descomprimidos), `arm7/`, `banner/`, `files/`, `path_order.txt`. O hub grava ao lado um `pokehub-workspace.json` com SHA-1 do dump e o CRC original da área segura: o `dsrom build` zera esse CRC, e o hub o restaura quando a área segura não mudou. Validado: reconstrução byte a byte idêntica ao dump de SoulSilver (teste opcional com `POKEHUB_REAL_ROM` + `POKEHUB_DSROM`). O extrator/empacotador em C# continua como reserva (formato "ndstool legado") se o ds-rom não puder ser baixado.
 2. **Hooks de lançamento** (`Plugins/LaunchHooks`, campo `launch.hook` no manifesto). `dspre-open-workspace`: antes de abrir o DSPRE, grava `openDefaultRom` em `%AppData%\DSPRE\userSettings.json` apontando para o workspace do projeto, preservando as outras chaves. O DSPRE pergunta se reabre o projeto ao iniciar (ele não aceita argumentos de linha de comando; verificado em `Program.cs`).
 3. UI: escolha da pasta raiz num painel dentro da janela principal; log ocultável com "Copiar tudo".
+4. **Editor de treinadores embutido** (`Core/Gen4/*`, `App/Views/TrainerEditorWindow`, manifesto `trainer-editor.json` com `source.type = builtin`). Primeiro editor próprio do hub:
+   - `Narc`: leitura e escrita de NARC (BTNF preservado, arquivos alinhados a 4 bytes com 0xFF).
+   - `Gen4TextArchive` + `CharMap`: bancos de texto de Gen 4 (cifra da tabela de offsets e das strings, compressão de 9 bits dos nomes de treinador) com o `charmap.json` do DSPRE embutido. Mensagens não alteradas são regravadas com as palavras originais, porque o encoder da Nintendo deixa bits de preenchimento diferentes.
+   - `Gen4Game`: caminhos dos NARCs e números dos bancos de texto por jogo e idioma (DP, Pt, HGSS; fonte: RomInfo do DSPRE).
+   - `Trainer`/`PartyMember`: registro de 20 bytes do trdata e entradas do trpoke (6/8/14/16 bytes em DP, +2 de ball seal em Pt/HGSS), com os bytes originais preservados quando o treinador não muda.
+   - `TrainerRepository`: carrega treinadores e as listas de nomes de classes, espécies, itens e golpes do próprio jogo; grava trdata, trpoke e o banco de nomes.
+   - A janela lista os treinadores com filtro, edita nome, classe, IA, tipo de batalha, itens e o time (espécie, forma, nível, dificuldade/IVs, item, golpes, ball seal, flags de gênero e habilidade). Salvar grava no workspace e cria uma versão no git.
+   - Validado com SoulSilver: carregar e regravar sem mudanças produz NARCs idênticos (teste opcional `POKEHUB_WORKSPACE=<workspace>`).
+   - Fora do escopo por enquanto: adicionar treinadores novos (exige expandir tabelas no arm9), nomes de classe, sprites.
 
-Próximos: mais plugins (Nitro Studio 2, DeSmuME), editores próprios (treinadores, encontros, texto), publicar no GitHub.
+Próximos: mais plugins (Nitro Studio 2, DeSmuME), editores de encontros e texto, publicar no GitHub.
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)
 

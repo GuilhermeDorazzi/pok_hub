@@ -14,8 +14,11 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
 
     public RuntimeManager Runtimes { get; } = new(hub, config);
 
+    public static readonly InstalledTool BuiltinTool = new() { Version = "embutido", ExecutablePath = "", Source = "builtin" };
+
     public InstalledTool? GetInstalled(PluginManifest m, Project? project) =>
-        m.Scope == PluginScope.Project
+        m.Source.Type == SourceType.Builtin ? BuiltinTool
+        : m.Scope == PluginScope.Project
             ? project?.Config.ProjectTools.GetValueOrDefault(m.Id)
             : config.InstalledTools.GetValueOrDefault(m.Id);
 

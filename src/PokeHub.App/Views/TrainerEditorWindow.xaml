@@ -1,0 +1,139 @@
+<Window x:Class="PokeHub.App.Views.TrainerEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:PokeHub.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DataContext="{d:DesignInstance vm:TrainerEditorViewModel}"
+        Title="Editor de treinadores" Width="1150" Height="720" MinWidth="900" MinHeight="500"
+        WindowStartupLocation="CenterOwner" FontSize="13" Closing="Window_Closing">
+    <Window.Resources>
+        <Style TargetType="ComboBox">
+            <Setter Property="IsEditable" Value="False" />
+            <Setter Property="MaxDropDownHeight" Value="300" />
+        </Style>
+    </Window.Resources>
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- lista -->
+        <DockPanel Grid.Column="0" Margin="0,0,10,0">
+            <TextBlock DockPanel.Dock="Top" Text="{Binding GameLabel}" Foreground="Gray" Margin="0,0,0,6" />
+            <TextBox DockPanel.Dock="Top" Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"
+                     ToolTip="Filtrar por id, nome ou classe" />
+            <ListBox ItemsSource="{Binding FilteredTrainers}" SelectedItem="{Binding Selected}" DisplayMemberPath="Display"
+                     VirtualizingPanel.IsVirtualizing="True" FontFamily="Consolas" />
+        </DockPanel>
+
+        <!-- detalhe -->
+        <DockPanel Grid.Column="1">
+            <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                <TextBlock Text="{Binding Status}" Foreground="Gray" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Salvar" Command="{Binding SaveCommand}" FontWeight="Bold" Padding="16,6" />
+                    <Button Content="Fechar" IsCancel="True" Padding="16,6" />
+                </StackPanel>
+            </DockPanel>
+
+            <Grid IsEnabled="{Binding Current, Converter={StaticResource NotNullToBool}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- treinador -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition /><RowDefinition /><RowDefinition />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Nome" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
+                    <TextBox Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Grid.Row="0" Grid.Column="1" Margin="0,0,16,4" MaxLength="10" />
+                    <TextBlock Text="Classe" Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Margin="0,0,8,4" />
+                    <ComboBox ItemsSource="{Binding Classes}" SelectedIndex="{Binding TrainerClass}" Grid.Row="0" Grid.Column="3" Margin="0,0,0,4" />
+
+                    <TextBlock Text="Flags de IA (hex)" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
+                    <TextBox Text="{Binding AiFlagsHex, UpdateSourceTrigger=LostFocus}" Grid.Row="1" Grid.Column="1" Margin="0,0,16,4" />
+                    <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="3" Margin="0,0,0,4">
+                        <CheckBox Content="Batalha dupla" IsChecked="{Binding DoubleBattle}" Margin="0,0,16,0" />
+                        <CheckBox Content="Itens no time" IsChecked="{Binding HasItems}" Margin="0,0,16,0" />
+                        <CheckBox Content="Golpes definidos" IsChecked="{Binding HasMoves}" />
+                    </StackPanel>
+
+                    <TextBlock Text="Itens do treinador" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <UniformGrid Rows="1" Columns="4" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3">
+                        <ComboBox ItemsSource="{Binding Items}" SelectedIndex="{Binding Item1}" Margin="0,0,4,0" />
+                        <ComboBox ItemsSource="{Binding Items}" SelectedIndex="{Binding Item2}" Margin="0,0,4,0" />
+                        <ComboBox ItemsSource="{Binding Items}" SelectedIndex="{Binding Item3}" Margin="0,0,4,0" />
+                        <ComboBox ItemsSource="{Binding Items}" SelectedIndex="{Binding Item4}" />
+                    </UniformGrid>
+                </Grid>
+
+                <DockPanel Grid.Row="1" Margin="0,0,0,4">
+                    <TextBlock Text="Time" FontWeight="Bold" VerticalAlignment="Center" />
+                    <Button DockPanel.Dock="Right" Content="Adicionar Pokémon" Command="{Binding AddPokemonCommand}" HorizontalAlignment="Right" />
+                </DockPanel>
+
+                <!-- time -->
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Party}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="#DDD" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,6" Background="#FAFAFA">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <WrapPanel>
+                                                <TextBlock Text="Espécie" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                <ComboBox ItemsSource="{Binding Owner.Species}" SelectedIndex="{Binding Species}" Width="170" Margin="0,0,12,4" />
+                                                <TextBlock Text="Forma" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                <TextBox Text="{Binding Form}" Width="40" Margin="0,0,12,4" />
+                                                <TextBlock Text="Nível" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                <TextBox Text="{Binding Level}" Width="40" Margin="0,0,12,4" />
+                                                <TextBlock Text="Dificuldade" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                <TextBox Text="{Binding Difficulty}" Width="40" Margin="0,0,4,4" />
+                                                <TextBlock Text="{Binding IvText}" Foreground="Gray" VerticalAlignment="Center" Margin="0,0,12,4" />
+                                                <TextBlock Text="Item" VerticalAlignment="Center" Margin="0,0,4,0"
+                                                           Visibility="{Binding Owner.HasItems, Converter={StaticResource BoolToVis}}" />
+                                                <ComboBox ItemsSource="{Binding Owner.Items}" SelectedIndex="{Binding Item}" Width="150" Margin="0,0,12,4"
+                                                          Visibility="{Binding Owner.HasItems, Converter={StaticResource BoolToVis}}" />
+                                                <TextBlock Text="Ball seal" VerticalAlignment="Center" Margin="0,0,4,0"
+                                                           Visibility="{Binding Owner.HasBallSeal, Converter={StaticResource BoolToVis}}" />
+                                                <TextBox Text="{Binding BallSeal}" Width="40" Margin="0,0,4,4"
+                                                         Visibility="{Binding Owner.HasBallSeal, Converter={StaticResource BoolToVis}}" />
+                                            </WrapPanel>
+                                            <WrapPanel Visibility="{Binding Owner.HasMoves, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="Golpes" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                <ComboBox ItemsSource="{Binding Owner.Moves}" SelectedIndex="{Binding Move1}" Width="140" Margin="0,0,4,4" />
+                                                <ComboBox ItemsSource="{Binding Owner.Moves}" SelectedIndex="{Binding Move2}" Width="140" Margin="0,0,4,4" />
+                                                <ComboBox ItemsSource="{Binding Owner.Moves}" SelectedIndex="{Binding Move3}" Width="140" Margin="0,0,4,4" />
+                                                <ComboBox ItemsSource="{Binding Owner.Moves}" SelectedIndex="{Binding Move4}" Width="140" Margin="0,0,4,4" />
+                                            </WrapPanel>
+                                            <WrapPanel>
+                                                <CheckBox Content="Forçar macho" IsChecked="{Binding ForceMale}" Margin="0,0,12,0" />
+                                                <CheckBox Content="Forçar fêmea" IsChecked="{Binding ForceFemale}" Margin="0,0,12,0" />
+                                                <CheckBox Content="Habilidade 1" IsChecked="{Binding AbilitySlot1}" Margin="0,0,12,0" />
+                                                <CheckBox Content="Habilidade 2" IsChecked="{Binding AbilitySlot2}" />
+                                            </WrapPanel>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="Remover" VerticalAlignment="Top" MinWidth="70"
+                                                Command="{Binding Owner.RemovePokemonCommand}" CommandParameter="{Binding}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

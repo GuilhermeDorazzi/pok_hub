@@ -17,6 +17,8 @@ public enum SourceType
     GitClone,
     /// <summary>Já instalado na máquina; o usuário aponta o executável.</summary>
     System,
+    /// <summary>Editor do próprio hub; nada a instalar. O id do manifesto identifica o editor.</summary>
+    Builtin,
 }
 
 /// <summary>Descrição de uma ferramenta suportada, carregada de plugins/*.json.</summary>

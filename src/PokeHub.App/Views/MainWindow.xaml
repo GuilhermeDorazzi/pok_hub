@@ -117,9 +117,12 @@
                                                     Visibility="{Binding HasBuild, Converter={StaticResource InverseBoolToVis}}" />
                                             <Button Content="Compilar ROM" Command="{Binding BuildCommand}" FontWeight="Bold" Margin="0,0,0,6"
                                                     Visibility="{Binding HasBuild, Converter={StaticResource BoolToVis}}" />
-                                            <Button Content="{Binding InstallButtonText}" Command="{Binding InstallCommand}" Margin="0,0,0,6" />
-                                            <Button Content="Pasta" Command="{Binding OpenFolderCommand}" Margin="0,0,0,6" />
-                                            <Button Content="Site" Command="{Binding OpenHomepageCommand}" />
+                                            <Button Content="{Binding InstallButtonText}" Command="{Binding InstallCommand}" Margin="0,0,0,6"
+                                                    Visibility="{Binding CanInstallOrUpdate, Converter={StaticResource BoolToVis}}" />
+                                            <Button Content="Pasta" Command="{Binding OpenFolderCommand}" Margin="0,0,0,6"
+                                                    Visibility="{Binding CanInstallOrUpdate, Converter={StaticResource BoolToVis}}" />
+                                            <Button Content="Site" Command="{Binding OpenHomepageCommand}"
+                                                    Visibility="{Binding CanInstallOrUpdate, Converter={StaticResource BoolToVis}}" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>

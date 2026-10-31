@@ -5,4 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Gen4\charmap.json" LogicalName="charmap.json" />
+  </ItemGroup>
 </Project>

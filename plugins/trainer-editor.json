@@ -1,0 +1,12 @@
+{
+  "id": "trainer-editor",
+  "name": "Editor de treinadores (PokeHub)",
+  "description": "Editor embutido: nome, classe, itens, IA, tipo de batalha e o time completo de cada treinador, lendo nomes de espécies, itens e golpes do próprio jogo.",
+  "license": "GPL-3.0",
+  "contexts": ["trainers"],
+  "generations": [4],
+  "scope": "hub",
+  "source": { "type": "builtin" },
+  "launch": { "args": [] },
+  "notes": "Grava direto no workspace e salva uma versão no git a cada salvamento. Reempacote para testar."
+}
