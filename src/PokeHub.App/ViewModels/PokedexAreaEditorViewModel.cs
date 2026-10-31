@@ -33,7 +33,7 @@ public sealed partial class AreaBlockViewModel : ObservableObject
     {
         _owner = owner;
         Block = block;
-        Title = title;
+        Title = (PokedexAreaRepository.IsSpecial(block) ? Loc.T("dx.specialShort") : Loc.T("dx.normalShort")) + " · " + title;
         foreach (var l in locations) Areas.Add(new AreaCheckViewModel(l, owner.MarkDirty));
     }
 
@@ -78,11 +78,54 @@ public sealed partial class PokedexAreaEditorViewModel : ObservableObject
 
     public string GameLabel => Loc.T("dx.gameLabel", _repo.Game.Game);
 
-    public PokedexAreaEditorViewModel(PokedexAreaRepository repo, Action<string> log, Func<string, Task> snapshot)
+    // ----- mapa da Pokédex (lido da ROM) -----
+
+    /// <summary>Mapa renderizado da ROM e formas das áreas; null quando os gráficos não foram encontrados.</summary>
+    public PokedexAreaMap? Map { get; private set; }
+    public string MapError { get; private set; } = "";
+    public bool HasMap => Map is not null;
+    /// <summary>Os oito blocos, para o seletor "Mostrar no mapa".</summary>
+    public List<AreaBlockViewModel> Blocks { get; } = [];
+    [ObservableProperty] private AreaBlockViewModel? _selectedMapBlock;
+    /// <summary>Disparado quando as áreas marcadas do bloco mostrado mudam (ou o bloco/espécie muda).</summary>
+    public event Action? MapChanged;
+
+    partial void OnSelectedMapBlockChanged(AreaBlockViewModel? value) => MapChanged?.Invoke();
+
+    private void LoadMap(PokedexAreaRepository repo)
+    {
+        try { Map = PokedexAreaMap.Load(_project); }
+        catch (Exception ex) { MapError = Loc.T("dx.mapUnavailable", ex.Message); _log(MapError); }
+    }
+
+    /// <summary>Clique no mapa: alterna a área sob o tile no bloco mostrado.</summary>
+    public void ToggleAreaAt(int tileX, int tileY)
+    {
+        if (Map is null || SelectedMapBlock is null) return;
+        bool special = PokedexAreaRepository.IsSpecial(SelectedMapBlock.Block);
+        var hit = Map.HitTest(tileX, tileY, special, SelectedMapBlock.Areas.Select(a => a.Location.Id));
+        if (hit is null) return;
+        var area = SelectedMapBlock.Areas.First(a => a.Location.Id == hit);
+        area.IsSelected = !area.IsSelected;
+    }
+
+    public string? AreaNameAt(int tileX, int tileY)
+    {
+        if (Map is null || SelectedMapBlock is null) return null;
+        bool special = PokedexAreaRepository.IsSpecial(SelectedMapBlock.Block);
+        var hit = Map.HitTest(tileX, tileY, special, SelectedMapBlock.Areas.Select(a => a.Location.Id));
+        return hit is null ? null : SelectedMapBlock.Areas.First(a => a.Location.Id == hit).Name;
+    }
+
+    private readonly PokeHub.Core.Projects.Project _project;
+
+    public PokedexAreaEditorViewModel(PokedexAreaRepository repo, PokeHub.Core.Projects.Project project, Action<string> log, Func<string, Task> snapshot)
     {
         _repo = repo;
+        _project = project;
         _log = log;
         _snapshot = snapshot;
+        LoadMap(repo);
         for (int i = 1; i <= PokedexAreaRepository.SpeciesCount; i++)
             Species.Add($"{i:D3}  {(i < repo.SpeciesNames.Count ? repo.SpeciesNames[i] : "")}");
 
@@ -94,6 +137,8 @@ public sealed partial class PokedexAreaEditorViewModel : ObservableObject
         SpecialBlocks.Add(new(PokedexAreaBlock.SpecialDay, Loc.T("dx.day"), PokedexAreaRepository.SpecialLocations, this));
         SpecialBlocks.Add(new(PokedexAreaBlock.SpecialNight, Loc.T("dx.night"), PokedexAreaRepository.SpecialLocations, this));
         SpecialBlocks.Add(new(PokedexAreaBlock.SpecialAll, Loc.T("dx.anytime"), PokedexAreaRepository.SpecialLocations, this));
+        Blocks.AddRange(NormalBlocks.Concat(SpecialBlocks));
+        SelectedMapBlock = NormalBlocks[0]; // manhã
         LoadSpecies();
     }
 
@@ -125,6 +170,7 @@ public sealed partial class PokedexAreaEditorViewModel : ObservableObject
             foreach (var b in AllBlocks) b.Load(_repo.GetAreas(SelectedSpecies, b.Block));
         }
         finally { _loading = false; }
+        MapChanged?.Invoke();
     }
 
     public void MarkDirty()
@@ -135,6 +181,7 @@ public sealed partial class PokedexAreaEditorViewModel : ObservableObject
         foreach (var b in AllBlocks) _repo.SetAreas(SelectedSpecies, b.Block, b.SelectedIds);
         IsDirty = _repo.HasChanges;
         Status = IsDirty ? Loc.T("common.unsaved") : "";
+        MapChanged?.Invoke();
     }
 
     [RelayCommand]

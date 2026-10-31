@@ -6,7 +6,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DataContext="{d:DesignInstance vm:PokedexAreaEditorViewModel}"
-        Title="{loc:T dx.title}" Width="1200" Height="760" MinWidth="900" MinHeight="520"
+        Title="{loc:T dx.title}" Width="1240" Height="900" MinWidth="960" MinHeight="640"
         WindowStartupLocation="CenterOwner" FontSize="13" Closing="Window_Closing">
     <Window.Resources>
         <DataTemplate x:Key="BlockTemplate" DataType="{x:Type vm:AreaBlockViewModel}">
@@ -53,6 +53,32 @@
                 <Button Content="{loc:T common.close}" IsCancel="True" Padding="16,6" />
             </StackPanel>
         </DockPanel>
+
+        <!-- Mapa da Pokédex lido da ROM: áreas do bloco escolhido em destaque; clique alterna -->
+        <Border DockPanel.Dock="Top" BorderBrush="#DDD" BorderThickness="1" CornerRadius="4" Padding="8" Margin="4,0,4,8" Background="#FAFAFA"
+                Visibility="{Binding HasMap, Converter={StaticResource BoolToVis}}">
+            <DockPanel>
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                    <TextBlock Text="{loc:T dx.mapBlock}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <ComboBox ItemsSource="{Binding Blocks}" SelectedItem="{Binding SelectedMapBlock}" Width="220" VerticalAlignment="Center">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate><TextBlock Text="{Binding Title}" /></DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <TextBlock x:Name="HoverText" FontWeight="SemiBold" VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="160" />
+                    <TextBlock Text="{loc:T dx.mapHint}" Foreground="Gray" FontSize="11" VerticalAlignment="Center" Margin="16,0,0,0" TextTrimming="CharacterEllipsis" />
+                </DockPanel>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" HorizontalAlignment="Left">
+                    <Grid>
+                        <Grid.LayoutTransform><ScaleTransform ScaleX="2" ScaleY="2" /></Grid.LayoutTransform>
+                        <Image x:Name="MapImage" Stretch="None" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                        <Canvas x:Name="MapCanvas" Background="Transparent" MouseLeftButtonDown="MapCanvas_MouseDown" MouseMove="MapCanvas_MouseMove" />
+                    </Grid>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+        <TextBlock DockPanel.Dock="Top" Text="{Binding MapError}" Foreground="Firebrick" Margin="4,0,4,8"
+                   Visibility="{Binding HasMap, Converter={StaticResource InverseBoolToVis}}" />
 
         <Grid>
             <Grid.RowDefinitions>

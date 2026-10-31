@@ -48,6 +48,29 @@ public partial class App : Application
                 using var fs = File.Create(file);
                 enc.Save(fs);
             }
+            // --screenshot também captura o editor de Pokédex (com mapa) quando o projeto é HGSS
+            if (vm.CurrentProject is { } project && Array.IndexOf(Environment.GetCommandLineArgs(), "--editors") >= 0)
+            {
+                try
+                {
+                    BuiltinEditors.Open("pokedex-area-editor", project, _ => { }, _ => Task.CompletedTask);
+                    if (Windows.OfType<Views.PokedexAreaEditorWindow>().FirstOrDefault() is { } dex)
+                    {
+                        (dex.DataContext as PokedexAreaEditorViewModel)!.SelectedSpecies = 16; // Pidgey
+                        await Task.Delay(400);
+                        dex.UpdateLayout();
+                        var root = (FrameworkElement)dex.Content;
+                        var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                        bmp.Render(root);
+                        var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                        enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+                        using var fs = File.Create(Path.Combine(Path.GetDirectoryName(basePath)!, Path.GetFileNameWithoutExtension(basePath) + "-pokedex.png"));
+                        enc.Save(fs);
+                        dex.Close();
+                    }
+                }
+                catch (Exception ex) { Console.Error.WriteLine(ex); }
+            }
             Shutdown();
         }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
     }

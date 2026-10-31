@@ -121,6 +121,8 @@ Fase 2 concluída em 2026-10-30.
    - **Guias de script**: "Como funcionam os scripts (Gen 4)" (estrutura Scripts/Functions/Movements, quem chama, flags e variáveis, decisões, movimento) e "Receitas de script" (NPC que fala, item uma vez, Pokémon de presente, sim/não, bloquear caminho), além de guias de patch, "o que mudou" e lote. Total de 21 guias.
    - Lição: processos filhos do Core precisam de stdin próprio (`ProcessRunner`), senão a captura trava quando outro leitor segura o stdin do processo (servidor MCP).
 
+16. **Mapa visual no editor de Pokédex** (2026-10-31). `Core/Graphics`: decodificadores LZ10, NCLR (paleta BGR555), NCGR (tiles 4/8 bpp) e NSCR (tilemap com espelhos e banco de paleta) com renderização para RGBA. `Core/Gen4/PokedexAreaMap`: lê da própria ROM o mapa da tela de áreas do HGSS (NARC `a/0/6/8` = zukan_gra do pokeheartgold: NSCR 86 + NCGR 87 + NCLR 18, tilemap 512×256 do qual o jogo usa 45×16 tiles, rolando para Johto em x = 72 e Kanto em x = −104) e as formas das áreas nos dois primeiros arquivos de `a/1/3/3` (gDungeons: x,y por área especial; gOverworlds: x,y,w,h e máscara de 32 células por área normal; o jogo separa Johto/Kanto em x ≥ 22). O editor mostra o mapa em 2×, com as áreas do bloco escolhido contornadas e as marcadas em amarelo; clicar alterna o checkbox; o nome aparece ao passar o mouse. Validado com SoulSilver (Route 29 em x=18, y=12, 3×1, na costa sudeste de Johto). Nada de imagem da Nintendo no repositório: tudo vem do workspace do usuário. `--screenshot ... --editors` captura também essa janela.
+
 Publicado em github.com/GuilhermeDorazzi/pok_hub (privado por enquanto).
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)

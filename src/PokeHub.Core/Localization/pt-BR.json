@@ -595,5 +595,15 @@
  "feature.batch": "Operações em lote",
  "feature.batch.text": "Sobe níveis, troca espécies ou dá itens a muitos treinadores e rotas de uma vez, com prévia.",
  "feature.patch": "Patch para distribuir",
- "feature.patch.text": "Gera um .bps com só as suas mudanças. Quem joga aplica sobre a ROM limpa."
+ "feature.patch.text": "Gera um .bps com só as suas mudanças. Quem joga aplica sobre a ROM limpa.",
+ "core.gfx.notLz10": "Dados não estão comprimidos em LZ10.",
+ "core.gfx.badHeader": "Arquivo gráfico inválido: esperado {0}.",
+ "core.dex.mapMissing": "Gráficos do mapa da Pokédex não encontrados no workspace (a/0/6/8).",
+ "dx.mapBlock": "Mostrar no mapa",
+ "dx.mapHint": "Clique numa área do mapa para marcar ou desmarcar no bloco escolhido. Johto à esquerda, Kanto à direita.",
+ "dx.mapUnavailable": "Mapa indisponível: {0}",
+ "dx.johto": "Johto",
+ "dx.kanto": "Kanto",
+ "dx.normalShort": "Normal",
+ "dx.specialShort": "Especial"
 }

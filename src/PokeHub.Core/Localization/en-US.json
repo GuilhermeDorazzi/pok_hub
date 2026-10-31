@@ -595,5 +595,15 @@
  "feature.batch": "Batch operations",
  "feature.batch.text": "Raise levels, swap species or give items to many trainers and routes at once, with a preview.",
  "feature.patch": "Patch to distribute",
- "feature.patch.text": "Writes a .bps with only your changes. Players apply it to a clean ROM."
+ "feature.patch.text": "Writes a .bps with only your changes. Players apply it to a clean ROM.",
+ "core.gfx.notLz10": "Data is not LZ10-compressed.",
+ "core.gfx.badHeader": "Invalid graphics file: expected {0}.",
+ "core.dex.mapMissing": "Pokédex map graphics not found in the workspace (a/0/6/8).",
+ "dx.mapBlock": "Show on map",
+ "dx.mapHint": "Click an area on the map to check or uncheck it in the chosen block. Johto on the left, Kanto on the right.",
+ "dx.mapUnavailable": "Map unavailable: {0}",
+ "dx.johto": "Johto",
+ "dx.kanto": "Kanto",
+ "dx.normalShort": "Normal",
+ "dx.specialShort": "Special"
 }
