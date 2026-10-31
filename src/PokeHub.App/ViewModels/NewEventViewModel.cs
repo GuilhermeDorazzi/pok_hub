@@ -46,6 +46,13 @@ public sealed partial class NewEventViewModel : ObservableObject
     [ObservableProperty] private NewEventSprite? _selectedSprite;
     [ObservableProperty] private NewEventChoice? _selectedFacing;
     [ObservableProperty] private bool _isTalk = true;
+    [ObservableProperty] private bool _isItem;
+    [ObservableProperty] private bool _isPokemon;
+    [ObservableProperty] private NewEventChoice? _selectedSpecies;
+    [ObservableProperty] private string _level = "10";
+    [ObservableProperty] private bool _vanish = true;
+    [ObservableProperty] private string _pokemonText = "";
+    [ObservableProperty] private BitmapSource? _pokemonSprite;
     [ObservableProperty] private string _talkText = "";
     [ObservableProperty] private string _beforeText = "";
     [ObservableProperty] private string _afterText = "";
@@ -57,14 +64,17 @@ public sealed partial class NewEventViewModel : ObservableObject
     public MapLayout? Layout { get; private set; }
     /// <summary>Tile escolhido, em coordenadas da planta.</summary>
     public (int X, int Y)? Tile { get; private set; }
-    public bool IsItem => !IsTalk;
+    public IReadOnlyList<NewEventChoice> Species { get; }
+    public bool UsesSpriteList => !IsPokemon;
 
-    public NewEventViewModel(Project project, EventMap map, IReadOnlyList<string> items, Action<string> log, Func<string, Task> snapshot)
+    public NewEventViewModel(Project project, EventMap map, IReadOnlyList<string> items, IReadOnlyList<string> species, Action<string> log, Func<string, Task> snapshot)
     {
         _project = project; _map = map; _log = log; _snapshot = snapshot;
         _font = Gen4Font.Load(map.Game);
         Items = items.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}")).Skip(1).ToList();
         SelectedItem = Items.FirstOrDefault();
+        Species = species.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}")).Where(s => NewEventService.SpriteForSpecies(s.Value) is not null).ToList();
+        SelectedSpecies = Species.FirstOrDefault();
         SelectedFacing = Facings[0];
         Sprites = map.Sprites is { } sprites
             ? sprites.Ids.Select(id => (id, image: sprites.Render(id))).Where(s => s.image is not null).Select(s => new NewEventSprite(s.id, s.image!.ToBitmap())).ToList()
@@ -77,7 +87,9 @@ public sealed partial class NewEventViewModel : ObservableObject
     }
 
     partial void OnMapFilterChanged(string value) => ApplyMapFilter();
-    partial void OnIsTalkChanged(bool value) => OnPropertyChanged(nameof(IsItem));
+    partial void OnIsPokemonChanged(bool value) => OnPropertyChanged(nameof(UsesSpriteList));
+    partial void OnSelectedSpeciesChanged(NewEventChoice? value) =>
+        PokemonSprite = value is not null && NewEventService.SpriteForSpecies(value.Value) is { } sprite ? SpriteOf(sprite) : null;
 
     private void ApplyMapFilter()
     {
@@ -121,14 +133,15 @@ public sealed partial class NewEventViewModel : ObservableObject
         if (SelectedMap is not { } map || Layout is null) { Status = Loc.T("newev.needMap"); return; }
         if (Tile is not { } tile) { Status = Loc.T("newev.clickMap"); return; }
         if (SelectedSprite is not { } sprite || SelectedFacing is not { } facing) { Status = Loc.T("newev.needSprite"); return; }
-        if (IsTalk ? string.IsNullOrWhiteSpace(TalkText) : string.IsNullOrWhiteSpace(BeforeText) || string.IsNullOrWhiteSpace(AfterText)) { Status = Loc.T("newev.needText"); return; }
-        if (!IsTalk && (SelectedItem is null || !int.TryParse(Quantity, out _))) { Status = Loc.T("core.newev.badQuantity"); return; }
+        if (IsTalk && string.IsNullOrWhiteSpace(TalkText) || IsItem && (string.IsNullOrWhiteSpace(BeforeText) || string.IsNullOrWhiteSpace(AfterText))) { Status = Loc.T("newev.needText"); return; }
+        if (IsItem && (SelectedItem is null || !int.TryParse(Quantity, out _))) { Status = Loc.T("core.newev.badQuantity"); return; }
+        if (IsPokemon && (SelectedSpecies is null || !int.TryParse(Level, out _))) { Status = Loc.T("core.newev.badLevel"); return; }
 
         try
         {
-            NpcBehavior behavior = IsTalk
-                ? new TalkBehavior(Prepare(TalkText))
-                : new GiveItemBehavior(SelectedItem!.Value, int.Parse(Quantity), Prepare(BeforeText), Prepare(AfterText));
+            NpcBehavior behavior = IsTalk ? new TalkBehavior(Prepare(TalkText))
+                : IsItem ? new GiveItemBehavior(SelectedItem!.Value, int.Parse(Quantity), Prepare(BeforeText), Prepare(AfterText))
+                : new PokemonBehavior(SelectedSpecies!.Value, int.Parse(Level), Vanish, string.IsNullOrWhiteSpace(PokemonText) ? null : Prepare(PokemonText));
             await _snapshot(Loc.T("newev.snapshotBefore", map.Label));
             var result = NewEventService.Create(_project, _map, new NewNpc(map.Id, tile.X + Layout.OriginX, tile.Y + Layout.OriginY, sprite.Id, facing.Value, behavior));
             await _snapshot(Loc.T("newev.snapshotAfter", map.Label));
@@ -136,7 +149,7 @@ public sealed partial class NewEventViewModel : ObservableObject
             LoadLayout();
             Status = Loc.T("newev.created", result.ScriptId) + (result.Warnings.Count > 0 ? " " + string.Join(" ", result.Warnings) : "");
             _log(Status);
-            TalkText = BeforeText = AfterText = "";
+            TalkText = BeforeText = AfterText = PokemonText = "";
         }
         catch (Exception ex) when (ex is ArgumentException or System.IO.InvalidDataException or NotSupportedException or System.IO.IOException or UnauthorizedAccessException or KeyNotFoundException)
         {

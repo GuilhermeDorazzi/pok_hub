@@ -38,7 +38,7 @@
         <ScrollViewer Grid.Column="2" Margin="10,0,0,0" VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <TextBlock Text="{loc:T newev.step.look}" FontWeight="Bold" Margin="0,0,0,6" />
-                <ListBox ItemsSource="{Binding Sprites}" SelectedItem="{Binding SelectedSprite}" Height="170" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,6">
+                <ListBox ItemsSource="{Binding Sprites}" SelectedItem="{Binding SelectedSprite}" Visibility="{Binding UsesSpriteList, Converter={StaticResource BoolToVis}}" Height="170" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,6">
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
@@ -55,7 +55,8 @@
 
                 <TextBlock Text="{loc:T newev.step.does}" FontWeight="Bold" Margin="0,0,0,6" />
                 <RadioButton Content="{loc:T newev.talk}" IsChecked="{Binding IsTalk}" Margin="0,0,0,4" />
-                <RadioButton Content="{loc:T newev.item}" IsChecked="{Binding IsItem, Mode=OneWay}" Checked="Item_Checked" Margin="0,0,0,8" />
+                <RadioButton Content="{loc:T newev.item}" IsChecked="{Binding IsItem}" Margin="0,0,0,4" />
+                <RadioButton Content="{loc:T newev.pokemon}" IsChecked="{Binding IsPokemon}" Margin="0,0,0,8" />
 
                 <StackPanel Visibility="{Binding IsTalk, Converter={StaticResource BoolToVis}}">
                     <TextBlock Text="{loc:T newev.talkText}" Margin="0,0,0,4" />
@@ -72,6 +73,21 @@
                     </DockPanel>
                     <TextBlock Text="{loc:T newev.afterText}" Margin="0,0,0,4" />
                     <TextBox Text="{Binding AfterText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="60" />
+                </StackPanel>
+
+                <StackPanel Visibility="{Binding IsPokemon, Converter={StaticResource BoolToVis}}">
+                    <DockPanel Margin="0,0,0,8">
+                        <Image DockPanel.Dock="Right" Source="{Binding PokemonSprite}" Width="32" Height="32" Margin="8,0,0,0" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                        <TextBlock Text="{loc:T newev.species}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <ComboBox ItemsSource="{Binding Species}" SelectedItem="{Binding SelectedSpecies}" />
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,8">
+                        <TextBlock Text="{loc:T newev.level}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox Text="{Binding Level}" Width="50" HorizontalAlignment="Left" />
+                    </DockPanel>
+                    <CheckBox Content="{loc:T newev.vanish}" IsChecked="{Binding Vanish}" Margin="0,0,0,8" />
+                    <TextBlock Text="{loc:T newev.pokemonText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding PokemonText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="50" />
                 </StackPanel>
 
                 <TextBlock Text="{loc:T newev.hint}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,8,0,0" />

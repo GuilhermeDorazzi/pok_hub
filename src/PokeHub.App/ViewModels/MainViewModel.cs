@@ -228,7 +228,8 @@ public sealed partial class MainViewModel : ObservableObject
             if (!PokeHub.Core.Gen4.Scripts.NewEventService.Supports(game)) { Log(Loc.T("core.newev.hgssOnly")); return; }
             var text = Narc.Read(File.ReadAllBytes(game.TextArchivePath));
             var items = Gen4TextArchive.Read(text.Files[game.ItemsBank]).Messages.Select(m => Gen4TextArchive.Decode(m)).ToList();
-            var vm = new NewEventViewModel(p, PokeHub.Core.Gen4.Scripts.EventMap.Load(p), items, Log, message => SnapshotForEditorAsync(p, message));
+            var species = Gen4TextArchive.Read(text.Files[game.SpeciesBank]).Messages.Select(m => Gen4TextArchive.Decode(m)).ToList();
+            var vm = new NewEventViewModel(p, PokeHub.Core.Gen4.Scripts.EventMap.Load(p), items, species, Log, message => SnapshotForEditorAsync(p, message));
             new NewEventWindow(vm) { Owner = Application.Current.MainWindow }.Show();
         }
         catch (Exception ex) { Log(Loc.T("vm.error", ex.Message)); }

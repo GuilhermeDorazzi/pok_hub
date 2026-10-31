@@ -67,6 +67,35 @@ public class NewEventTests
     }
 
     [Fact]
+    public void Pokemon_script_matches_the_games_static_encounters()
+    {
+        var table = ScriptCommandTable.Hgss;
+        var code = NewEventService.BuildScript(table, new PokemonBehavior(25, 10, true, null), [], 0x95F, 12);
+        var file = new byte[6 + code.Length];
+        BitConverter.TryWriteBytes(file.AsSpan(0), 2);
+        BitConverter.TryWriteBytes(file.AsSpan(4), (ushort)0xFD13);
+        code.CopyTo(file, 6);
+        var script = new ScriptFile(file, table).Routine(1)!;
+        var ordered = script.Instructions.OrderBy(i => i.Offset).ToList();
+        Assert.Equal(["PlaySE", "LockAll", "FacePlayer", "PlayCry", "WaitCry", "WildBattle", "CheckBattleWon", "CompareVarToValue", "GoToIf", "SetFlag", "HidePerson", "ReleaseAll", "End", "WhiteOut", "ReleaseAll", "End"], ordered.Select(i => i.Name));
+        var battle = ordered.First(i => i.Name == "WildBattle");
+        Assert.Equal(25, battle.Args[0].Value);
+        Assert.Equal(10, battle.Args[1].Value);
+        Assert.Equal(12, ordered.First(i => i.Name == "HidePerson").Args[0].Value);
+
+        // sem sumir, não usa flag nem esconde
+        var stays = NewEventService.BuildScript(table, new PokemonBehavior(25, 10, false, null), [], null);
+        Assert.True(stays.Length < code.Length);
+    }
+
+    [Fact]
+    public void Every_species_has_a_field_sprite()
+    {
+        for (int species = 1; species <= 493; species++) Assert.NotNull(NewEventService.SpriteForSpecies(species));
+        Assert.Null(NewEventService.SpriteForSpecies(494));
+    }
+
+    [Fact]
     public void Add_object_goes_at_the_end_of_the_object_list()
     {
         using var ms = new MemoryStream();
@@ -135,6 +164,17 @@ public class NewEventTests
             Assert.Contains(created.Flags, f => f.Id == item.Flag && f.Action == "set");
             // a flag usada deixa de ser livre, e o próximo NPC recebe outra
             Assert.NotEqual(item.Flag, NewEventService.PickFreeFlag(map3, 738));
+
+            var map4 = EventMap.Load(project);
+            var mon = NewEventService.Create(project, map4, new NewNpc(header.Id, at.X + 3, at.Z, 0, 1, new PokemonBehavior(25, 7, true, "Pika!")));
+            Assert.NotNull(mon.Flag);
+            var finalEvents = new EventFile(Narc.Read(File.ReadAllBytes(game.EventsPath)).Files[header.EventsBank]);
+            var pikachu = finalEvents.Objects[^1];
+            Assert.Equal(NewEventService.SpriteForSpecies(25), pikachu.SpriteId);
+            Assert.Equal(mon.Flag, pikachu.EventFlag);
+            Assert.NotNull(map4.Sprites!.Render(pikachu.SpriteId)); // o sprite existe na tabela do jogo
+            for (int species = 1; species <= 493; species++)
+                Assert.NotNull(map4.Sprites.Render(NewEventService.SpriteForSpecies(species)!.Value));
 
             var script = new ScriptFile(Narc.Read(File.ReadAllBytes(game.ScriptsPath)).Files[header.ScriptsBank], ScriptCommandTable.Hgss);
             for (int id = 1; id <= oldScript.EntryOffsets.Count; id++)

@@ -16,6 +16,20 @@ public static class NewEventTools
         return TextPreview.Wrap(text.Trim(), s => font is null ? s.Length * 6 : TextPreview.Render(Gen4TextArchive.Encode(s), font).Lines.Max(l => l.Width));
     }
 
+    [McpServerTool(Name = "create_pokemon_encounter"), Description("Coloca um Pokémon parado num mapa (HG/SS): ao interagir toca o grito e começa a batalha. Com vanish=true, some depois da batalha, a não ser que o jogador perca. Salva versão antes e depois.")]
+    public static async Task<object> CreatePokemonEncounter(HubContext hub, string project, int mapId, int x, int z, int species, int level, bool vanish = true, string? text = null, int facing = 1)
+    {
+        var p = hub.OpenProject(project);
+        if (!WorkspaceService.IsExtracted(p)) throw new InvalidOperationException("Workspace vazio: extraia a ROM primeiro (extract_rom).");
+        var game = Gen4Game.For(p);
+        var behavior = new PokemonBehavior(species, level, vanish, string.IsNullOrWhiteSpace(text) ? null : Wrap(game, text));
+        var log = new LogCollector();
+        if (hub.Git.IsAvailable) await hub.Git.SnapshotAsync(p, $"Antes de criar Pokémon no mapa {mapId}", log);
+        var result = NewEventService.Create(p, EventMap.Load(p), new NewNpc(mapId, x, z, 0, facing, behavior));
+        if (hub.Git.IsAvailable) await hub.Git.SnapshotAsync(p, $"Pokémon criado no mapa {mapId}", log);
+        return new { result.ObjectIndex, result.ScriptId, result.Flag, result.Warnings };
+    }
+
     [McpServerTool(Name = "create_npc"), Description("Cria um NPC num mapa (HG/SS): com item=0 ele só fala 'text'; com item, fala 'text', dá o item uma vez e depois repete 'after'. Quebra as linhas para caber na caixa. Salva versão antes e depois.")]
     public static async Task<object> CreateNpc(HubContext hub, string project,
         [Description("Id do mapa, de list_events")] int mapId,

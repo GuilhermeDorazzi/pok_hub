@@ -8,8 +8,8 @@
     "en-US": "New event"
   },
   "intro": {
-    "pt-BR": "Cria um NPC completo sem mexer em scripts: você escolhe o mapa, clica onde ele fica, escolhe a aparência e o que ele faz. Por enquanto, em HeartGold e SoulSilver, com os modelos Falar e Dar item.",
-    "en-US": "Creates a complete NPC without touching scripts: pick the map, click where it stands, pick its look and what it does. For now on HeartGold and SoulSilver, with the Talk and Give item templates."
+    "pt-BR": "Cria um NPC completo sem mexer em scripts: você escolhe o mapa, clica onde ele fica, escolhe a aparência e o que ele faz. Por enquanto, em HeartGold e SoulSilver, com os modelos Falar, Dar item e Pokémon no mapa.",
+    "en-US": "Creates a complete NPC without touching scripts: pick the map, click where it stands, pick its look and what it does. For now on HeartGold and SoulSilver, with the Talk, Give item and Pokémon on the map templates."
   },
   "steps": [
     {
@@ -30,6 +30,14 @@
     }
   ],
   "tips": [
+    {
+      "pt-BR": "O save guarda os objetos do mapa onde foi feito. Se você salvou no mesmo mapa do NPC novo, saia do mapa e volte para ele aparecer. Em jogo novo isso não acontece.",
+      "en-US": "A save stores the objects of the map it was made on. If you saved on the same map as the new NPC, leave the map and come back for it to appear. This does not happen on a new game."
+    },
+    {
+      "pt-BR": "No modelo Pokémon no mapa, o sprite vem da espécie: é o mesmo do Pokémon que segue o jogador. Marcando Sumir, ele desaparece depois da batalha, salvo se o jogador perder, e não volta.",
+      "en-US": "In the Pokémon on the map template, the sprite comes from the species: the same one as the Pokémon that follows the player. With Disappear checked, it vanishes after the battle, unless the player loses, and does not come back."
+    },
     {
       "pt-BR": "No modelo Dar item, o hub reserva uma flag livre para o item ser entregue uma vez só. Se a mochila estiver cheia, o jogo avisa e o item fica para depois.",
       "en-US": "In the Give item template, the hub reserves a free flag so the item is given only once. If the bag is full, the game says so and the item stays for later."

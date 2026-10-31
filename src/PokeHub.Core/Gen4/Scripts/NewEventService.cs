@@ -1,3 +1,5 @@
+using System.Reflection;
+using System.Text.Json;
 using PokeHub.Core.Localization;
 using PokeHub.Core.Projects;
 
@@ -8,6 +10,9 @@ public abstract record NpcBehavior;
 public sealed record TalkBehavior(string Text) : NpcBehavior;
 /// <summary>Dá o item uma vez só: depois repete apenas a fala final.</summary>
 public sealed record GiveItemBehavior(int Item, int Quantity, string BeforeText, string AfterText) : NpcBehavior;
+
+/// <summary>Pokémon parado no mapa: grito e batalha. Com Vanish, some depois da batalha, a não ser que o jogador perca. Texto é opcional.</summary>
+public sealed record PokemonBehavior(int Species, int Level, bool Vanish, string? Text) : NpcBehavior;
 
 /// <param name="X">Tile na matriz inteira, como guardado no arquivo de eventos.</param>
 /// <param name="Facing">0 cima, 1 baixo, 2 esquerda, 3 direita.</param>
@@ -68,7 +73,7 @@ public static class NewEventService
     /// <summary>O mapa mais cheio do SoulSilver tem 51 NPCs. Passar disso é terreno não testado.</summary>
     public const int NpcWarningCount = 51;
     private const int SelectSoundCommandSeen = 609, SpecialVar0 = 0x8004, SpecialVar1 = 0x8005, ResultVar = 0x800C;
-    private const int GiveItemStd = 2033, BagFullStd = 2009, ConditionEqual = 1;
+    private const int GiveItemStd = 2033, BagFullStd = 2009, ConditionEqual = 1, SelectSound = 1500, MaxSpecies = 493;
     /// <summary>Flags de treinador começam aqui e vão até o último treinador; as do sistema começam em 0x960.</summary>
     private const int TrainerFlagBase = 0x550, SystemFlagBase = 0x960;
 
@@ -94,9 +99,35 @@ public static class NewEventService
         return events.Bg.Count > 0 ? events.Bg.OrderBy(b => Math.Abs(b.X - x) + Math.Abs(b.Z - z)).First().Y : 0;
     }
 
-    public static byte[] BuildScript(ScriptCommandTable table, NpcBehavior behavior, IReadOnlyList<int> messages, int? flag)
+    private static readonly Lazy<Dictionary<int, int>> Followers = new(() =>
+    {
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("follower-sprites-hgss.json")
+            ?? throw new InvalidOperationException("follower-sprites-hgss.json embutido não encontrado.");
+        using var doc = JsonDocument.Parse(stream);
+        return doc.RootElement.GetProperty("sprites").EnumerateObject().ToDictionary(p => int.Parse(p.Name), p => p.Value.GetInt32());
+    });
+
+    /// <summary>Sprite de campo da espécie, o mesmo do Pokémon que segue o jogador no HG/SS. Null se não houver.</summary>
+    public static int? SpriteForSpecies(int species) => Followers.Value.TryGetValue(species, out var sprite) ? sprite : null;
+
+    public static byte[] BuildScript(ScriptCommandTable table, NpcBehavior behavior, IReadOnlyList<int> messages, int? flag, int objectId = 0)
     {
         var s = new ScriptBuilder(table);
+        if (behavior is PokemonBehavior mon)
+        {
+            s.Emit("PlaySE", SelectSound).Emit("LockAll").Emit("FacePlayer").Emit("PlayCry", mon.Species, 0);
+            if (messages.Count > 0) s.Emit("NPCMsg", messages[0]);
+            s.Emit("WaitCry");
+            if (messages.Count > 0) s.Emit("CloseMsg");
+            s.Emit("WildBattle", mon.Species, mon.Level, 0)
+                .Emit("CheckBattleWon", ResultVar)
+                .Emit("CompareVarToValue", ResultVar, 0)
+                .Emit("GoToIf", ConditionEqual, "lost");
+            if (flag is { } hide) s.Emit("SetFlag", hide).Emit("HidePerson", objectId);
+            return s.Emit("ReleaseAll").Emit("End")
+                .Label("lost").Emit("WhiteOut").Emit("ReleaseAll").Emit("End")
+                .Build();
+        }
         s.Emit($"ScrCmd_{SelectSoundCommandSeen}").Emit("LockAll").Emit("FacePlayer");
         switch (behavior)
         {
@@ -134,6 +165,8 @@ public static class NewEventService
         if (header.ScriptsBank < 0 || header.MsgBank < 0 || header.EventsBank < 0) throw new InvalidDataException(Loc.T("core.newev.noFiles", header.InternalName));
         if (npc.Facing is < 0 or > 3) throw new ArgumentException(Loc.T("core.newev.badFacing"));
         if (npc.Behavior is GiveItemBehavior { Quantity: < 1 or > 99 }) throw new ArgumentException(Loc.T("core.newev.badQuantity"));
+        if (npc.Behavior is PokemonBehavior { Level: < 1 or > 100 }) throw new ArgumentException(Loc.T("core.newev.badLevel"));
+        if (npc.Behavior is PokemonBehavior { Species: < 1 or > MaxSpecies }) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
 
         var warnings = new List<string>();
         var eventsNarc = Narc.Read(File.ReadAllBytes(game.EventsPath));
@@ -151,7 +184,7 @@ public static class NewEventService
         }
 
         int? flag = null;
-        if (npc.Behavior is GiveItemBehavior)
+        if (npc.Behavior is GiveItemBehavior or PokemonBehavior { Vanish: true })
         {
             int trainers = Narc.Read(File.ReadAllBytes(game.TrainerDataPath)).Files.Count;
             flag = PickFreeFlag(map, trainers) ?? throw new InvalidDataException(Loc.T("core.newev.noFlag"));
@@ -163,23 +196,26 @@ public static class NewEventService
         {
             TalkBehavior t => [t.Text],
             GiveItemBehavior i => [EndWithWait(i.BeforeText), i.AfterText],
+            PokemonBehavior { Text: { Length: > 0 } text } => [EndWithWait(text)],
             _ => [],
         };
         var messages = lines.Select(text => texts.AddText(header.MsgBank, text)).ToList();
 
         var table = ScriptCommandTable.Hgss;
-        var code = BuildScript(table, npc.Behavior, messages, flag);
+        int objectId = events.Objects.Count == 0 ? 0 : events.Objects.Max(o => o.Id) + 1;
+        var code = BuildScript(table, npc.Behavior, messages, flag, objectId);
         var editor = new ScriptEditor(scriptsNarc.Files[header.ScriptsBank], table);
         int scriptId = editor.AddEntry(code);
         scriptsNarc.Files[header.ScriptsBank] = editor.Raw;
 
         int index = events.Objects.Count;
         eventsNarc.Files[header.EventsBank] = EventFile.AddObject(eventsNarc.Files[header.EventsBank], new ObjectEvent(index,
-            Id: events.Objects.Count == 0 ? 0 : events.Objects.Max(o => o.Id) + 1,
-            SpriteId: npc.SpriteId,
+            Id: objectId,
+            SpriteId: npc.Behavior is PokemonBehavior p ? SpriteForSpecies(p.Species) ?? npc.SpriteId : npc.SpriteId,
             Movement: FixedFacingMovement + npc.Facing,
             Type: 0,
-            EventFlag: 0,
+            // a flag do Pokémon que some esconde o objeto; a do item só marca a entrega, e o NPC continua lá
+            EventFlag: npc.Behavior is PokemonBehavior && flag is { } hidden ? hidden : 0,
             ScriptId: scriptId,
             Facing: npc.Facing,
             X: npc.X,
