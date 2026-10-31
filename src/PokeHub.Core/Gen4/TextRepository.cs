@@ -102,6 +102,9 @@ public sealed class TextRepository
         return bank.Texts.Count - 1;
     }
 
+    /// <summary>Nome da espécie no banco do jogo.</summary>
+    public string Species(int species) => Bank(Game.SpeciesBank).Texts[species];
+
     public bool HasChanges => _banks.Any(b => b is { Dirty: true });
 
     public IEnumerable<TextSearchHit> Search(string query, int limit = 500)

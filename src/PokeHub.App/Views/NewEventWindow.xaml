@@ -48,7 +48,15 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-                <DockPanel Margin="0,0,0,12">
+                <DockPanel Margin="0,0,0,6">
+                    <TextBlock Text="{loc:T newev.movement}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <ComboBox ItemsSource="{Binding Movements}" SelectedItem="{Binding SelectedMovement}" />
+                </DockPanel>
+                <DockPanel Margin="0,0,0,6" Visibility="{Binding UsesRange, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{loc:T newev.range}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBox Text="{Binding Range}" Width="50" HorizontalAlignment="Left" />
+                </DockPanel>
+                <DockPanel Margin="0,0,0,12" Visibility="{Binding UsesFacing, Converter={StaticResource BoolToVis}}">
                     <TextBlock Text="{loc:T newev.facing}" VerticalAlignment="Center" Margin="0,0,8,0" />
                     <ComboBox ItemsSource="{Binding Facings}" SelectedItem="{Binding SelectedFacing}" />
                 </DockPanel>
@@ -56,7 +64,8 @@
                 <TextBlock Text="{loc:T newev.step.does}" FontWeight="Bold" Margin="0,0,0,6" />
                 <RadioButton Content="{loc:T newev.talk}" IsChecked="{Binding IsTalk}" Margin="0,0,0,4" />
                 <RadioButton Content="{loc:T newev.item}" IsChecked="{Binding IsItem}" Margin="0,0,0,4" />
-                <RadioButton Content="{loc:T newev.pokemon}" IsChecked="{Binding IsPokemon}" Margin="0,0,0,8" />
+                <RadioButton Content="{loc:T newev.pokemon}" IsChecked="{Binding IsPokemon}" Margin="0,0,0,4" />
+                <RadioButton Content="{loc:T newev.trade}" IsChecked="{Binding IsTrade}" Margin="0,0,0,8" />
 
                 <StackPanel Visibility="{Binding IsTalk, Converter={StaticResource BoolToVis}}">
                     <TextBlock Text="{loc:T newev.talkText}" Margin="0,0,0,4" />
@@ -88,6 +97,30 @@
                     <CheckBox Content="{loc:T newev.vanish}" IsChecked="{Binding Vanish}" Margin="0,0,0,8" />
                     <TextBlock Text="{loc:T newev.pokemonText}" Margin="0,0,0,4" />
                     <TextBox Text="{Binding PokemonText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="50" />
+                </StackPanel>
+
+                <StackPanel Visibility="{Binding IsTrade, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding FreeTradeNote}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,6" />
+                    <DockPanel Margin="0,0,0,6">
+                        <TextBlock Text="{loc:T newev.trade.ask}" Width="70" VerticalAlignment="Center" />
+                        <ComboBox ItemsSource="{Binding Species}" SelectedItem="{Binding AskSpecies}" />
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,6">
+                        <TextBlock Text="{loc:T newev.trade.give}" Width="70" VerticalAlignment="Center" />
+                        <ComboBox ItemsSource="{Binding Species}" SelectedItem="{Binding GiveSpecies}" />
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,6">
+                        <TextBlock Text="{loc:T newev.trade.nickname}" Width="70" VerticalAlignment="Center" />
+                        <TextBox Text="{Binding Nickname}" MaxLength="10" />
+                    </DockPanel>
+                    <TextBlock Text="{loc:T newev.trade.askText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding AskText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.trade.thanksText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding ThanksText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.trade.wrongText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding WrongText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="36" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.trade.declineText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding DeclineText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="36" />
                 </StackPanel>
 
                 <TextBlock Text="{loc:T newev.hint}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,8,0,0" />

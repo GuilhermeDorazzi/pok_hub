@@ -102,8 +102,8 @@ public partial class App : Application
                             newEventVm.MapFilter = "R29";
                             newEventVm.SelectedMap = newEventVm.Maps.FirstOrDefault();
                             newEventVm.PickTile(40, 20);
-                            newEventVm.IsPokemon = true;
-                            newEventVm.SelectedSpecies = newEventVm.Species.FirstOrDefault(s => s.Value == 25);
+                            newEventVm.IsTrade = true;
+                            newEventVm.SelectedMovement = newEventVm.Movements[2];
                         }
                         await Task.Delay(800);
                         win.UpdateLayout();

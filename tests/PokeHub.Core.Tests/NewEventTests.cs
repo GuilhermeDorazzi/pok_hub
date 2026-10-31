@@ -89,6 +89,25 @@ public class NewEventTests
     }
 
     [Fact]
+    public void Trade_script_matches_the_games_own_npcs()
+    {
+        var table = ScriptCommandTable.Hgss;
+        var code = NewEventService.BuildScript(table, new TradeBehavior(16, 1, null, "a", "b", "c", "d"), [1, 2, 3, 4], 0x95F, 0, 7);
+        var file = new byte[6 + code.Length];
+        BitConverter.TryWriteBytes(file.AsSpan(0), 2);
+        BitConverter.TryWriteBytes(file.AsSpan(4), (ushort)0xFD13);
+        code.CopyTo(file, 6);
+        var ordered = new ScriptFile(file, table).Routine(1)!.Instructions.OrderBy(i => i.Offset).ToList();
+        Assert.Equal(7, ordered.First(i => i.Name == "LoadNPCTrade").Args[0].Value);
+        Assert.Equal(["PlaySE", "LockAll", "FacePlayer", "CheckFlag", "GoToIf", "NPCMsg", "TouchscreenMenuHide", "GetMenuChoice", "TouchscreenMenuShow", "CompareVarToValue", "GoToIf", "GoTo",
+            "CloseMsg", "FadeScreen", "WaitFade", "ScrCmd_566", "GetPartySelection", "RestoreOverworld", "FadeScreen", "WaitFade", "CompareVarToValue", "GoToIf",
+            "LoadNPCTrade", "CopyVar", "GetPartyMonSpecies", "NPCTradeGetReqSpecies", "CompareVarToVar", "GoToIf", "NPCTradeExec", "NPCTradeEnd", "SetFlag",
+            "NPCMsg", "WaitButton", "CloseMsg", "ReleaseAll", "End",
+            "NPCTradeEnd", "NPCMsg", "WaitButton", "CloseMsg", "ReleaseAll", "End",
+            "NPCMsg", "WaitButton", "CloseMsg", "ReleaseAll", "End"], ordered.Select(i => i.Name));
+    }
+
+    [Fact]
     public void Every_species_has_a_field_sprite()
     {
         for (int species = 1; species <= 493; species++) Assert.NotNull(NewEventService.SpriteForSpecies(species));
@@ -135,7 +154,7 @@ public class NewEventTests
         var projectDir = Path.GetDirectoryName(ws.TrimEnd('\\', '/'))!;
         var project = new Project { Paths = new ProjectPaths(projectDir), Config = ProjectConfig.Load(Path.Combine(projectDir, "project.json")) };
         var game = Gen4Game.For(project);
-        string[] paths = [game.EventsPath, game.ScriptsPath, game.TextArchivePath];
+        string[] paths = [game.EventsPath, game.ScriptsPath, game.TextArchivePath, Path.Combine(game.FilesRoot, @"a\1\1\2")];
         var saved = paths.Select(File.ReadAllBytes).ToList();
         try
         {
@@ -175,6 +194,27 @@ public class NewEventTests
             Assert.NotNull(map4.Sprites!.Render(pikachu.SpriteId)); // o sprite existe na tabela do jogo
             for (int species = 1; species <= 493; species++)
                 Assert.NotNull(map4.Sprites.Render(NewEventService.SpriteForSpecies(species)!.Value));
+
+            // movimento: andar usa alcance, parado não
+            var walker = NewEventService.Create(project, EventMap.Load(project), new NewNpc(header.Id, at.X + 4, at.Z, at.SpriteId, 1, new TalkBehavior("Ando"), NpcMovement.Wander, 2));
+            var walkerObject = new EventFile(Narc.Read(File.ReadAllBytes(game.EventsPath)).Files[header.EventsBank]).Objects[walker.ObjectIndex];
+            Assert.Equal(3, walkerObject.Movement);
+            Assert.Equal(2, walkerObject.XRange);
+            Assert.Equal(2, walkerObject.ZRange);
+
+            // troca: usa uma vaga que nenhum script carrega, grava as espécies e o apelido
+            var freeBefore = NewEventService.FreeTradeSlots(game);
+            Assert.NotEmpty(freeBefore);
+            var names = TextRepository.Load(project);
+            Assert.Equal("ROCKY", names.Bank(NewEventService.TradeNamesBank).Texts[0], ignoreCase: true); // apelido da vaga 0 no jogo
+            var tradeResult = NewEventService.Create(project, EventMap.Load(project), new NewNpc(header.Id, at.X + 5, at.Z, at.SpriteId, 1,
+                new TradeBehavior(16, 1, "HUBBY", "Troca?", "Valeu!", "Esse nao!", "Tudo bem.")));
+            var trades = Narc.Read(File.ReadAllBytes(Path.Combine(game.FilesRoot, @"a\1\1\2")));
+            var record = trades.Files[freeBefore[0]];
+            Assert.Equal(1, BitConverter.ToInt32(record, 0));
+            Assert.Equal(16, BitConverter.ToInt32(record, 0x4C));
+            Assert.Equal("HUBBY", TextRepository.Load(project).Bank(NewEventService.TradeNamesBank).Texts[freeBefore[0]]);
+            Assert.DoesNotContain(freeBefore[0], NewEventService.FreeTradeSlots(game));
 
             var script = new ScriptFile(Narc.Read(File.ReadAllBytes(game.ScriptsPath)).Files[header.ScriptsBank], ScriptCommandTable.Hgss);
             for (int id = 1; id <= oldScript.EntryOffsets.Count; id++)

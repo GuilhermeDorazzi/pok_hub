@@ -48,6 +48,16 @@ public sealed partial class NewEventViewModel : ObservableObject
     [ObservableProperty] private bool _isTalk = true;
     [ObservableProperty] private bool _isItem;
     [ObservableProperty] private bool _isPokemon;
+    [ObservableProperty] private bool _isTrade;
+    [ObservableProperty] private NewEventChoice? _selectedMovement;
+    [ObservableProperty] private string _range = "2";
+    [ObservableProperty] private NewEventChoice? _askSpecies;
+    [ObservableProperty] private NewEventChoice? _giveSpecies;
+    [ObservableProperty] private string _nickname = "";
+    [ObservableProperty] private string _askText = "";
+    [ObservableProperty] private string _thanksText = "";
+    [ObservableProperty] private string _wrongText = Loc.T("newev.trade.wrongDefault");
+    [ObservableProperty] private string _declineText = Loc.T("newev.trade.declineDefault");
     [ObservableProperty] private NewEventChoice? _selectedSpecies;
     [ObservableProperty] private string _level = "10";
     [ObservableProperty] private bool _vanish = true;
@@ -66,6 +76,14 @@ public sealed partial class NewEventViewModel : ObservableObject
     public (int X, int Y)? Tile { get; private set; }
     public IReadOnlyList<NewEventChoice> Species { get; }
     public bool UsesSpriteList => !IsPokemon;
+    public string FreeTradeNote { get; }
+    public IReadOnlyList<NewEventChoice> Movements { get; } =
+    [
+        new((int)NpcMovement.Fixed, Loc.T("newev.move.fixed")), new((int)NpcMovement.LookAround, Loc.T("newev.move.look")),
+        new((int)NpcMovement.Wander, Loc.T("newev.move.wander")), new((int)NpcMovement.UpDown, Loc.T("newev.move.updown")), new((int)NpcMovement.LeftRight, Loc.T("newev.move.leftright")),
+    ];
+    public bool UsesFacing => SelectedMovement?.Value is null or (int)NpcMovement.Fixed;
+    public bool UsesRange => SelectedMovement?.Value is (int)NpcMovement.Wander or (int)NpcMovement.UpDown or (int)NpcMovement.LeftRight;
 
     public NewEventViewModel(Project project, EventMap map, IReadOnlyList<string> items, IReadOnlyList<string> species, Action<string> log, Func<string, Task> snapshot)
     {
@@ -75,6 +93,10 @@ public sealed partial class NewEventViewModel : ObservableObject
         SelectedItem = Items.FirstOrDefault();
         Species = species.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}")).Where(s => NewEventService.SpriteForSpecies(s.Value) is not null).ToList();
         SelectedSpecies = Species.FirstOrDefault();
+        AskSpecies = Species.FirstOrDefault();
+        GiveSpecies = Species.FirstOrDefault();
+        SelectedMovement = Movements[0];
+        FreeTradeNote = Loc.T("newev.trade.free", NewEventService.FreeTradeSlots(map.Game).Count);
         SelectedFacing = Facings[0];
         Sprites = map.Sprites is { } sprites
             ? sprites.Ids.Select(id => (id, image: sprites.Render(id))).Where(s => s.image is not null).Select(s => new NewEventSprite(s.id, s.image!.ToBitmap())).ToList()
@@ -88,6 +110,11 @@ public sealed partial class NewEventViewModel : ObservableObject
 
     partial void OnMapFilterChanged(string value) => ApplyMapFilter();
     partial void OnIsPokemonChanged(bool value) => OnPropertyChanged(nameof(UsesSpriteList));
+    partial void OnSelectedMovementChanged(NewEventChoice? value)
+    {
+        OnPropertyChanged(nameof(UsesFacing));
+        OnPropertyChanged(nameof(UsesRange));
+    }
     partial void OnSelectedSpeciesChanged(NewEventChoice? value) =>
         PokemonSprite = value is not null && NewEventService.SpriteForSpecies(value.Value) is { } sprite ? SpriteOf(sprite) : null;
 
@@ -136,20 +163,25 @@ public sealed partial class NewEventViewModel : ObservableObject
         if (IsTalk && string.IsNullOrWhiteSpace(TalkText) || IsItem && (string.IsNullOrWhiteSpace(BeforeText) || string.IsNullOrWhiteSpace(AfterText))) { Status = Loc.T("newev.needText"); return; }
         if (IsItem && (SelectedItem is null || !int.TryParse(Quantity, out _))) { Status = Loc.T("core.newev.badQuantity"); return; }
         if (IsPokemon && (SelectedSpecies is null || !int.TryParse(Level, out _))) { Status = Loc.T("core.newev.badLevel"); return; }
+        if (IsTrade && (AskSpecies is null || GiveSpecies is null)) { Status = Loc.T("core.newev.badSpecies"); return; }
+        if (IsTrade && (string.IsNullOrWhiteSpace(AskText) || string.IsNullOrWhiteSpace(ThanksText) || string.IsNullOrWhiteSpace(WrongText) || string.IsNullOrWhiteSpace(DeclineText))) { Status = Loc.T("newev.needText"); return; }
+        int range = 1;
+        if (UsesRange && !int.TryParse(Range, out range)) { Status = Loc.T("core.newev.badRange", 8); return; }
 
         try
         {
             NpcBehavior behavior = IsTalk ? new TalkBehavior(Prepare(TalkText))
                 : IsItem ? new GiveItemBehavior(SelectedItem!.Value, int.Parse(Quantity), Prepare(BeforeText), Prepare(AfterText))
+                : IsTrade ? new TradeBehavior(AskSpecies!.Value, GiveSpecies!.Value, string.IsNullOrWhiteSpace(Nickname) ? null : Nickname.Trim(), Prepare(AskText), Prepare(ThanksText), Prepare(WrongText), Prepare(DeclineText))
                 : new PokemonBehavior(SelectedSpecies!.Value, int.Parse(Level), Vanish, string.IsNullOrWhiteSpace(PokemonText) ? null : Prepare(PokemonText));
             await _snapshot(Loc.T("newev.snapshotBefore", map.Label));
-            var result = NewEventService.Create(_project, _map, new NewNpc(map.Id, tile.X + Layout.OriginX, tile.Y + Layout.OriginY, sprite.Id, facing.Value, behavior));
+            var result = NewEventService.Create(_project, _map, new NewNpc(map.Id, tile.X + Layout.OriginX, tile.Y + Layout.OriginY, sprite.Id, facing.Value, behavior, (NpcMovement)(SelectedMovement?.Value ?? 0), range));
             await _snapshot(Loc.T("newev.snapshotAfter", map.Label));
             _map = EventMap.Load(_project); // flags, scripts e planta precisam refletir o NPC novo
             LoadLayout();
             Status = Loc.T("newev.created", result.ScriptId) + (result.Warnings.Count > 0 ? " " + string.Join(" ", result.Warnings) : "");
             _log(Status);
-            TalkText = BeforeText = AfterText = PokemonText = "";
+            TalkText = BeforeText = AfterText = PokemonText = AskText = ThanksText = Nickname = "";
         }
         catch (Exception ex) when (ex is ArgumentException or System.IO.InvalidDataException or NotSupportedException or System.IO.IOException or UnauthorizedAccessException or KeyNotFoundException)
         {

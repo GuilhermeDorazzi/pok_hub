@@ -14,9 +14,15 @@ public sealed record GiveItemBehavior(int Item, int Quantity, string BeforeText,
 /// <summary>Pokémon parado no mapa: grito e batalha. Com Vanish, some depois da batalha, a não ser que o jogador perca. Texto é opcional.</summary>
 public sealed record PokemonBehavior(int Species, int Level, bool Vanish, string? Text) : NpcBehavior;
 
+/// <summary>Troca: o NPC pede uma espécie e dá outra, usando uma vaga livre da tabela de trocas do jogo.</summary>
+public sealed record TradeBehavior(int AskSpecies, int GiveSpecies, string? Nickname, string AskText, string ThanksText, string WrongText, string DeclineText) : NpcBehavior;
+
+/// <summary>Como o NPC se move. Os códigos são MOVEMENT_TYPE nas decomps; andar usa um alcance em tiles a partir da posição dele.</summary>
+public enum NpcMovement { Fixed, LookAround, Wander, UpDown, LeftRight }
+
 /// <param name="X">Tile na matriz inteira, como guardado no arquivo de eventos.</param>
 /// <param name="Facing">0 cima, 1 baixo, 2 esquerda, 3 direita.</param>
-public sealed record NewNpc(int MapId, int X, int Z, int SpriteId, int Facing, NpcBehavior Behavior);
+public sealed record NewNpc(int MapId, int X, int Z, int SpriteId, int Facing, NpcBehavior Behavior, NpcMovement Movement = NpcMovement.Fixed, int Range = 1);
 
 public sealed record NewNpcResult(int ObjectIndex, int ScriptId, int? Flag, IReadOnlyList<string> Warnings);
 
@@ -72,6 +78,11 @@ public static class NewEventService
 {
     /// <summary>O mapa mais cheio do SoulSilver tem 51 NPCs. Passar disso é terreno não testado.</summary>
     public const int NpcWarningCount = 51;
+    /// <summary>Banco com apelidos (vaga) e nomes de treinador (vaga + 13) das trocas.</summary>
+    public const int TradeNamesBank = 200;
+    private const int TradeSlots = 13, MaxRange = 8;
+    private const int TradeGiveOffset = 0, TradeAbilityOffset = 28, TradeAskOffset = 0x4C;
+    private const int PartyCancelled = 255, ConditionNotEqual = 5;
     private const int SelectSoundCommandSeen = 609, SpecialVar0 = 0x8004, SpecialVar1 = 0x8005, ResultVar = 0x800C;
     private const int GiveItemStd = 2033, BagFullStd = 2009, ConditionEqual = 1, SelectSound = 1500, MaxSpecies = 493;
     /// <summary>Flags de treinador começam aqui e vão até o último treinador; as do sistema começam em 0x960.</summary>
@@ -110,9 +121,59 @@ public static class NewEventService
     /// <summary>Sprite de campo da espécie, o mesmo do Pokémon que segue o jogador no HG/SS. Null se não houver.</summary>
     public static int? SpriteForSpecies(int species) => Followers.Value.TryGetValue(species, out var sprite) ? sprite : null;
 
-    public static byte[] BuildScript(ScriptCommandTable table, NpcBehavior behavior, IReadOnlyList<int> messages, int? flag, int objectId = 0)
+    /// <summary>Vagas de troca que nenhum script carrega. Trocar uma delas não afeta nenhum NPC do jogo.</summary>
+    public static List<int> FreeTradeSlots(Gen4Game game)
+    {
+        var used = new HashSet<long>();
+        var table = ScriptCommandTable.Hgss;
+        foreach (var file in Narc.Read(File.ReadAllBytes(game.ScriptsPath)).Files)
+        {
+            var script = new ScriptFile(file, table);
+            for (int id = 1; id <= script.EntryOffsets.Count; id++)
+                foreach (var i in script.Routine(id)!.Instructions)
+                    if (i.Name == "LoadNPCTrade") used.Add(i.Args[0].Value);
+        }
+        return Enumerable.Range(0, TradeSlots).Where(slot => !used.Contains(slot)).ToList();
+    }
+
+    private static void BuildTrade(ScriptBuilder s, int slot, int flag, IReadOnlyList<int> m)
+    {
+        s.Emit("PlaySE", SelectSound).Emit("LockAll").Emit("FacePlayer")
+            .Emit("CheckFlag", flag).Emit("GoToIf", ConditionEqual, "done")
+            .Emit("NPCMsg", m[0])
+            .Emit("TouchscreenMenuHide").Emit("GetMenuChoice", ResultVar).Emit("TouchscreenMenuShow")
+            .Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "yes")
+            .Emit("GoTo", "decline")
+            .Label("yes")
+            .Emit("CloseMsg")
+            .Emit("FadeScreen", 6, 1, 0, 0).Emit("WaitFade")
+            .Emit("ScrCmd_566").Emit("GetPartySelection", ResultVar).Emit("RestoreOverworld")
+            .Emit("FadeScreen", 6, 1, 1, 0).Emit("WaitFade")
+            .Emit("CompareVarToValue", ResultVar, PartyCancelled).Emit("GoToIf", ConditionEqual, "decline")
+            .Emit("LoadNPCTrade", slot)
+            .Emit("CopyVar", SpecialVar0, ResultVar)
+            .Emit("GetPartyMonSpecies", SpecialVar0, SpecialVar1)
+            .Emit("NPCTradeGetReqSpecies", ResultVar)
+            .Emit("CompareVarToVar", SpecialVar1, ResultVar).Emit("GoToIf", ConditionNotEqual, "wrong")
+            .Emit("NPCTradeExec", SpecialVar0).Emit("NPCTradeEnd")
+            .Emit("SetFlag", flag)
+            .Label("done")
+            .Emit("NPCMsg", m[1]).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End")
+            .Label("wrong")
+            .Emit("NPCTradeEnd")
+            .Emit("NPCMsg", m[2]).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End")
+            .Label("decline")
+            .Emit("NPCMsg", m[3]).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
+    }
+
+    public static byte[] BuildScript(ScriptCommandTable table, NpcBehavior behavior, IReadOnlyList<int> messages, int? flag, int objectId = 0, int tradeSlot = 0)
     {
         var s = new ScriptBuilder(table);
+        if (behavior is TradeBehavior)
+        {
+            BuildTrade(s, tradeSlot, flag!.Value, messages);
+            return s.Build();
+        }
         if (behavior is PokemonBehavior mon)
         {
             s.Emit("PlaySE", SelectSound).Emit("LockAll").Emit("FacePlayer").Emit("PlayCry", mon.Species, 0);
@@ -167,6 +228,16 @@ public static class NewEventService
         if (npc.Behavior is GiveItemBehavior { Quantity: < 1 or > 99 }) throw new ArgumentException(Loc.T("core.newev.badQuantity"));
         if (npc.Behavior is PokemonBehavior { Level: < 1 or > 100 }) throw new ArgumentException(Loc.T("core.newev.badLevel"));
         if (npc.Behavior is PokemonBehavior { Species: < 1 or > MaxSpecies }) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
+        if (npc.Behavior is TradeBehavior { AskSpecies: < 1 or > MaxSpecies } or TradeBehavior { GiveSpecies: < 1 or > MaxSpecies }) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
+        if (npc.Range is < 1 or > MaxRange) throw new ArgumentException(Loc.T("core.newev.badRange", MaxRange));
+
+        int? tradeSlot = null;
+        if (npc.Behavior is TradeBehavior)
+        {
+            var free = FreeTradeSlots(game);
+            if (free.Count == 0) throw new InvalidDataException(Loc.T("core.newev.noTradeSlot"));
+            tradeSlot = free[0];
+        }
 
         var warnings = new List<string>();
         var eventsNarc = Narc.Read(File.ReadAllBytes(game.EventsPath));
@@ -184,7 +255,7 @@ public static class NewEventService
         }
 
         int? flag = null;
-        if (npc.Behavior is GiveItemBehavior or PokemonBehavior { Vanish: true })
+        if (npc.Behavior is GiveItemBehavior or TradeBehavior or PokemonBehavior { Vanish: true })
         {
             int trainers = Narc.Read(File.ReadAllBytes(game.TrainerDataPath)).Files.Count;
             flag = PickFreeFlag(map, trainers) ?? throw new InvalidDataException(Loc.T("core.newev.noFlag"));
@@ -197,13 +268,29 @@ public static class NewEventService
             TalkBehavior t => [t.Text],
             GiveItemBehavior i => [EndWithWait(i.BeforeText), i.AfterText],
             PokemonBehavior { Text: { Length: > 0 } text } => [EndWithWait(text)],
+            TradeBehavior t => [t.AskText, t.ThanksText, t.WrongText, t.DeclineText],
             _ => [],
         };
         var messages = lines.Select(text => texts.AddText(header.MsgBank, text)).ToList();
 
         var table = ScriptCommandTable.Hgss;
         int objectId = events.Objects.Count == 0 ? 0 : events.Objects.Max(o => o.Id) + 1;
-        var code = BuildScript(table, npc.Behavior, messages, flag, objectId);
+        var code = BuildScript(table, npc.Behavior, messages, flag, objectId, tradeSlot ?? 0);
+
+        byte[]? tradeNarc = null;
+        if (npc.Behavior is TradeBehavior trade)
+        {
+            var path = Path.Combine(game.FilesRoot, TradesRelativePath);
+            var trades = Narc.Read(File.ReadAllBytes(path));
+            var record = trades.Files[tradeSlot!.Value];
+            BitConverter.TryWriteBytes(record.AsSpan(TradeGiveOffset), trade.GiveSpecies);
+            BitConverter.TryWriteBytes(record.AsSpan(TradeAskOffset), trade.AskSpecies);
+            // a habilidade guardada precisa ser uma que a espécie nova tenha
+            var personal = PersonalRepository.Load(project).Get(trade.GiveSpecies);
+            if (personal is not null) BitConverter.TryWriteBytes(record.AsSpan(TradeAbilityOffset), (int)personal.Ability1);
+            tradeNarc = trades.Write();
+            texts.SetText(TradeNamesBank, tradeSlot.Value, string.IsNullOrWhiteSpace(trade.Nickname) ? texts.Species(trade.GiveSpecies) : trade.Nickname);
+        }
         var editor = new ScriptEditor(scriptsNarc.Files[header.ScriptsBank], table);
         int scriptId = editor.AddEntry(code);
         scriptsNarc.Files[header.ScriptsBank] = editor.Raw;
@@ -212,7 +299,14 @@ public static class NewEventService
         eventsNarc.Files[header.EventsBank] = EventFile.AddObject(eventsNarc.Files[header.EventsBank], new ObjectEvent(index,
             Id: objectId,
             SpriteId: npc.Behavior is PokemonBehavior p ? SpriteForSpecies(p.Species) ?? npc.SpriteId : npc.SpriteId,
-            Movement: FixedFacingMovement + npc.Facing,
+            Movement: npc.Movement switch
+            {
+                NpcMovement.LookAround => MovementLookAround,
+                NpcMovement.Wander => MovementWander,
+                NpcMovement.UpDown => MovementWander + 1,
+                NpcMovement.LeftRight => MovementWander + 2,
+                _ => FixedFacingMovement + npc.Facing,
+            },
             Type: 0,
             // a flag do Pokémon que some esconde o objeto; a do item só marca a entrega, e o NPC continua lá
             EventFlag: npc.Behavior is PokemonBehavior && flag is { } hidden ? hidden : 0,
@@ -220,16 +314,20 @@ public static class NewEventService
             Facing: npc.Facing,
             X: npc.X,
             Z: npc.Z,
-            Y: HeightFor(events, npc.X, npc.Z)));
+            Y: HeightFor(events, npc.X, npc.Z),
+            XRange: npc.Movement is NpcMovement.Wander or NpcMovement.LeftRight ? npc.Range : 0,
+            ZRange: npc.Movement is NpcMovement.Wander or NpcMovement.UpDown ? npc.Range : 0));
 
         texts.Save();
         WriteAtomic(game.ScriptsPath, scriptsNarc.Write());
         WriteAtomic(game.EventsPath, eventsNarc.Write());
+        if (tradeNarc is not null) WriteAtomic(Path.Combine(game.FilesRoot, TradesRelativePath), tradeNarc);
         return new NewNpcResult(index, scriptId, flag, warnings);
     }
 
     /// <summary>Nos NPCs do jogo, 14 a 17 olham fixo para cima, baixo, esquerda e direita.</summary>
-    private const int FixedFacingMovement = 14;
+    private const int FixedFacingMovement = 14, MovementLookAround = 2, MovementWander = 3;
+    private const string TradesRelativePath = @"a\1\1\2";
 
     /// <summary>Sem esperar o botão, o próximo comando apagaria a fala antes de dar para ler.</summary>
     private static string EndWithWait(string text) => text.EndsWith("\\r", StringComparison.Ordinal) ? text : text + "\\r";
