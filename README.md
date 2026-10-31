@@ -12,6 +12,7 @@ Hub para ROM hacking de Pokémon no Nintendo DS. Instala, configura e lança as 
 ```
 src/PokeHub.Core   lógica: pastas do hub, projetos, manifestos de plugins, instalador, lançador de processos, header de ROM
 src/PokeHub.App    interface WPF
+src/PokeHub.Mcp    servidor MCP: agentes de IA operam o hub (ver docs/03-servidor-mcp.md)
 plugins/*.json     manifestos das ferramentas suportadas
 docs/              planejamento e levantamento de ferramentas
 ```

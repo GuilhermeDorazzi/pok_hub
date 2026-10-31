@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "pokehub": {
+      "command": "src/PokeHub.Mcp/bin/Debug/net9.0/PokeHub.Mcp.exe",
+      "args": [],
+      "env": {}
+    }
+  }
+}

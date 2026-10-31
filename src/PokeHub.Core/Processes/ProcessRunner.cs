@@ -16,6 +16,9 @@ public static class ProcessRunner
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            // stdin próprio (fechado logo após iniciar): sem isso o filho herda o stdin do hub e, quando outro
+            // leitor está pendurado nele (ex.: o servidor MCP lendo o protocolo), a captura da saída trava.
+            RedirectStandardInput = true,
             CreateNoWindow = true,
             WorkingDirectory = workingDir ?? Environment.CurrentDirectory,
         };
@@ -30,6 +33,7 @@ public static class ProcessRunner
         p.ErrorDataReceived += (_, e) => { if (e.Data is not null) log?.Report(e.Data); };
         log?.Report($"> {fileName} {string.Join(' ', args)}");
         p.Start();
+        p.StandardInput.Close();
         p.BeginOutputReadLine();
         p.BeginErrorReadLine();
         try { await p.WaitForExitAsync(ct); }
@@ -41,10 +45,12 @@ public static class ProcessRunner
     public static async Task<(int ExitCode, string Output)> CaptureAsync(string fileName, IEnumerable<string> args,
         Encoding? outputEncoding = null, int timeoutMs = 10000)
     {
-        var psi = new ProcessStartInfo(fileName) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
+        var psi = new ProcessStartInfo(fileName) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = true, CreateNoWindow = true };
         foreach (var a in args) psi.ArgumentList.Add(a);
         psi.StandardOutputEncoding = outputEncoding ?? Encoding.UTF8;
         using var p = Process.Start(psi) ?? throw new InvalidOperationException(Loc.T("core.process.startFailed", fileName));
+        p.StandardInput.Close();
+        p.BeginErrorReadLine(); // drena stderr para o filho nunca bloquear com o pipe cheio
         using var cts = new CancellationTokenSource(timeoutMs);
         var output = await p.StandardOutput.ReadToEndAsync(cts.Token);
         await p.WaitForExitAsync(cts.Token);
