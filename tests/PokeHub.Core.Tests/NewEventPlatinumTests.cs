@@ -31,8 +31,8 @@ public class NewEventPlatinumTests
     public void Pokemon_and_trade_match_the_games_own_scripts()
     {
         var table = ScriptCommandTable.Platinum;
-        Assert.Equal(["PlaySE", "LockAll", "FacePlayer", "PlayCry", "WaitCry", "StartWildBattle", "CheckWonBattle", "CompareVarToValue", "GoToIf", "SetFlag", "RemoveObject", "ReleaseAll", "End", "BlackOutFromBattle", "ReleaseAll", "End"],
-            Commands(NewEventService.BuildScript(table, new PokemonBehavior(25, 10, true, null), [], 0x95F, 3), table));
+        Assert.Equal(["PlaySE", "LockAll", "FacePlayer", "PlayCry", "WaitCry", "CountPartyNonEggs", "CompareVarToValue", "GoToIf", "SetFlag", "StartWildBattle", "ClearFlag", "CheckWonBattle", "CompareVarToValue", "GoToIf", "SetFlag", "ReleaseAll", "End", "BlackOutFromBattle", "ReleaseAll", "End", "ReleaseAll", "End"],
+            Commands(NewEventService.BuildScript(table, new PokemonBehavior(25, 10, true, null), [], 0x95F, 3, engageFlag: 0x95E), table));
         var trade = Commands(NewEventService.BuildScript(table, new TradeBehavior(16, 1, null, "a", "b", "c", "d"), [1, 2, 3, 4], 0x95F), table);
         Assert.Contains("ShowYesNoMenu", trade);
         Assert.Contains("OpenPartyMenuForTrade", trade);
@@ -57,6 +57,8 @@ public class NewEventPlatinumTests
         var game = Gen4Game.For(project);
         string[] paths = [game.EventsPath, game.ScriptsPath, game.TextArchivePath];
         var saved = paths.Select(File.ReadAllBytes).ToList();
+        var ledgerPath = Path.Combine(ws, "pokehub-events.json");
+        var savedLedger = File.Exists(ledgerPath) ? File.ReadAllText(ledgerPath) : null;
         try
         {
             var map = EventMap.Load(project);
@@ -89,6 +91,8 @@ public class NewEventPlatinumTests
         finally
         {
             for (int i = 0; i < paths.Length; i++) File.WriteAllBytes(paths[i], saved[i]);
+            if (savedLedger is null) File.Delete(ledgerPath);
+            else File.WriteAllText(ledgerPath, savedLedger);
         }
     }
 }

@@ -22,6 +22,14 @@
         <DockPanel Margin="0,0,10,0">
             <TextBlock DockPanel.Dock="Top" Text="{loc:T newev.step.map}" FontWeight="Bold" Margin="0,0,0,6" />
             <TextBox DockPanel.Dock="Top" Text="{Binding MapFilter, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" ToolTip="{loc:T newev.mapFilter}" />
+            <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                <TextBlock Text="{loc:T newev.createdList}" FontWeight="Bold" Margin="0,0,0,6" />
+                <ListBox ItemsSource="{Binding Created}" SelectedItem="{Binding SelectedCreated}" Height="150" ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+                <DockPanel Margin="0,6,0,0">
+                    <Button Content="{loc:T newev.newNpc}" Command="{Binding NewNpcCommand}" Padding="10,3" />
+                    <Button Content="{loc:T newev.remove}" Command="{Binding RemoveCommand}" IsEnabled="{Binding IsEditing}" Padding="10,3" HorizontalAlignment="Right" Margin="0" />
+                </DockPanel>
+            </StackPanel>
             <ListBox ItemsSource="{Binding Maps}" SelectedItem="{Binding SelectedMap}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
         </DockPanel>
 
@@ -95,6 +103,7 @@
                         <TextBox Text="{Binding Level}" Width="50" HorizontalAlignment="Left" />
                     </DockPanel>
                     <CheckBox Content="{loc:T newev.vanish}" IsChecked="{Binding Vanish}" Margin="0,0,0,8" />
+                    <TextBlock Text="{loc:T newev.noTeam}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8" />
                     <TextBlock Text="{loc:T newev.pokemonText}" Margin="0,0,0,4" />
                     <TextBox Text="{Binding PokemonText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="50" />
                 </StackPanel>
@@ -129,7 +138,7 @@
 
         <DockPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,8,0,0">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <Button Content="{loc:T newev.create}" Command="{Binding CreateCommand}" FontWeight="Bold" Padding="16,6" Margin="0,0,6,0" />
+                <Button Content="{Binding SaveLabel}" Command="{Binding CreateCommand}" FontWeight="Bold" Padding="16,6" Margin="0,0,6,0" />
                 <Button Content="{loc:T common.close}" Click="Close_Click" Padding="16,6" />
             </StackPanel>
             <TextBlock Text="{Binding Status}" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" TextWrapping="Wrap" />

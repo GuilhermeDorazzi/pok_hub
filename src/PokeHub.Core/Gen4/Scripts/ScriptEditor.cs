@@ -80,6 +80,33 @@ public sealed class ScriptEditor
         return count + 1;
     }
 
+    /// <summary>Troca o código de um script existente. O número não muda, então eventos e outros scripts continuam certos; o código antigo fica sem uso.</summary>
+    public void ReplaceEntry(int id, byte[] code)
+    {
+        const int EntrySize = 4;
+        var output = new byte[Raw.Length + code.Length];
+        Raw.CopyTo(output, 0);
+        code.CopyTo(output, Raw.Length);
+        int entry = (id - 1) * EntrySize;
+        BitConverter.TryWriteBytes(output.AsSpan(entry), Raw.Length - (entry + EntrySize));
+        Raw = output;
+        File = new ScriptFile(output, Table);
+    }
+
+    /// <summary>Grava bytes por cima de um trecho, sem mudar o tamanho do arquivo.</summary>
+    public void Overwrite(int at, byte[] bytes)
+    {
+        bytes.CopyTo(Raw, at);
+        File = new ScriptFile(Raw, Table);
+    }
+
+    /// <summary>Aponta um salto já gravado para outra posição do arquivo.</summary>
+    public void PatchJump(int at, int target)
+    {
+        BitConverter.TryWriteBytes(Raw.AsSpan(at), target - (at + 4));
+        File = new ScriptFile(Raw, Table);
+    }
+
     /// <summary>Insere antes do comando em <paramref name="before"/>. Quem saltava para ele passa a executar o novo primeiro.</summary>
     public void Insert(int before, int opcode, IReadOnlyList<long> args)
     {

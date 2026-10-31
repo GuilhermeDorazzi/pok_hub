@@ -16,6 +16,11 @@ public sealed record NewEventMap(int Id, string Label)
 
 public sealed record NewEventSprite(int Id, BitmapSource Image);
 
+public sealed record NewEventCreated(CreatedNpc Npc, string Label)
+{
+    public override string ToString() => Label;
+}
+
 public sealed record NewEventChoice(int Value, string Label)
 {
     public override string ToString() => Label;
@@ -32,6 +37,7 @@ public sealed partial class NewEventViewModel : ObservableObject
     private readonly List<NewEventMap> _allMaps;
 
     public ObservableCollection<NewEventMap> Maps { get; } = [];
+    public ObservableCollection<NewEventCreated> Created { get; } = [];
     public IReadOnlyList<NewEventSprite> Sprites { get; }
     public IReadOnlyList<NewEventChoice> Facings { get; } =
     [
@@ -70,6 +76,7 @@ public sealed partial class NewEventViewModel : ObservableObject
     [ObservableProperty] private string _quantity = "1";
     [ObservableProperty] private string _position = Loc.T("newev.clickMap");
     [ObservableProperty] private string _status = "";
+    [ObservableProperty] private NewEventCreated? _selectedCreated;
 
     public MapLayout? Layout { get; private set; }
     /// <summary>Tile escolhido, em coordenadas da planta.</summary>
@@ -77,6 +84,8 @@ public sealed partial class NewEventViewModel : ObservableObject
     public IReadOnlyList<NewEventChoice> Species { get; }
     public IReadOnlyList<NewEventChoice> AllSpecies { get; }
     public bool UsesSpriteList => !IsPokemon;
+    public bool IsEditing => SelectedCreated is not null;
+    public string SaveLabel => Loc.T(IsEditing ? "newev.save" : "newev.create");
     public string FreeTradeNote { get; }
     public IReadOnlyList<NewEventChoice> Movements { get; } =
     [
@@ -138,7 +147,91 @@ public sealed partial class NewEventViewModel : ObservableObject
         Position = Loc.T("newev.clickMap");
         Layout = SelectedMap is { } m ? _map.LayoutOf(m.Id) : null;
         LayoutImage = Layout?.Render().ToBitmap();
+        LoadCreated();
         LayoutChanged?.Invoke();
+    }
+
+    private void LoadCreated()
+    {
+        Created.Clear();
+        if (SelectedMap is not { } map) return;
+        foreach (var npc in NewEventLedger.Load(_project).Npcs.Where(n => n.MapId == map.Id))
+            Created.Add(new NewEventCreated(npc, Loc.T($"newev.kind.{npc.Kind}") + $" · {npc.X}, {npc.Z}" + (npc.Texts.FirstOrDefault() is { } text ? " · " + Unwrap(text) : "")));
+    }
+
+    private static string Unwrap(string text) => text.Replace("\\n", " ").Replace("\\r", " ").Trim();
+
+    /// <summary>Selecionar um NPC criado leva os dados dele para o formulário; Salvar passa a alterar esse NPC.</summary>
+    partial void OnSelectedCreatedChanged(NewEventCreated? value)
+    {
+        OnPropertyChanged(nameof(IsEditing));
+        OnPropertyChanged(nameof(SaveLabel));
+        if (value?.Npc is not { } npc) return;
+        if (Layout is not null) PickTile(npc.X - Layout.OriginX, npc.Z - Layout.OriginY);
+        SelectedSprite = Sprites.FirstOrDefault(s => s.Id == npc.SpriteId) ?? SelectedSprite;
+        SelectedFacing = Facings.FirstOrDefault(f => f.Value == npc.Facing) ?? SelectedFacing;
+        SelectedMovement = Movements.FirstOrDefault(m => m.Value == (int)npc.Movement) ?? SelectedMovement;
+        Range = npc.Range.ToString();
+        IsTalk = npc.Kind == "talk";
+        IsItem = npc.Kind == "item";
+        IsPokemon = npc.Kind == "pokemon";
+        IsTrade = npc.Kind == "trade";
+        switch (npc.ToBehavior())
+        {
+            case TalkBehavior t:
+                TalkText = Unwrap(t.Text);
+                break;
+            case GiveItemBehavior i:
+                SelectedItem = Items.FirstOrDefault(c => c.Value == i.Item) ?? SelectedItem;
+                Quantity = i.Quantity.ToString();
+                BeforeText = Unwrap(i.BeforeText);
+                AfterText = Unwrap(i.AfterText);
+                break;
+            case PokemonBehavior p:
+                SelectedSpecies = Species.FirstOrDefault(c => c.Value == p.Species) ?? SelectedSpecies;
+                Level = p.Level.ToString();
+                Vanish = p.Vanish;
+                PokemonText = Unwrap(p.Text ?? "");
+                break;
+            case TradeBehavior t:
+                AskSpecies = AllSpecies.FirstOrDefault(c => c.Value == t.AskSpecies) ?? AskSpecies;
+                GiveSpecies = AllSpecies.FirstOrDefault(c => c.Value == t.GiveSpecies) ?? GiveSpecies;
+                Nickname = t.Nickname ?? "";
+                AskText = Unwrap(t.AskText);
+                ThanksText = Unwrap(t.ThanksText);
+                WrongText = Unwrap(t.WrongText);
+                DeclineText = Unwrap(t.DeclineText);
+                break;
+        }
+    }
+
+    [RelayCommand]
+    private void NewNpc()
+    {
+        SelectedCreated = null;
+        TalkText = BeforeText = AfterText = PokemonText = AskText = ThanksText = Nickname = "";
+        Status = "";
+    }
+
+    [RelayCommand]
+    private async Task RemoveAsync()
+    {
+        if (SelectedCreated?.Npc is not { } npc || SelectedMap is not { } map) return;
+        try
+        {
+            await _snapshot(Loc.T("newev.snapshotBefore", map.Label));
+            NewEventService.Remove(_project, _map, npc);
+            await _snapshot(Loc.T("newev.snapshotRemoved", map.Label));
+            _map = EventMap.Load(_project);
+            SelectedCreated = null;
+            LoadLayout();
+            Status = Loc.T("newev.removed");
+            _log(Status);
+        }
+        catch (Exception ex) when (ex is ArgumentException or System.IO.InvalidDataException or System.IO.IOException or UnauthorizedAccessException)
+        {
+            Status = Loc.T("common.saveError", ex.Message);
+        }
     }
 
     public void PickTile(int x, int y)
@@ -179,11 +272,14 @@ public sealed partial class NewEventViewModel : ObservableObject
                 : IsTrade ? new TradeBehavior(AskSpecies!.Value, GiveSpecies!.Value, string.IsNullOrWhiteSpace(Nickname) ? null : Nickname.Trim(), Prepare(AskText), Prepare(ThanksText), Prepare(WrongText), Prepare(DeclineText))
                 : new PokemonBehavior(SelectedSpecies!.Value, int.Parse(Level), Vanish, string.IsNullOrWhiteSpace(PokemonText) ? null : Prepare(PokemonText));
             await _snapshot(Loc.T("newev.snapshotBefore", map.Label));
-            var result = NewEventService.Create(_project, _map, new NewNpc(map.Id, tile.X + Layout.OriginX, tile.Y + Layout.OriginY, sprite.Id, facing.Value, behavior, (NpcMovement)(SelectedMovement?.Value ?? 0), range));
+            var request = new NewNpc(map.Id, tile.X + Layout.OriginX, tile.Y + Layout.OriginY, sprite.Id, facing.Value, behavior, (NpcMovement)(SelectedMovement?.Value ?? 0), range);
+            bool editing = SelectedCreated is not null;
+            var result = SelectedCreated?.Npc is { } existing ? NewEventService.Update(_project, _map, existing, request) : NewEventService.Create(_project, _map, request);
             await _snapshot(Loc.T("newev.snapshotAfter", map.Label));
             _map = EventMap.Load(_project); // flags, scripts e planta precisam refletir o NPC novo
             LoadLayout();
-            Status = Loc.T("newev.created", result.ScriptId) + (result.Warnings.Count > 0 ? " " + string.Join(" ", result.Warnings) : "");
+            SelectedCreated = null;
+            Status = Loc.T(editing ? "newev.updated" : "newev.created", result.ScriptId) + (result.Warnings.Count > 0 ? " " + string.Join(" ", result.Warnings) : "");
             _log(Status);
             TalkText = BeforeText = AfterText = PokemonText = AskText = ThanksText = Nickname = "";
         }

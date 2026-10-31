@@ -31,6 +31,40 @@ public static class NewEventTools
         return new { result.ObjectIndex, result.ScriptId, result.Flag, result.Warnings };
     }
 
+    [McpServerTool(Name = "list_created_npcs"), Description("Lista os NPCs criados pelo hub num projeto, com mapa, número do objeto, modelo, posição e falas.")]
+    public static object ListCreatedNpcs(HubContext hub, string project)
+    {
+        var p = hub.OpenProject(project);
+        return NewEventLedger.Load(p).Npcs.Select(n => new { n.MapId, n.ObjectId, n.ScriptId, n.Kind, n.X, n.Z, n.SpriteId, movement = n.Movement.ToString(), n.Flag, n.TradeSlot, n.Texts }).ToList();
+    }
+
+    private static CreatedNpc Find(Project p, int mapId, int objectId) =>
+        NewEventLedger.Load(p).Npcs.FirstOrDefault(n => n.MapId == mapId && n.ObjectId == objectId) ?? throw new ArgumentException($"O NPC {objectId} do mapa {mapId} não foi criado pelo hub.");
+
+    [McpServerTool(Name = "move_created_npc"), Description("Muda a posição de um NPC criado pelo hub. Salva versão antes e depois.")]
+    public static async Task<object> MoveCreatedNpc(HubContext hub, string project, int mapId, int objectId, int x, int z)
+    {
+        var p = hub.OpenProject(project);
+        var npc = Find(p, mapId, objectId);
+        var log = new LogCollector();
+        if (hub.Git.IsAvailable) await hub.Git.SnapshotAsync(p, $"Antes de mover o NPC {objectId} do mapa {mapId}", log);
+        var result = NewEventService.Update(p, EventMap.Load(p), npc, npc.ToNewNpc() with { X = x, Z = z });
+        if (hub.Git.IsAvailable) await hub.Git.SnapshotAsync(p, $"NPC {objectId} do mapa {mapId} movido", log);
+        return new { objectId, x, z, result.Warnings };
+    }
+
+    [McpServerTool(Name = "remove_created_npc"), Description("Remove um NPC criado pelo hub: tira do mapa e desativa o script. Salva versão antes e depois.")]
+    public static async Task<object> RemoveCreatedNpc(HubContext hub, string project, int mapId, int objectId)
+    {
+        var p = hub.OpenProject(project);
+        var npc = Find(p, mapId, objectId);
+        var log = new LogCollector();
+        if (hub.Git.IsAvailable) await hub.Git.SnapshotAsync(p, $"Antes de remover o NPC {objectId} do mapa {mapId}", log);
+        NewEventService.Remove(p, EventMap.Load(p), npc);
+        if (hub.Git.IsAvailable) await hub.Git.SnapshotAsync(p, $"NPC {objectId} do mapa {mapId} removido", log);
+        return new { removed = objectId, mapId };
+    }
+
     [McpServerTool(Name = "create_trade_npc"), Description("Cria um NPC que troca Pokémon (HG/SS), usando uma vaga de troca que nenhum script usa. Falha se não houver vaga livre. Salva versão antes e depois.")]
     public static async Task<object> CreateTradeNpc(HubContext hub, string project, int mapId, int x, int z, int sprite, int askSpecies, int giveSpecies,
         string askText, string thanksText, string wrongText, string declineText, string? nickname = null, int facing = 1,

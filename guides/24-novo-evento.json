@@ -31,6 +31,10 @@
   ],
   "tips": [
     {
+      "pt-BR": "Os NPCs criados pelo hub aparecem na lista Criados neste mapa. Selecione um para editar, ou use Remover. NPCs originais do jogo e os criados antes desta lista não aparecem nela.",
+      "en-US": "NPCs created by the hub appear in the Created on this map list. Select one to edit, or use Remove. The game's original NPCs and those created before this list do not appear in it."
+    },
+    {
       "pt-BR": "No Platinum, o modelo Pokémon no mapa mostra só as 35 espécies que têm sprite de campo nesse jogo.",
       "en-US": "On Platinum, the Pokémon on the map template only lists the 35 species with a field sprite in that game."
     },
@@ -43,8 +47,8 @@
       "en-US": "A save stores the objects of the map it was made on. If you saved on the same map as the new NPC, leave the map and come back for it to appear. This does not happen on a new game."
     },
     {
-      "pt-BR": "No modelo Pokémon no mapa, o sprite vem da espécie: é o mesmo do Pokémon que segue o jogador. Marcando Sumir, ele desaparece depois da batalha, salvo se o jogador perder, e não volta.",
-      "en-US": "In the Pokémon on the map template, the sprite comes from the species: the same one as the Pokémon that follows the player. With Disappear checked, it vanishes after the battle, unless the player loses, and does not come back."
+      "pt-BR": "No modelo Pokémon no mapa, o sprite vem da espécie: é o mesmo do Pokémon que segue o jogador. Marcando Sumir, ele desaparece depois da batalha, salvo se o jogador perder, e não volta. Sem Pokémon no time, o jogador só ouve o grito.",
+      "en-US": "In the Pokémon on the map template, the sprite comes from the species: the same one as the Pokémon that follows the player. With Disappear checked, it vanishes after the battle, unless the player loses, and does not come back. With no Pokémon in the party, the player only hears the cry."
     },
     {
       "pt-BR": "No modelo Dar item, o hub reserva uma flag livre para o item ser entregue uma vez só. Se a mochila estiver cheia, o jogo avisa e o item fica para depois.",

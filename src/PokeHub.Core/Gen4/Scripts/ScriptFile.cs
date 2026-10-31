@@ -122,6 +122,32 @@ public sealed class MapScriptHeader
     public List<Entry> Entries { get; } = [];
     public List<VarTrigger> Triggers { get; } = [];
 
+    /// <summary>
+    /// Devolve o cabeçalho com a entrada desse tipo apontando para o script. Se não existir, entra antes do fim, com preenchimento que mantém
+    /// a tabela de gatilhos na mesma posição par, e o deslocamento dela é corrigido.
+    /// </summary>
+    public static byte[] SetEntry(byte[] raw, int kind, int scriptId)
+    {
+        const int EntrySize = 5, Inserted = 8;
+        int end = 0;
+        for (; end + EntrySize <= raw.Length && raw[end] != 0; end += EntrySize)
+            if (raw[end] == kind)
+            {
+                var same = raw.ToArray();
+                BitConverter.TryWriteBytes(same.AsSpan(end + 1), scriptId);
+                return same;
+            }
+        var result = new byte[raw.Length + Inserted];
+        Buffer.BlockCopy(raw, 0, result, 0, end);
+        result[end] = (byte)kind;
+        BitConverter.TryWriteBytes(result.AsSpan(end + 1), scriptId);
+        Buffer.BlockCopy(raw, end, result, end + Inserted, raw.Length - end);
+        for (int i = 0; i < end; i += EntrySize)
+            if (result[i] == 1)
+                BitConverter.TryWriteBytes(result.AsSpan(i + 1), BitConverter.ToInt32(result, i + 1) + Inserted);
+        return result;
+    }
+
     public MapScriptHeader(byte[] raw)
     {
         int initOffset = -1;

@@ -37,18 +37,46 @@ public sealed class EventFile
                 BitConverter.ToUInt16(d, p + 12), BitConverter.ToUInt16(d, p + 14)));
     }
 
-    /// <summary>Devolve o arquivo com um NPC a mais no fim da lista de objetos. O resto, inclusive o que o hub não interpreta, é copiado como está.</summary>
-    public static byte[] AddObject(byte[] raw, ObjectEvent o)
+    private const int BgRecord = 20, ObjectRecord = 32;
+
+    private static (int CountAt, int Start, int Count) ObjectList(byte[] raw)
     {
-        const int BgSize = 20, ObjectSize = 32;
-        int countAt = 4 + BitConverter.ToInt32(raw, 0) * BgSize;
-        int objects = BitConverter.ToInt32(raw, countAt);
-        int insertAt = countAt + 4 + objects * ObjectSize;
-        var result = new byte[raw.Length + ObjectSize];
-        Buffer.BlockCopy(raw, 0, result, 0, insertAt);
-        Buffer.BlockCopy(raw, insertAt, result, insertAt + ObjectSize, raw.Length - insertAt);
-        BitConverter.TryWriteBytes(result.AsSpan(countAt), objects + 1);
-        void U16(int at, int value) => BitConverter.TryWriteBytes(result.AsSpan(insertAt + at), (ushort)value);
+        int countAt = 4 + BitConverter.ToInt32(raw, 0) * BgRecord;
+        return (countAt, countAt + 4, BitConverter.ToInt32(raw, countAt));
+    }
+
+    private static int IndexOfObject(byte[] raw, int id)
+    {
+        var (_, start, count) = ObjectList(raw);
+        for (int i = 0; i < count; i++)
+            if (BitConverter.ToUInt16(raw, start + i * ObjectRecord) == id) return i;
+        throw new InvalidDataException($"NPC {id}");
+    }
+
+    /// <summary>Tira um NPC da lista. Os outros mudam de posição na lista, mas não de número, que é o que scripts usam.</summary>
+    public static byte[] RemoveObject(byte[] raw, int id)
+    {
+        var (countAt, start, count) = ObjectList(raw);
+        int at = start + IndexOfObject(raw, id) * ObjectRecord;
+        var result = new byte[raw.Length - ObjectRecord];
+        Buffer.BlockCopy(raw, 0, result, 0, at);
+        Buffer.BlockCopy(raw, at + ObjectRecord, result, at, raw.Length - at - ObjectRecord);
+        BitConverter.TryWriteBytes(result.AsSpan(countAt), count - 1);
+        return result;
+    }
+
+    /// <summary>Grava os dados de um NPC que já existe, procurado pelo número dele. O que não tem campo aqui continua como estava.</summary>
+    public static byte[] ReplaceObject(byte[] raw, ObjectEvent o)
+    {
+        var (_, start, _) = ObjectList(raw);
+        var result = raw.ToArray();
+        WriteObject(result, start + IndexOfObject(raw, o.Id) * ObjectRecord, o);
+        return result;
+    }
+
+    private static void WriteObject(byte[] result, int at, ObjectEvent o)
+    {
+        void U16(int offset, int value) => BitConverter.TryWriteBytes(result.AsSpan(at + offset), (ushort)value);
         U16(0, o.Id);
         U16(2, o.SpriteId);
         U16(4, o.Movement);
@@ -60,7 +88,21 @@ public sealed class EventFile
         U16(22, o.ZRange);
         U16(24, o.X);
         U16(26, o.Z);
-        BitConverter.TryWriteBytes(result.AsSpan(insertAt + 28), o.Y);
+        BitConverter.TryWriteBytes(result.AsSpan(at + 28), o.Y);
+    }
+
+    /// <summary>Devolve o arquivo com um NPC a mais no fim da lista de objetos. O resto, inclusive o que o hub não interpreta, é copiado como está.</summary>
+    public static byte[] AddObject(byte[] raw, ObjectEvent o)
+    {
+        const int BgSize = 20, ObjectSize = 32;
+        int countAt = 4 + BitConverter.ToInt32(raw, 0) * BgSize;
+        int objects = BitConverter.ToInt32(raw, countAt);
+        int insertAt = countAt + 4 + objects * ObjectSize;
+        var result = new byte[raw.Length + ObjectSize];
+        Buffer.BlockCopy(raw, 0, result, 0, insertAt);
+        Buffer.BlockCopy(raw, insertAt, result, insertAt + ObjectSize, raw.Length - insertAt);
+        BitConverter.TryWriteBytes(result.AsSpan(countAt), objects + 1);
+        WriteObject(result, insertAt, o);
         return result;
     }
 }
