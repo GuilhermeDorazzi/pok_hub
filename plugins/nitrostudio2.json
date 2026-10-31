@@ -1,0 +1,28 @@
+{
+  "id": "nitrostudio2",
+  "name": "Nitro Studio 2",
+  "description": {
+    "pt-BR": "Editor de áudio do DS: arquivos SDAT com sequências (músicas), bancos de som e samples. Importa e exporta MIDI e WAV.",
+    "en-US": "DS audio editor: SDAT files with sequences (music), sound banks and samples. Imports and exports MIDI and WAV."
+  },
+  "purpose": {
+    "pt-BR": "Para trocar músicas e efeitos sonoros do jogo. O autor não publica releases no GitHub, então o hub não baixa sozinho: baixe o programa no site do projeto, descompacte e aponte o executável aqui.",
+    "en-US": "To replace the game's music and sound effects. The author publishes no GitHub releases, so the hub cannot download it: get the program from the project site, unzip it and point to the executable here."
+  },
+  "cost": {
+    "pt-BR": "Download manual de poucos MB; sem instalação.",
+    "en-US": "Manual download of a few MB; no installation."
+  },
+  "homepage": "https://gota7.github.io/NitroStudio2/",
+  "license": "sem licença declarada",
+  "contexts": ["audio"],
+  "generations": [4],
+  "scope": "hub",
+  "source": { "type": "system" },
+  "launch": { "args": [] },
+  "requires": ["dotnet-framework-4.8"],
+  "notes": {
+    "pt-BR": "O SDAT do HGSS fica em workspace/files/data/sound/gs_sound_data.sdat (ds-rom) ou workspace/data/data/sound/… (ndstool). GEN5: adicionar 5 em generations.",
+    "en-US": "The HGSS SDAT lives at workspace/files/data/sound/gs_sound_data.sdat (ds-rom) or workspace/data/data/sound/… (ndstool). GEN5: add 5 to generations."
+  }
+}

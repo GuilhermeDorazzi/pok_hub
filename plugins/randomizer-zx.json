@@ -1,0 +1,33 @@
+{
+  "id": "randomizer-zx",
+  "name": "Universal Pokémon Randomizer ZX",
+  "description": {
+    "pt-BR": "Randomiza uma ROM: Pokémon selvagens, treinadores, iniciais, itens, golpes e evoluções, com dezenas de opções. Gera uma ROM nova a partir de um .nds.",
+    "en-US": "Randomizes a ROM: wild Pokémon, trainers, starters, items, moves and evolutions, with dozens of options. Produces a new ROM from a .nds."
+  },
+  "purpose": {
+    "pt-BR": "Para criar versões randomizadas do seu hack ou da ROM base. Abra nele a build mais recente do projeto (pasta builds/) e salve a ROM randomizada com outro nome; ela não volta para o workspace. Precisa de Java, que o hub instala junto.",
+    "en-US": "To create randomized versions of your hack or of the base ROM. Open the project's latest build (builds/ folder) in it and save the randomized ROM under another name; it does not go back into the workspace. Needs Java, which the hub installs alongside."
+  },
+  "cost": {
+    "pt-BR": "1 MB da ferramenta + 46 MB do Java 17 em runtimes/, uns 2 minutos.",
+    "en-US": "1 MB for the tool + 46 MB for Java 17 in runtimes/, about 2 minutes."
+  },
+  "homepage": "https://github.com/Ajarmar/universal-pokemon-randomizer-zx",
+  "license": "GPL-3.0",
+  "contexts": ["utility", "pokemon"],
+  "generations": [4],
+  "scope": "hub",
+  "source": {
+    "type": "gitHubRelease",
+    "repo": "Ajarmar/universal-pokemon-randomizer-zx",
+    "assetPattern": "^PokeRandoZX-.*\\.zip$",
+    "executable": "PokeRandoZX.jar"
+  },
+  "launch": { "runtime": "java", "args": [] },
+  "requires": ["java17"],
+  "notes": {
+    "pt-BR": "Última versão 4.6.1 (2024). Suporta Gen 1 a 7; para Gen 4 lê DP, Pt e HGSS. GEN5: funciona com BW/B2W2 também.",
+    "en-US": "Latest version 4.6.1 (2024). Supports Gen 1 to 7; for Gen 4 it reads DP, Pt and HGSS. GEN5: works with BW/B2W2 too."
+  }
+}

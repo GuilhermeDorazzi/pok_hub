@@ -101,7 +101,9 @@ Fase 2 concluída em 2026-10-30.
 
 10. **Editor de texto** (`Core/Gen4/TextRepository.cs`, `App/Views/TextEditorWindow`, manifesto `text-editor.json`). Lista os 829 bancos do msg.narc (HGSS) com rótulos para os conhecidos (espécies, itens, golpes, habilidades, treinadores, classes, locais), decodifica sob demanda, busca em todos os bancos, edita com validação imediata (caracteres fora do charmap e comandos em nomes comprimidos são recusados) e grava só os bancos alterados, com as mensagens intactas regravadas byte a byte. Validação no SoulSilver: todas as mais de 10 mil mensagens decodificam e recodificam para os mesmos códigos.
 
-Próximos: mais plugins (Nitro Studio 2, DeSmuME), publicar no GitHub.
+11. **Mais plugins** (2026-10-31): DeSmuME 0.9.13 (emulador com depurador; `executable` aceita curinga, `DeSmuME_*_x64.exe`), Universal Pokémon Randomizer ZX 4.6.1 (jar, Java 17 gerenciado; gera uma ROM nova a partir da build), Nitro Studio 2 (áudio SDAT; sem releases no GitHub, então `source.type = system`: o usuário aponta o executável baixado do site do autor).
+
+Próximos: publicar no GitHub.
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)
 

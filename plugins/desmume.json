@@ -1,0 +1,32 @@
+{
+  "id": "desmume",
+  "name": "DeSmuME",
+  "description": {
+    "pt-BR": "Segundo emulador de Nintendo DS, com depurador, visualizador de memória e de tiles. Abre a última build do projeto.",
+    "en-US": "Second Nintendo DS emulator, with debugger, memory and tile viewers. Opens the project's latest build."
+  },
+  "purpose": {
+    "pt-BR": "Alternativa ao melonDS para testar a ROM, útil quando você precisa das ferramentas de depuração: visualizar memória, tiles, paletas e o estado da CPU enquanto o jogo roda. Para só jogar, o melonDS basta.",
+    "en-US": "An alternative to melonDS for testing the ROM, useful when you need the debugging tools: memory, tile, palette and CPU viewers while the game runs. Just to play, melonDS is enough."
+  },
+  "cost": {
+    "pt-BR": "5 MB de download, instantâneo.",
+    "en-US": "5 MB download, instant."
+  },
+  "homepage": "https://desmume.org/",
+  "license": "GPL-2.0",
+  "contexts": ["emulator"],
+  "generations": [4],
+  "scope": "hub",
+  "source": {
+    "type": "gitHubRelease",
+    "repo": "TASEmulators/desmume",
+    "assetPattern": "^desmume-.*-win64\\.zip$",
+    "executable": "DeSmuME_*_x64.exe"
+  },
+  "launch": { "args": ["${rom}"] },
+  "notes": {
+    "pt-BR": "Última release estável é a 0.9.13 (2022); o projeto segue ativo no git. GEN5: adicionar 5 em generations.",
+    "en-US": "Latest stable release is 0.9.13 (2022); the project is still active in git. GEN5: add 5 to generations."
+  }
+}
