@@ -133,6 +133,7 @@ public sealed partial class MainViewModel : ObservableObject
         OpenProjectFolderCommand.NotifyCanExecuteChanged();
         CreatePatchCommand.NotifyCanExecuteChanged();
         OpenBatchCommand.NotifyCanExecuteChanged();
+        OpenCodePatchesCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(HasProject));
         OnPropertyChanged(nameof(ProjectTitle));
         OnPropertyChanged(nameof(ProjectSummary));
@@ -206,6 +207,16 @@ public sealed partial class MainViewModel : ObservableObject
         Log(Loc.T("patch.applied", saveDlg.FileName));
         var r = MessageBox.Show(Loc.T("patch.appliedText", saveDlg.FileName), Loc.T("patch.title"), MessageBoxButton.YesNo, MessageBoxImage.Information);
         if (r == MessageBoxResult.Yes) await NewProjectAsync(saveDlg.FileName);
+    }
+
+    // ----- injeção de código -----
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private void OpenCodePatches()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
+        new CodePatchWindow(new CodePatchViewModel(p, _paths, Log, SnapshotForEditorAsync)) { Owner = Application.Current.MainWindow }.ShowDialog();
     }
 
     // ----- operações em lote -----
@@ -642,6 +653,8 @@ public sealed partial class MainViewModel : ObservableObject
             () => HasEmulators, () => HasEmulators ? PlayButtonText : Loc.T("feature.goTools")));
         AdvancedCards.Add(new FeatureCardViewModel("models", FeatureGroup.Advanced, "\uE8A9", Tool("apicula")));
         AdvancedCards.Add(new FeatureCardViewModel("decomp", FeatureGroup.Advanced, "\uE943", DecompTool()));
+        AdvancedCards.Add(new FeatureCardViewModel("inject", FeatureGroup.Advanced, "\uE756", null, OpenCodePatchesCommand,
+            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
         AdvancedCards.Add(new FeatureCardViewModel("randomizer", FeatureGroup.Advanced, "\uE8B1", Tool("randomizer-zx")));
         AdvancedCards.Add(new FeatureCardViewModel("files", FeatureGroup.Advanced, "\uE8B7", Tool("tinke")));
         AdvancedCards.Add(new FeatureCardViewModel("batch", FeatureGroup.Advanced, "\uE8FD", null, OpenBatchCommand,

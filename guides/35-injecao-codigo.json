@@ -1,0 +1,90 @@
+{
+  "id": "code-injection",
+  "group": "advanced",
+  "feature": "inject",
+  "tools": [],
+  "title": {
+    "pt-BR": "Injeção de código",
+    "en-US": "Code injection"
+  },
+  "intro": {
+    "pt-BR": "Permite colocar código novo em C ou assembly no jogo e continuar usando o DSPRE e os editores do hub no mesmo workspace. Serve para mudar o que os dados não alcançam: mecânicas, regras e rotinas do jogo. Exige saber um pouco de C e achar os endereços na decomp.",
+    "en-US": "Puts new C or assembly code into the game while you keep using DSPRE and the hub's editors on the same workspace. It is for what data cannot reach: mechanics, rules and game routines. You need a little C and to find addresses in the decomp."
+  },
+  "steps": [
+    {
+      "pt-BR": "Em Ferramentas, instale o MSYS2: ele traz o compilador ARM. O projeto precisa estar no formato ds-rom (é o padrão; projetos antigos em ndstool precisam extrair a ROM de novo).",
+      "en-US": "Under Tools, install MSYS2: it brings the ARM compiler. The project must be in ds-rom format (the default; old ndstool projects must extract the ROM again)."
+    },
+    {
+      "pt-BR": "No card Injeção de código, dê um nome e clique em Criar patch. A pasta abre com patch.json e main.c.",
+      "en-US": "On the Code injection card, type a name and click Create patch. The folder opens with patch.json and main.c."
+    },
+    {
+      "pt-BR": "Ache na decomp (pokeheartgold ou pokeplatinum) a função que quer mudar e o endereço dela na sua versão do jogo. Abra o endereço na ROM para conferir os bytes: a decomp nem sempre é a mesma versão da sua ROM.",
+      "en-US": "Find the function you want to change and its address for your game version in the decomp (pokeheartgold or pokeplatinum). Check the bytes at that address in the ROM: the decomp is not always the same version as your ROM."
+    },
+    {
+      "pt-BR": "Em patch.json, liste em symbols as funções do jogo que seu código chama, com endereço ímpar se forem Thumb: \"symbols\": { \"Sys_Algo\": \"0x02004209\" }.",
+      "en-US": "In patch.json, list under symbols the game functions your code calls, with an odd address if they are Thumb: \"symbols\": { \"Sys_Thing\": \"0x02004209\" }."
+    },
+    {
+      "pt-BR": "Em hooks, diga onde o jogo entra no seu código: { \"target\": \"arm9\", \"address\": \"0x02000E3C\", \"type\": \"call\", \"symbol\": \"MinhaFuncao\", \"expect\": \"F8F0E4F9\" }. O target pode ser overlay:12, por exemplo.",
+      "en-US": "Under hooks, say where the game enters your code: { \"target\": \"arm9\", \"address\": \"0x02000E3C\", \"type\": \"call\", \"symbol\": \"MyFunction\", \"expect\": \"F8F0E4F9\" }. The target can be overlay:12, for example."
+    },
+    {
+      "pt-BR": "Tipos de gancho. call: troca um BL existente por uma chamada à sua função (4 bytes). jump: substitui a função inteira a partir do endereço (12 ou 14 bytes em Thumb, 8 em ARM). pointer: grava o endereço da função numa tabela (4 bytes). bytes: grava bytes crus, sem compilar nada.",
+      "en-US": "Hook types. call: replaces an existing BL with a call to your function (4 bytes). jump: replaces the whole function from that address (12 or 14 bytes in Thumb, 8 in ARM). pointer: writes the function's address into a table (4 bytes). bytes: writes raw bytes, compiling nothing."
+    },
+    {
+      "pt-BR": "Marque o patch como Ativo e clique em Compilar e aplicar. O hub compila, aplica a expansão do ARM9 se faltar, grava os ganchos e salva uma versão antes e depois. Um erro de compilação ou uma checagem que falha não grava nada.",
+      "en-US": "Mark the patch as Active and click Build and apply. The hub compiles, applies the ARM9 expansion if missing, writes the hooks and saves a version before and after. A compile error or a failed check writes nothing."
+    },
+    {
+      "pt-BR": "Clique em Testar. Para mudar o código, edite as fontes e aplique de novo: a aplicação anterior é desfeita automaticamente. Remover do jogo tira tudo, sem apagar as pastas.",
+      "en-US": "Click Test. To change the code, edit the sources and apply again: the previous application is undone automatically. Remove from game takes everything out without deleting the folders."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Use sempre \"expect\" com os bytes originais do ponto alterado. É o que impede gravar em lugar errado quando o endereço é de outra versão do jogo.",
+      "en-US": "Always use \"expect\" with the original bytes at the changed point. It is what stops a write in the wrong place when the address is from another game version."
+    },
+    {
+      "pt-BR": "Um gancho call troca só a chamada: sua função costuma chamar a original (liste-a em symbols) para o jogo seguir igual. Um jump apaga o começo da função, então não dá para chamar a original.",
+      "en-US": "A call hook swaps only the call: your function usually calls the original (list it under symbols) so the game carries on as before. A jump erases the start of the function, so the original cannot be called."
+    },
+    {
+      "pt-BR": "O código novo é carregado no início do Main(), então ganchos em código que roda antes disso travam o jogo. Um gancho em overlay só vale enquanto aquele overlay está carregado.",
+      "en-US": "The new code is loaded at the start of Main(), so hooks in code that runs earlier crash the game. A hook in an overlay only counts while that overlay is loaded."
+    },
+    {
+      "pt-BR": "Há 60 KB para os patches, incluindo as variáveis globais, que começam zeradas uma única vez no boot. Não há biblioteca C (printf, malloc): use as funções do jogo. Em assembly, marque as funções Thumb com .thumb_func.",
+      "en-US": "There are 60 KB for patches, including global variables, which start zeroed once at boot. There is no C library (printf, malloc): use the game's functions. In assembly, mark Thumb functions with .thumb_func."
+    },
+    {
+      "pt-BR": "Salve e feche o DSPRE antes de aplicar. Se ele mudar um trecho que o patch gravou, o hub avisa e não mexe. Os patches de toolbox do DSPRE são compatíveis, pois usam a mesma expansão; o hg-engine não é, e o hub recusa aplicar sobre ele.",
+      "en-US": "Save and close DSPRE before applying. If it changes a range the patch wrote, the hub warns and leaves it alone. DSPRE's toolbox patches are compatible, as they use the same expansion; hg-engine is not, and the hub refuses to apply over it."
+    },
+    {
+      "pt-BR": "A expansão altera a área segura do ARM9, então o hub avisa ao empacotar. Isso é esperado; a ROM funciona em emuladores como qualquer ROM com o patch do DSPRE.",
+      "en-US": "The expansion changes the ARM9 secure area, so the hub warns when packing. This is expected; the ROM runs on emulators like any ROM with DSPRE's patch."
+    }
+  ],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "pokeheartgold (endereços e código do HG/SS)",
+        "en-US": "pokeheartgold (HG/SS addresses and code)"
+      },
+      "url": "https://github.com/pret/pokeheartgold"
+    },
+    {
+      "label": {
+        "pt-BR": "pokeplatinum (endereços e código do Platinum)",
+        "en-US": "pokeplatinum (Platinum addresses and code)"
+      },
+      "url": "https://github.com/pret/pokeplatinum"
+    }
+  ]
+}
