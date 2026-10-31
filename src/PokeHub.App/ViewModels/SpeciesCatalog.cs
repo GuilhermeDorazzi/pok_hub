@@ -18,7 +18,7 @@ public sealed class SpeciesOption(int id, string name, SpeciesCatalog catalog)
 public sealed class SpeciesCatalog
 {
     private readonly PokemonSprites? _sprites;
-    private readonly Dictionary<int, BitmapSource?> _cache = [];
+    private readonly Dictionary<(int Species, int Form, bool Female), BitmapSource?> _cache = [];
 
     public IReadOnlyList<SpeciesOption> Options { get; }
 
@@ -28,10 +28,11 @@ public sealed class SpeciesCatalog
         Options = names.Select((name, id) => new SpeciesOption(id, name, this)).ToList();
     }
 
-    public BitmapSource? Sprite(int species)
+    public BitmapSource? Sprite(int species, int form = 0, bool female = false)
     {
-        if (!_cache.TryGetValue(species, out var bitmap))
-            _cache[species] = bitmap = _sprites?.Render(species)?.ToBitmap();
+        var key = (species, form, female);
+        if (!_cache.TryGetValue(key, out var bitmap))
+            _cache[key] = bitmap = _sprites?.Render(species, form, female)?.ToBitmap();
         return bitmap;
     }
 

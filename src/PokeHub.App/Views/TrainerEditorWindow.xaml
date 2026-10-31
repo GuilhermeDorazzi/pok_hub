@@ -126,6 +126,8 @@
 </StackPanel>
                                                 <TextBlock Text="{loc:T tr.item}" VerticalAlignment="Center" Margin="0,0,4,0"
                                                            Visibility="{Binding Owner.HasItems, Converter={StaticResource BoolToVis}}" />
+                                                <Image Source="{Binding ItemIcon}" Width="24" Height="24" Margin="0,0,4,4" RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                                       Visibility="{Binding Owner.HasItems, Converter={StaticResource BoolToVis}}" />
                                                 <ComboBox ItemsSource="{Binding Owner.Items}" SelectedIndex="{Binding Item}" Width="150" Margin="0,0,12,4"
                                                           Visibility="{Binding Owner.HasItems, Converter={StaticResource BoolToVis}}" />
                                                 <TextBlock Text="{loc:T tr.ballSeal}" VerticalAlignment="Center" Margin="0,0,4,0"

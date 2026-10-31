@@ -70,6 +70,25 @@ public class CodeInjectionTests(ITestOutputHelper output) : IDisposable
     }
 
     [Fact]
+    public void Expansion_accepts_padding_or_the_assert_text_and_refuses_anything_else()
+    {
+        var e = Arm9Expansion.For(new Gen4Game { Game = BaseGame.Platinum, Language = Gen4Language.English, FilesRoot = "", Arm9Path = "" })!;
+        int init = (int)(e.InitAddress - Arm9Base), site = (int)(e.BranchAddress - Arm9Base);
+        byte[] Arm9With(byte[] area)
+        {
+            var arm9 = new byte[init + 64];
+            new byte[] { 0x00, 0x20, 0x03, 0x21 }.CopyTo(arm9, site);
+            area.CopyTo(arm9, init);
+            return arm9;
+        }
+        var text = System.Text.Encoding.ASCII.GetBytes("Assertion (%s) failed in \"%s\"");
+        Assert.True(e.EnsureApplied(Arm9With(text), Arm9Base));
+        Assert.True(e.EnsureApplied(Arm9With(Enumerable.Repeat((byte)0xFF, 32).ToArray()), Arm9Base));
+        var code = Enumerable.Range(1, 32).Select(i => (byte)i).ToArray();
+        Assert.Throws<InvalidDataException>(() => e.EnsureApplied(Arm9With(code), Arm9Base));
+    }
+
+    [Fact]
     public void Thumb_call_rejects_far_targets_and_odd_sites()
     {
         Assert.Throws<InvalidDataException>(() => ArmEncoding.Call(0x02000000, 0x02800001, siteThumb: true));
@@ -236,6 +255,7 @@ public class CodeInjectionTests(ITestOutputHelper output) : IDisposable
     /// <summary>
     /// Gera uma ROM de SoulSilver US para conferir no emulador: gancho no laço principal que clareia a tela de cima e escurece a de baixo a cada quadro.
     /// Opcional: POKEHUB_INJECT_WORKSPACE (cópia descartável de um workspace ds-rom, alterada pelo teste), POKEHUB_DSROM, POKEHUB_MSYS2_HUB_ROOT e POKEHUB_INJECT_OUTPUT (.nds).
+    /// POKEHUB_INJECT_HOOK troca o jogo: "ponto,funcao,codigo"; Platinum US: 0x02000D84,0x02000F31,CPUE.
     /// </summary>
     [Fact]
     public async Task Real_rom_with_a_visible_hook()
@@ -248,13 +268,15 @@ public class CodeInjectionTests(ITestOutputHelper output) : IDisposable
 
         var paths = new ProjectPaths(Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(workspace))!);
         Assert.Equal(Path.GetFullPath(workspace), Path.GetFullPath(paths.Workspace)); // a pasta precisa se chamar workspace, como num projeto
-        var p = new Project { Paths = paths, Config = new ProjectConfig { Name = "real", BaseGame = BaseGame.SoulSilver, GameCode = "IPGE", Generation = 4 } };
+        var hook = (Environment.GetEnvironmentVariable("POKEHUB_INJECT_HOOK") ?? "0x02000E3C,0x02004209,IPGE").Split(',');
+        uint site = CodePatch.ParseNumber(hook[0]), frame = CodePatch.ParseNumber(hook[1]);
+        var p = new Project { Paths = paths, Config = new ProjectConfig { Name = "real", BaseGame = hook[2].StartsWith("CPU") ? BaseGame.Platinum : BaseGame.SoulSilver, GameCode = hook[2], Generation = 4 } };
 
         WritePatch(p, "brilho", new PatchManifest
         {
-            GameCodes = ["IPGE"],
-            Symbols = new() { ["Game_Frame"] = "0x02004209" },
-            Hooks = [new PatchHook { Address = "0x02000E3C", Type = "call", Symbol = "FrameHook", Expect = Convert.ToHexString(ArmEncoding.Call(0x02000E3C, 0x02004209, true)) }],
+            GameCodes = [hook[2]],
+            Symbols = new() { ["Game_Frame"] = hook[1] },
+            Hooks = [new PatchHook { Address = hook[0], Type = "call", Symbol = "FrameHook", Expect = Convert.ToHexString(ArmEncoding.Call(site, frame, true)) }],
         }, """
             extern void Game_Frame(void);
             void FrameHook(void)

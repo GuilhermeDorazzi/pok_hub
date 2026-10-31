@@ -40,15 +40,19 @@ public sealed record Arm9Expansion(uint BranchAddress, byte[] BranchCode, uint I
     {
         if (IsApplied(arm9, arm9Base)) return false;
         int branch = (int)(BranchAddress - arm9Base), init = (int)(InitAddress - arm9Base);
-        var initArea = arm9.AsSpan(init, InitCode.Length);
-        if (!arm9.AsSpan(branch, BranchCode.Length).SequenceEqual(OriginalBranchSite)
-            || initArea.IndexOfAnyExcept(initArea[0]) >= 0
-            || initArea[0] is not (0x00 or 0xFF))
+        if (!arm9.AsSpan(branch, BranchCode.Length).SequenceEqual(OriginalBranchSite) || !IsDisposable(arm9.AsSpan(init, InitCode.Length)))
             throw new InvalidDataException(Loc.T("core.inject.expansionConflict", $"0x{BranchAddress:X8}", $"0x{InitAddress:X8}"));
         BranchCode.CopyTo(arm9, branch);
         InitCode.CopyTo(arm9, init);
         return true;
     }
+
+    /// <summary>
+    /// Preenchimento (HGSS) ou o texto da mensagem de assert do SDK (Platinum), que o patch do DSPRE sobrescreve: "Assertion (%s) failed in".
+    /// Qualquer outra coisa pode ser código ou um patch alheio. A mensagem só apareceria num travamento, e sairia cortada.
+    /// </summary>
+    private static bool IsDisposable(ReadOnlySpan<byte> area) =>
+        (area.IndexOfAnyExcept(area[0]) < 0 && area[0] is 0x00 or 0xFF) || area.StartsWith("Assertion ("u8);
 
     private enum GameFamily { Dp, Platinum, Hgss }
     private static GameFamily Family(Gen4Game g) => g.IsHgss ? GameFamily.Hgss : g.IsPlatinum ? GameFamily.Platinum : GameFamily.Dp;

@@ -14,11 +14,12 @@ public sealed partial class PartyRowViewModel(PartyMember member, TrainerEditorV
     public TrainerEditorViewModel Owner { get; } = owner;
 
     public int Species { get => Member.Species; set { Member.Species = (ushort)value; OnPropertyChanged(); OnPropertyChanged(nameof(Summary)); OnPropertyChanged(nameof(Sprite)); Owner.MarkDirty(); } }
-    public BitmapSource? Sprite => Owner.Catalog.Sprite(Member.Species);
-    public int Form { get => Member.Form; set { Member.Form = (ushort)Math.Clamp(value, 0, 63); OnPropertyChanged(); Owner.MarkDirty(); } }
+    public BitmapSource? Sprite => Owner.Catalog.Sprite(Member.Species, Member.Form, ForceFemale);
+    public BitmapSource? ItemIcon => Owner.ItemIcon(Member.Item);
+    public int Form { get => Member.Form; set { Member.Form = (ushort)Math.Clamp(value, 0, 63); OnPropertyChanged(); OnPropertyChanged(nameof(Sprite)); Owner.MarkDirty(); } }
     public int Level { get => Member.Level; set { Member.Level = (ushort)Math.Clamp(value, 1, 100); OnPropertyChanged(); OnPropertyChanged(nameof(Summary)); Owner.MarkDirty(); } }
     public int Difficulty { get => Member.Difficulty; set { Member.Difficulty = (byte)Math.Clamp(value, 0, 255); OnPropertyChanged(); OnPropertyChanged(nameof(IvText)); Owner.MarkDirty(); } }
-    public int Item { get => Member.Item; set { Member.Item = (ushort)value; OnPropertyChanged(); Owner.MarkDirty(); } }
+    public int Item { get => Member.Item; set { Member.Item = (ushort)value; OnPropertyChanged(); OnPropertyChanged(nameof(ItemIcon)); Owner.MarkDirty(); } }
     public int Move1 { get => Member.Moves[0]; set { Member.Moves[0] = (ushort)value; OnPropertyChanged(); Owner.MarkDirty(); } }
     public int Move2 { get => Member.Moves[1]; set { Member.Moves[1] = (ushort)value; OnPropertyChanged(); Owner.MarkDirty(); } }
     public int Move3 { get => Member.Moves[2]; set { Member.Moves[2] = (ushort)value; OnPropertyChanged(); Owner.MarkDirty(); } }
@@ -33,7 +34,7 @@ public sealed partial class PartyRowViewModel(PartyMember member, TrainerEditorV
     private void SetFlag(GenderAbilityFlags flag, bool on)
     {
         Member.GenderAbility = on ? Member.GenderAbility | flag : Member.GenderAbility & ~flag;
-        OnPropertyChanged(nameof(ForceMale)); OnPropertyChanged(nameof(ForceFemale));
+        OnPropertyChanged(nameof(ForceMale)); OnPropertyChanged(nameof(ForceFemale)); OnPropertyChanged(nameof(Sprite));
         OnPropertyChanged(nameof(AbilitySlot1)); OnPropertyChanged(nameof(AbilitySlot2));
         Owner.MarkDirty();
     }
@@ -55,6 +56,7 @@ public sealed partial class TrainerEditorViewModel : ObservableObject
     private readonly TrainerRepository _repo;
     private readonly Action<string> _log;
     private readonly Func<string, Task> _snapshot;
+    private readonly Dictionary<int, BitmapSource?> _itemIcons = [];
 
     public IReadOnlyList<string> Species => _repo.Species;
     public SpeciesCatalog Catalog { get; }
@@ -84,6 +86,13 @@ public sealed partial class TrainerEditorViewModel : ObservableObject
         foreach (var t in repo.Trainers) AllTrainers.Add(new TrainerListItem(t, repo));
         ApplyFilter();
         Selected = FilteredTrainers.FirstOrDefault();
+    }
+
+    public BitmapSource? ItemIcon(int item)
+    {
+        if (!_itemIcons.TryGetValue(item, out var icon))
+            _itemIcons[item] = icon = _repo.ItemIcons?.Render(item)?.ToBitmap();
+        return icon;
     }
 
     public string SpeciesName(int id) => id >= 0 && id < Species.Count ? Species[id] : $"#{id}";
