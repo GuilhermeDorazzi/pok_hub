@@ -4,6 +4,7 @@ using System.Text;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using PokeHub.App.Views;
 using PokeHub.Core.Decomp;
 using PokeHub.Core.Hub;
@@ -11,9 +12,12 @@ using PokeHub.Core.Localization;
 using PokeHub.Core.Plugins;
 using PokeHub.Core.Processes;
 using PokeHub.Core.Projects;
+using PokeHub.Core.Rom;
 using PokeHub.Core.Runtimes;
 
 namespace PokeHub.App.ViewModels;
+
+public enum HubSection { Home, Project, Tools, Settings }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -27,23 +31,56 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly DependencyChecker _deps;
     private readonly WorkspaceService _workspace;
     private readonly ProjectService _projects;
+    private readonly GitHubReleaseClient _releases = new();
     private readonly StringBuilder _log = new();
 
-    public IReadOnlyList<ContextItem> Contexts { get; private set; } = ContextItem.Build();
     public IReadOnlyList<LanguageOption> Languages => LanguageOption.All;
-    public ObservableCollection<ToolItemViewModel> Tools { get; } = [];
     public ObservableCollection<Project> Projects { get; } = [];
 
-    [ObservableProperty] private ContextItem _selectedContext;
+    /// <summary>Todas as ferramentas do catálogo para a geração do projeto aberto (inclui editores embutidos).</summary>
+    public List<ToolItemViewModel> AllTools { get; } = [];
+    public ObservableCollection<ToolGroupViewModel> ToolGroups { get; } = [];
+    public ObservableCollection<FeatureCardViewModel> EditCards { get; } = [];
+    public ObservableCollection<FeatureCardViewModel> AdvancedCards { get; } = [];
+
     [ObservableProperty] private LanguageOption _selectedLanguage = LanguageOption.All.First(l => l.Code == Loc.Instance.Language);
     [ObservableProperty] private Project? _currentProject;
     [ObservableProperty] private string _logText = "";
+    [ObservableProperty] private string _lastLogLine = "";
     [ObservableProperty] private bool _isBusy;
 
+    // ----- navegação -----
+
+    [ObservableProperty] private HubSection _section = HubSection.Home;
+
+    public bool IsHome { get => Section == HubSection.Home; set { if (value) Section = HubSection.Home; } }
+    public bool IsProjectSection { get => Section == HubSection.Project; set { if (value) Section = HubSection.Project; } }
+    public bool IsTools { get => Section == HubSection.Tools; set { if (value) Section = HubSection.Tools; } }
+    public bool IsSettings { get => Section == HubSection.Settings; set { if (value) Section = HubSection.Settings; } }
+
+    partial void OnSectionChanged(HubSection value)
+    {
+        OnPropertyChanged(nameof(IsHome));
+        OnPropertyChanged(nameof(IsProjectSection));
+        OnPropertyChanged(nameof(IsTools));
+        OnPropertyChanged(nameof(IsSettings));
+    }
+
+    [RelayCommand]
+    private void ShowTools() => Section = HubSection.Tools;
+
+    // ----- projeto -----
+
     public string RootPath => _paths.Root;
+    public bool HasProject => CurrentProject is not null;
+    public string ProjectTitle => CurrentProject?.Name ?? Loc.T("vm.noProject");
     public string ProjectSummary => CurrentProject is { } p
         ? Loc.T("vm.projectSummary", p.Name, p.Config.BaseGame, p.Config.GameCode, p.Config.Generation, WorkspaceService.FormatLabel(p))
-        : Loc.T("vm.noProject");
+        : Loc.T("project.none");
+    public string ProjectGame => CurrentProject is { } p ? $"{p.Config.BaseGame} ({p.Config.GameCode})" : "";
+    public string ProjectGeneration => CurrentProject is { } p ? Loc.T("project.gen", p.Config.Generation) : "";
+    public string ProjectWorkspace => CurrentProject is { } p ? WorkspaceService.FormatLabel(p) : "";
+    public string ProjectDir => CurrentProject?.Paths.Dir ?? "";
 
     private bool HasProjectAndIdle => CurrentProject is not null && !IsBusy;
 
@@ -56,7 +93,14 @@ public sealed partial class MainViewModel : ObservableObject
         PlayCommand.NotifyCanExecuteChanged();
         SaveVersionCommand.NotifyCanExecuteChanged();
         ShowHistoryCommand.NotifyCanExecuteChanged();
+        OpenProjectFolderCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(HasProject));
+        OnPropertyChanged(nameof(ProjectTitle));
         OnPropertyChanged(nameof(ProjectSummary));
+        OnPropertyChanged(nameof(ProjectGame));
+        OnPropertyChanged(nameof(ProjectGeneration));
+        OnPropertyChanged(nameof(ProjectWorkspace));
+        OnPropertyChanged(nameof(ProjectDir));
     }
 
     [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
@@ -94,7 +138,10 @@ public sealed partial class MainViewModel : ObservableObject
             if (_installer.GetInstalled(m, CurrentProject) is not null) Emulators.Add(new EmulatorOption(m.Id, m.Name));
         SelectedEmulator = Emulators.FirstOrDefault(e => e.Id == current) ?? Emulators.FirstOrDefault();
         OnPropertyChanged(nameof(HasEmulators));
+        OnPropertyChanged(nameof(RuntimesSummary));
         PlayCommand.NotifyCanExecuteChanged();
+        RefreshCards();
+        RefreshUpdatesCount();
     }
 
     partial void OnSelectedEmulatorChanged(EmulatorOption? value)
@@ -108,6 +155,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(PlayButtonText));
         PlayCommand.NotifyCanExecuteChanged();
+        RefreshCards();
     }
 
     private bool CanPlay => IsEmulatorRunning || (HasProjectAndIdle && SelectedEmulator is not null);
@@ -123,6 +171,14 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
         await PackInternalAsync(run: true);
+    }
+
+    /// <summary>Card "Emulador" da tela inicial: Testar quando há emulador, senão leva à seção Ferramentas.</summary>
+    [RelayCommand]
+    private async Task EmulatorCardAsync()
+    {
+        if (!HasEmulators) { Section = HubSection.Tools; return; }
+        if (PlayCommand.CanExecute(null)) await PlayAsync();
     }
 
     private async Task PackInternalAsync(bool run)
@@ -189,7 +245,8 @@ public sealed partial class MainViewModel : ObservableObject
         _launcher.Output += (rt, line) => Log($"[{rt.PluginId}] {line}");
         _launcher.Exited += rt => _ = SnapshotAfterToolAsync(rt.PluginId);
 
-        SelectedContext = Contexts[0];
+        ToolsFilters = BuildFilters();
+        SelectedToolsFilter = ToolsFilters[0];
         Log(Loc.T("vm.started", paths.Root));
         Log(Loc.T("vm.plugins", catalog.All.Count, string.Join(", ", catalog.All.Select(p => p.Id))));
         var dotnet = DependencyChecker.ReadDotNetRelease();
@@ -198,6 +255,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (config.LastProject is { } last) CurrentProject = Projects.FirstOrDefault(p => p.Name == last);
         RebuildTools();
         RefreshGitStatus();
+        RefreshDependencies();
         _ = DetectShellsAsync();
         _ = CheckGitAsync();
     }
@@ -217,6 +275,7 @@ public sealed partial class MainViewModel : ObservableObject
         InstallGitCommand.NotifyCanExecuteChanged();
         SaveVersionCommand.NotifyCanExecuteChanged();
         ShowHistoryCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(RuntimesSummary));
     }
 
     private async Task CheckGitAsync()
@@ -284,16 +343,91 @@ public sealed partial class MainViewModel : ObservableObject
         catch (Exception ex) { Log(Loc.T("vm.git.repoFail", ex.Message)); }
     }
 
+    // ----- shells (decomp) -----
+
+    public ObservableCollection<UnixShell> Shells { get; } = [];
+    [ObservableProperty] private UnixShell? _selectedShell;
+    public bool HasShells => Shells.Count > 0;
+
     private async Task DetectShellsAsync()
     {
         try
         {
             var shells = await _builds.GetShellsAsync();
             Log(shells.Count == 0 ? Loc.T("vm.shells.none") : Loc.T("vm.shells.found", string.Join("; ", shells.Select(s => s.Description))));
-            foreach (var t in Tools) t.Refresh();
+            Shells.Clear();
+            foreach (var s in shells) Shells.Add(s);
+            SelectedShell = await _builds.ResolveShellAsync();
+            OnPropertyChanged(nameof(HasShells));
+            foreach (var t in AllTools) t.Refresh();
+            RefreshDependencies();
         }
         catch (Exception ex) { Log(Loc.T("vm.shells.error", ex.Message)); }
     }
+
+    partial void OnSelectedShellChanged(UnixShell? value)
+    {
+        if (value is not null) _builds.SetPreferredShell(value);
+    }
+
+    // ----- dependências do Windows (seção Configurações) -----
+
+    public ObservableCollection<DependencyStatus> Dependencies { get; } = [];
+
+    [RelayCommand]
+    private void RefreshDependencies()
+    {
+        Dependencies.Clear();
+        foreach (var d in _deps.CheckAll(["dotnet-framework-4.8", "vcredist-x64", "unix-shell"])) Dependencies.Add(d);
+    }
+
+    /// <summary>Runtimes que o hub instalou sozinho (Java, Git, ds-rom, MSYS2).</summary>
+    public string RuntimesSummary => _config.InstalledRuntimes.Count == 0
+        ? Loc.T("tools.runtimesNone")
+        : Loc.T("tools.runtimes", string.Join(", ", _config.InstalledRuntimes.OrderBy(k => k.Key).Select(k => $"{k.Key} {k.Value.Version}")));
+
+    // ----- seção Ferramentas: filtro e atualizações -----
+
+    public IReadOnlyList<ToolsFilterOption> ToolsFilters { get; private set; }
+    [ObservableProperty] private ToolsFilterOption _selectedToolsFilter;
+    [ObservableProperty] private bool _isCheckingUpdates;
+    [ObservableProperty] private int _updatesCount;
+    public bool HasUpdates => UpdatesCount > 0;
+
+    private static IReadOnlyList<ToolsFilterOption> BuildFilters() =>
+        [new(ToolsFilter.All), new(ToolsFilter.Installed), new(ToolsFilter.Updates)];
+
+    partial void OnSelectedToolsFilterChanged(ToolsFilterOption value) => ApplyToolsFilter();
+
+    private void ApplyToolsFilter()
+    {
+        foreach (var g in ToolGroups) g.ApplyFilter(SelectedToolsFilter.Filter);
+    }
+
+    partial void OnUpdatesCountChanged(int value) => OnPropertyChanged(nameof(HasUpdates));
+
+    private void RefreshUpdatesCount()
+    {
+        UpdatesCount = AllTools.Count(t => t.UpdateAvailable);
+        if (SelectedToolsFilter.Filter == ToolsFilter.Updates) ApplyToolsFilter();
+    }
+
+    [RelayCommand]
+    private async Task CheckUpdatesAsync()
+    {
+        if (IsCheckingUpdates) return;
+        try
+        {
+            IsCheckingUpdates = true;
+            Log(Loc.T("tools.checking"));
+            await Task.WhenAll(AllTools.Select(t => t.CheckUpdateAsync(_releases)));
+            RefreshUpdatesCount();
+            Log(UpdatesCount == 0 ? Loc.T("tools.upToDate") : Loc.T("tools.updatesFound", UpdatesCount));
+        }
+        finally { IsCheckingUpdates = false; }
+    }
+
+    // ----- projetos, idioma e reconstrução -----
 
     private void ReloadProjects()
     {
@@ -301,19 +435,21 @@ public sealed partial class MainViewModel : ObservableObject
         foreach (var p in _projects.ListProjects().OrderBy(p => p.Name)) Projects.Add(p);
     }
 
-    partial void OnSelectedContextChanged(ContextItem value) => RebuildTools();
-
     partial void OnSelectedLanguageChanged(LanguageOption value)
     {
         if (value.Code == Loc.Instance.Language) return;
         Loc.Instance.Language = value.Code;
         HubBootstrapper.SaveLanguage(value.Code);
-        var current = SelectedContext.Context;
-        Contexts = ContextItem.Build();
-        OnPropertyChanged(nameof(Contexts));
-        SelectedContext = Contexts.First(c => c.Context == current);
+        var filter = SelectedToolsFilter.Filter;
+        ToolsFilters = BuildFilters();
+        OnPropertyChanged(nameof(ToolsFilters));
+        SelectedToolsFilter = ToolsFilters.First(f => f.Filter == filter);
         RefreshGitStatus();
+        RefreshDependencies();
         NotifyProjectCommands();
+        OnPropertyChanged(nameof(PlayButtonText));
+        OnPropertyChanged(nameof(AppVersion));
+        OnPropertyChanged(nameof(RuntimesSummary));
         RebuildTools();
     }
 
@@ -325,14 +461,65 @@ public sealed partial class MainViewModel : ObservableObject
         RebuildTools();
     }
 
+    /// <summary>Recria as ferramentas, os grupos da seção Ferramentas e os cards da tela inicial.</summary>
     private void RebuildTools()
     {
-        Tools.Clear();
+        var latest = AllTools.ToDictionary(t => t.Manifest.Id, t => t.LatestVersion, StringComparer.OrdinalIgnoreCase);
+        AllTools.Clear();
         // GEN5: quando houver projeto Gen 5 aberto, o filtro por geração esconde os plugins só de Gen 4.
         var gen = CurrentProject?.Config.Generation;
-        foreach (var m in _catalog.ForContext(SelectedContext.Context, gen))
-            Tools.Add(new ToolItemViewModel(m, _installer, _launcher, _builds, _deps, () => CurrentProject, Log, SnapshotForEditorAsync, RefreshEmulators));
+        foreach (var m in _catalog.All.Where(m => gen is null || m.Generations.Contains(gen.Value)).OrderBy(m => m.Name))
+        {
+            var t = new ToolItemViewModel(m, _installer, _launcher, _builds, _deps, () => CurrentProject, Log, SnapshotForEditorAsync, RefreshEmulators);
+            if (latest.TryGetValue(m.Id, out var v)) t.LatestVersion = v;
+            AllTools.Add(t);
+        }
+
+        ToolGroups.Clear();
+        foreach (var key in new[] { "editors", "emulators", "decomp" })
+            ToolGroups.Add(new ToolGroupViewModel(key, AllTools.Where(t => !t.IsBuiltin && ToolGroupViewModel.GroupOf(t.Manifest) == key)));
+        ApplyToolsFilter();
+
+        BuildCards();
         RefreshEmulators();
+    }
+
+    private ToolItemViewModel? Tool(string id) => AllTools.FirstOrDefault(t => t.Manifest.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Decomp correspondente ao jogo do projeto. Sem projeto, mostra a de HGSS para o card existir.</summary>
+    private ToolItemViewModel? DecompTool() => CurrentProject?.Config.BaseGame switch
+    {
+        BaseGame.HeartGold or BaseGame.SoulSilver or null => Tool("pokeheartgold"),
+        BaseGame.Platinum => Tool("pokeplatinum"),
+        // GEN5: mapear Black/White para as decomps correspondentes quando existirem no catálogo.
+        _ => null,
+    };
+
+    private void BuildCards()
+    {
+        EditCards.Clear();
+        AdvancedCards.Clear();
+        EditCards.Add(new FeatureCardViewModel("maps", FeatureGroup.Edit, "\uE707", Tool("dspre")));
+        EditCards.Add(new FeatureCardViewModel("trainers", FeatureGroup.Edit, "\uE716", Tool("trainer-editor")));
+        EditCards.Add(new FeatureCardViewModel("encounters", FeatureGroup.Edit, "\uE909", Tool("encounter-editor")));
+        EditCards.Add(new FeatureCardViewModel("text", FeatureGroup.Edit, "\uE8D2", Tool("text-editor")));
+        EditCards.Add(new FeatureCardViewModel("pokedex", FeatureGroup.Edit, "\uE8F1", Tool("pokedex-area-editor")));
+        EditCards.Add(new FeatureCardViewModel("pokemon", FeatureGroup.Edit, "\uE9D9", Tool("pokeditor")));
+        EditCards.Add(new FeatureCardViewModel("graphics", FeatureGroup.Edit, "\uE8B9", Tool("nitropaint")));
+        EditCards.Add(new FeatureCardViewModel("audio", FeatureGroup.Edit, "\uE8D6", Tool("nitrostudio2")));
+        AdvancedCards.Add(new FeatureCardViewModel("emulator", FeatureGroup.Advanced, "\uE768", null, EmulatorCardCommand,
+            () => HasEmulators, () => HasEmulators ? PlayButtonText : Loc.T("feature.goTools")));
+        AdvancedCards.Add(new FeatureCardViewModel("models", FeatureGroup.Advanced, "\uE8A9", Tool("apicula")));
+        AdvancedCards.Add(new FeatureCardViewModel("decomp", FeatureGroup.Advanced, "\uE943", DecompTool()));
+        AdvancedCards.Add(new FeatureCardViewModel("randomizer", FeatureGroup.Advanced, "\uE8B1", Tool("randomizer-zx")));
+        AdvancedCards.Add(new FeatureCardViewModel("files", FeatureGroup.Advanced, "\uE8B7", Tool("tinke")));
+        RefreshCards();
+    }
+
+    private void RefreshCards()
+    {
+        foreach (var c in EditCards) c.Refresh();
+        foreach (var c in AdvancedCards) c.Refresh();
     }
 
     public void Log(string line)
@@ -341,6 +528,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             _log.Append(DateTime.Now.ToString("HH:mm:ss")).Append("  ").AppendLine(line);
             LogText = _log.ToString();
+            LastLogLine = line;
         }
         if (Application.Current?.Dispatcher.CheckAccess() ?? true) Append();
         else Application.Current!.Dispatcher.Invoke(Append);
@@ -363,12 +551,30 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenRootFolder() => Process.Start(new ProcessStartInfo("explorer.exe", _paths.Root) { UseShellExecute = true });
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasProject))]
     private void OpenProjectFolder()
     {
         if (CurrentProject is { } p) Process.Start(new ProcessStartInfo("explorer.exe", p.Paths.Dir) { UseShellExecute = true });
     }
 
+    /// <summary>Troca a pasta raiz do hub: grava em settings.json e pede para reabrir o PokeHub.</summary>
     [RelayCommand]
-    private void ClearLog() { _log.Clear(); LogText = ""; }
+    private void ChangeRoot()
+    {
+        var dlg = new OpenFolderDialog { Title = Loc.T("settings.changeRoot.dialog"), Multiselect = false };
+        if (dlg.ShowDialog() != true || string.Equals(dlg.FolderName, _paths.Root, StringComparison.OrdinalIgnoreCase)) return;
+        HubBootstrapper.Initialize(dlg.FolderName);
+        Log(Loc.T("settings.changeRoot.log", dlg.FolderName));
+        var r = MessageBox.Show(Loc.T("settings.changeRoot.text", dlg.FolderName), Loc.T("settings.changeRoot.title"), MessageBoxButton.YesNo, MessageBoxImage.Information);
+        if (r == MessageBoxResult.Yes) Application.Current.Shutdown();
+    }
+
+    public string AppVersion => Loc.T("settings.version", typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "?");
+    public const string RepositoryUrl = "https://github.com/GuilhermeDorazzi/pok_hub";
+
+    [RelayCommand]
+    private void OpenRepository() => Process.Start(new ProcessStartInfo(RepositoryUrl) { UseShellExecute = true });
+
+    [RelayCommand]
+    private void ClearLog() { _log.Clear(); LogText = ""; LastLogLine = ""; }
 }

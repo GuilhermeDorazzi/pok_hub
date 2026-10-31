@@ -31,6 +31,35 @@ public sealed partial class ToolItemViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private string _statusText = "";
+    /// <summary>Painel "Para que serve?" aberto na seção Ferramentas.</summary>
+    [ObservableProperty] private bool _isPurposeOpen;
+    /// <summary>Versão mais nova encontrada por "Verificar atualizações" (releases do GitHub).</summary>
+    [ObservableProperty] private string? _latestVersion;
+
+    public bool UpdateAvailable => LatestVersion is { } latest && Installed is { } i && !string.Equals(latest, i.Version, StringComparison.OrdinalIgnoreCase);
+    public string UpdateText => UpdateAvailable ? Loc.T("tools.updateAvailable", LatestVersion) : "";
+    public string ContextsText => string.Join(" · ", Manifest.Contexts.Select(c => Loc.T("ctx." + c.ToString().ToLowerInvariant())));
+
+    partial void OnLatestVersionChanged(string? value)
+    {
+        OnPropertyChanged(nameof(UpdateAvailable));
+        OnPropertyChanged(nameof(UpdateText));
+    }
+
+    /// <summary>Consulta a última release no GitHub. Só para ferramentas instaladas a partir de releases.</summary>
+    public async Task CheckUpdateAsync(GitHubReleaseClient client, CancellationToken ct = default)
+    {
+        if (Manifest.Source.Type != SourceType.GitHubRelease || Manifest.Source.Repo is null || !IsInstalled) return;
+        try
+        {
+            var release = await client.GetLatestAsync(Manifest.Source.Repo, ct);
+            LatestVersion = release.Tag;
+        }
+        catch (Exception ex)
+        {
+            _log(Loc.T("tools.checkError", Manifest.Name, ex.Message));
+        }
+    }
 
     public ToolItemViewModel(PluginManifest manifest, PluginInstaller installer, ToolLauncher launcher, DecompBuildService builds,
         DependencyChecker deps, Func<Project?> currentProject, Action<string> log, Func<Project, string, Task> snapshot, Action? installedChanged = null)
@@ -154,6 +183,14 @@ public sealed partial class ToolItemViewModel : ObservableObject
         OnPropertyChanged(nameof(CanLaunch));
         OnPropertyChanged(nameof(CanBuild));
         OnPropertyChanged(nameof(InstallButtonText));
+        OnPropertyChanged(nameof(UpdateAvailable));
+        OnPropertyChanged(nameof(UpdateText));
+        OnPropertyChanged(nameof(ContextsText));
+        OnPropertyChanged(nameof(LicenseText));
+        OnPropertyChanged(nameof(Description));
+        OnPropertyChanged(nameof(Purpose));
+        OnPropertyChanged(nameof(Cost));
+        OnPropertyChanged(nameof(Notes));
         InstallCommand.NotifyCanExecuteChanged();
         BuildCommand.NotifyCanExecuteChanged();
         LaunchCommand.NotifyCanExecuteChanged();

@@ -23,6 +23,33 @@ public partial class App : Application
         var configured = HubBootstrapper.FindConfiguredRoot();
         if (configured is not null) window.DataContext = CreateViewModel(configured);
         else window.ShowFirstRun();
+
+        // Depuração de layout: PokeHub.exe --screenshot C:\pasta\base.png gera base-home.png, base-tools.png... e fecha.
+        var i = Array.IndexOf(e.Args, "--screenshot");
+        if (i >= 0 && i + 1 < e.Args.Length && window.DataContext is MainViewModel vm) CaptureSections(window, vm, e.Args[i + 1]);
+    }
+
+    private void CaptureSections(MainWindow window, MainViewModel vm, string basePath)
+    {
+        window.Dispatcher.InvokeAsync(async () =>
+        {
+            await Task.Delay(1500); // detecção de shells, git etc.
+            foreach (var section in Enum.GetValues<HubSection>())
+            {
+                vm.Section = section;
+                await Task.Delay(300);
+                window.UpdateLayout();
+                var root = (FrameworkElement)window.Content;
+                var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                bmp.Render(root);
+                var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+                var file = Path.Combine(Path.GetDirectoryName(basePath)!, Path.GetFileNameWithoutExtension(basePath) + "-" + section.ToString().ToLowerInvariant() + ".png");
+                using var fs = File.Create(file);
+                enc.Save(fs);
+            }
+            Shutdown();
+        }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
     }
 
     private static MainViewModel CreateViewModel(string root)

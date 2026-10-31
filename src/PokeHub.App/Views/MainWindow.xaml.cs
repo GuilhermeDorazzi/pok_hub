@@ -59,6 +59,7 @@ public partial class MainWindow : Window
             LogSplitter.Visibility = Visibility.Visible;
             LogRow.Height = _logHeight;
             LogRow.MinHeight = 80;
+            LastLine.Visibility = Visibility.Collapsed;
             ToggleLogButton.Content = Loc.T("main.hide");
         }
         else
@@ -68,6 +69,7 @@ public partial class MainWindow : Window
             LogSplitter.Visibility = Visibility.Collapsed;
             LogRow.MinHeight = 0;
             LogRow.Height = GridLength.Auto;
+            LastLine.Visibility = Visibility.Visible; // recolhido: mostra só a última linha
             ToggleLogButton.Content = Loc.T("main.show");
         }
     }

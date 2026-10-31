@@ -7,181 +7,567 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         d:DataContext="{d:DesignInstance vm:MainViewModel}"
-        Title="PokeHub" Height="720" Width="1180" MinHeight="500" MinWidth="860"
-        FontSize="13" Background="#F4F4F6">
-    <Grid>
+        Title="PokeHub" Height="760" Width="1240" MinHeight="540" MinWidth="900"
+        FontSize="13" Background="#1B1D24" Foreground="#E8E9EE">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Theme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Card de recurso da tela inicial -->
+            <DataTemplate x:Key="FeatureCard" DataType="{x:Type vm:FeatureCardViewModel}">
+                <Border Style="{StaticResource Card}" Width="238" MinHeight="160" Margin="0,0,12,12">
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                            <Border Width="36" Height="36" CornerRadius="8" Background="{StaticResource HoverBrush}" Margin="0,0,10,0">
+                                <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="17" Foreground="{StaticResource AccentBrush}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" />
+                        </DockPanel>
+                        <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0" LastChildFill="False">
+                            <Button DockPanel.Dock="Right" Content="{Binding ActionText}" Command="{Binding ActionCommand}" Margin="0" MinWidth="84"
+                                    Visibility="{Binding HasAction, Converter={StaticResource BoolToVis}}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsReady}" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+                                                <Setter Property="FontWeight" Value="Bold" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <TextBlock DockPanel.Dock="Left" Text="{Binding StatusText}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsReady}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource OkBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DockPanel>
+                        <StackPanel>
+                            <TextBlock Text="{Binding Text}" Style="{StaticResource Muted}" LineHeight="18" />
+                            <TextBlock Text="{Binding Via}" Foreground="{StaticResource FaintBrush}" FontSize="11" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+            </DataTemplate>
+
+            <!-- Linha da seção Ferramentas -->
+            <DataTemplate x:Key="ToolRow" DataType="{x:Type vm:ToolItemViewModel}">
+                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="14,10">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="190" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Grid.Column="0" IsChecked="{Binding IsInstalled, Mode=OneWay}" IsHitTestVisible="False" Focusable="False"
+                                      ToolTip="{loc:T tools.installed}" VerticalAlignment="Center" Margin="0,0,14,0" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock>
+                                    <Run Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold" FontSize="14" />
+                                    <Run Text="   " />
+                                    <Run Text="{Binding LicenseText, Mode=OneWay}" Foreground="{StaticResource FaintBrush}" FontSize="11" />
+                                    <Run Text="  " />
+                                    <Run Text="{Binding ContextsText, Mode=OneWay}" Foreground="{StaticResource FaintBrush}" FontSize="11" />
+                                </TextBlock>
+                                <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}" />
+                                <TextBlock Text="{Binding RequiresText}" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                            <Setter Property="Foreground" Value="{StaticResource FaintBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasMissingDependency}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource WarnBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding RequiresText}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="{Binding Notes}" Foreground="{StaticResource AccentBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0"
+                                           Visibility="{Binding HasNotes, Converter={StaticResource BoolToVis}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="12,0">
+                                <TextBlock Text="{Binding StatusText}" FontSize="12" TextWrapping="Wrap">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsInstalled}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource OkBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="{Binding UpdateText}" Foreground="{StaticResource AccentBrush}" FontSize="12" TextWrapping="Wrap"
+                                           Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVis}}" />
+                                <TextBlock Text="{loc:T main.running}" Foreground="{StaticResource OkBrush}" FontSize="12"
+                                           Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                <ToggleButton Content="{loc:T main.whatFor}" IsChecked="{Binding IsPurposeOpen}"
+                                              Visibility="{Binding HasPurpose, Converter={StaticResource BoolToVis}}" />
+                                <Button Content="{loc:T main.open}" Command="{Binding LaunchCommand}" Style="{StaticResource SmallButton}"
+                                        Visibility="{Binding CanLaunch, Converter={StaticResource BoolToVis}}" />
+                                <Button Content="{Binding InstallButtonText}" Command="{Binding InstallCommand}" MinWidth="90">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SmallButton}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsInstalled}" Value="False">
+                                                    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                    <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding UpdateAvailable}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                    <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Button Content="{loc:T main.folder}" Command="{Binding OpenFolderCommand}" Style="{StaticResource SmallButton}"
+                                        Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}" />
+                                <Button Content="{loc:T main.site}" Command="{Binding OpenHomepageCommand}" Style="{StaticResource SmallButton}" Margin="0" />
+                            </StackPanel>
+                        </Grid>
+                        <Border Background="{StaticResource BgBrush}" CornerRadius="6" Padding="12,8" Margin="32,8,0,0"
+                                Visibility="{Binding IsPurposeOpen, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Purpose}" TextWrapping="Wrap" />
+                                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                                           Visibility="{Binding HasCost, Converter={StaticResource BoolToVis}}">
+                                    <Run Text="{loc:T main.cost}" FontWeight="SemiBold" /><Run Text="{Binding Cost, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </DataTemplate>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource BgBrush}">
     <Grid x:Name="MainContent">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="5" />
-            <RowDefinition x:Name="LogRow" Height="180" MinHeight="80" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition x:Name="LogRow" Height="160" MinHeight="80" />
         </Grid.RowDefinitions>
 
-        <!-- Barra superior: projeto -->
-        <Border Grid.Row="0" Background="#2B2D42" Padding="12,8">
+        <!-- Barra superior: projeto + Testar -->
+        <Border Grid.Row="0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="14,8">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Left" Text="PokeHub" Foreground="White" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,24,0" />
-                <TextBlock DockPanel.Dock="Left" Text="{loc:T main.project}" Foreground="#CCD" VerticalAlignment="Center" Margin="0,0,6,0" />
-                <ComboBox DockPanel.Dock="Left" Width="200" ItemsSource="{Binding Projects}" SelectedItem="{Binding CurrentProject}"
-                          DisplayMemberPath="Name" VerticalAlignment="Center" />
-                <Button DockPanel.Dock="Left" Content="{loc:T main.newProject}" Command="{Binding NewProjectCommand}" Margin="8,0,0,0" />
-                <Button DockPanel.Dock="Left" Content="{loc:T main.projectFolder}" Command="{Binding OpenProjectFolderCommand}" />
-                <Separator DockPanel.Dock="Left" Width="12" Background="Transparent" />
-                <Button DockPanel.Dock="Left" Content="{loc:T main.extractRom}" Command="{Binding ExtractRomCommand}" />
-                <Button DockPanel.Dock="Left" Content="{loc:T main.pack}" Command="{Binding PackRomCommand}" />
-                <Separator DockPanel.Dock="Left" Width="12" Background="Transparent" />
-                <Button DockPanel.Dock="Left" Content="{Binding PlayButtonText}" Command="{Binding PlayCommand}" FontWeight="Bold" MinWidth="96"
-                        ToolTip="{loc:T main.playTip}" />
-                <ComboBox DockPanel.Dock="Left" Width="130" ItemsSource="{Binding Emulators}" SelectedItem="{Binding SelectedEmulator}"
-                          DisplayMemberPath="Name" VerticalAlignment="Center" ToolTip="{loc:T main.emulator}"
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <TextBlock Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBlock Text="PokeHub" FontSize="17" FontWeight="Bold" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock DockPanel.Dock="Left" Text="{loc:T main.project}" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <ComboBox DockPanel.Dock="Left" MinWidth="240" ItemsSource="{Binding Projects}" SelectedItem="{Binding CurrentProject}"
+                          DisplayMemberPath="Name" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <Button DockPanel.Dock="Left" Content="{loc:T main.newProject}" Command="{Binding NewProjectCommand}" />
+
+                <ComboBox DockPanel.Dock="Right" MinWidth="140" ItemsSource="{Binding Emulators}" SelectedItem="{Binding SelectedEmulator}"
+                          DisplayMemberPath="Name" VerticalAlignment="Center" ToolTip="{loc:T main.emulator}" Margin="0"
                           Visibility="{Binding HasEmulators, Converter={StaticResource BoolToVis}}" />
-                <TextBlock DockPanel.Dock="Left" Text="{loc:T main.noEmulator}" Foreground="#F3C969" FontSize="11" VerticalAlignment="Center" Margin="4,0,0,0"
+                <TextBlock DockPanel.Dock="Right" Text="{loc:T main.testIn}" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Visibility="{Binding HasEmulators, Converter={StaticResource BoolToVis}}" />
+                <TextBlock DockPanel.Dock="Right" Text="{loc:T main.noEmulator}" Foreground="{StaticResource AccentBrush}" FontSize="11" VerticalAlignment="Center" Margin="0"
                            Visibility="{Binding HasEmulators, Converter={StaticResource InverseBoolToVis}}" />
-                <Separator DockPanel.Dock="Left" Width="12" Background="Transparent" />
-                <Button DockPanel.Dock="Left" Content="{loc:T main.saveVersion}" Command="{Binding SaveVersionCommand}" />
-                <Button DockPanel.Dock="Left" Content="{loc:T main.versions}" Command="{Binding ShowHistoryCommand}" />
-                <ComboBox DockPanel.Dock="Right" Width="150" ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}"
-                          DisplayMemberPath="Name" VerticalAlignment="Center" ToolTip="{loc:T main.language}" />
-                <Button DockPanel.Dock="Right" Content="{loc:T main.hubFolder}" Command="{Binding OpenRootFolderCommand}" />
-                <Button DockPanel.Dock="Right" Content="{loc:T main.installGit}" Command="{Binding InstallGitCommand}"
-                        Visibility="{Binding GitMissing, Converter={StaticResource BoolToVis}}" />
-                <TextBlock DockPanel.Dock="Right" Text="{Binding GitStatus}" Foreground="#AAB" VerticalAlignment="Center" Margin="0,0,12,0" />
-                <TextBlock Text="{Binding ProjectSummary}" Foreground="White" VerticalAlignment="Center" Margin="16,0,0,0" TextTrimming="CharacterEllipsis" />
+                <Button DockPanel.Dock="Right" Content="{Binding PlayButtonText}" Command="{Binding PlayCommand}" Style="{StaticResource AccentButton}"
+                        MinWidth="110" Height="34" Margin="0,0,10,0" ToolTip="{loc:T main.playTip}" />
+                <Border />
             </DockPanel>
         </Border>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="210" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Contextos -->
-            <ListBox Grid.Column="0" ItemsSource="{Binding Contexts}" SelectedItem="{Binding SelectedContext}"
-                     BorderThickness="0,0,1,0" Background="White" Padding="0">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Margin="10,8">
-                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                            <TextBlock Text="{Binding Hint}" Foreground="Gray" FontSize="11" TextWrapping="Wrap" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-
-            <!-- Ferramentas do contexto -->
-            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="16">
-                <StackPanel>
-                    <TextBlock Text="{Binding SelectedContext.Title}" FontSize="20" FontWeight="Bold" Margin="0,0,0,12" />
-                    <TextBlock Text="{loc:T main.noTools}" Foreground="Gray">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Tools.Count}" Value="0">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                    <ItemsControl ItemsSource="{Binding Tools}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="White" BorderBrush="#DDD" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,0,10">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0">
-                                            <DockPanel>
-                                                <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" />
-                                                <TextBlock Text="{Binding StatusText}" Foreground="#555" Margin="12,0,0,0" VerticalAlignment="Center" />
-                                                <TextBlock Text="{loc:T main.running}" Foreground="Green" VerticalAlignment="Center"
-                                                           Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}" />
-                                            </DockPanel>
-                                            <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Margin="0,4,0,4" />
-                                            <TextBlock Foreground="Gray" FontSize="11" TextWrapping="Wrap">
-                                                <Run Text="{Binding LicenseText, Mode=OneWay}" />
-                                                <Run Text="   " />
-                                                <Run Text="{Binding RequiresText, Mode=OneWay}">
-                                                    <Run.Style>
-                                                        <Style TargetType="Run">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding HasMissingDependency}" Value="True">
-                                                                    <Setter Property="Foreground" Value="Firebrick" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Run.Style>
-                                                </Run>
-                                            </TextBlock>
-                                            <Expander Header="{loc:T main.whatFor}" Margin="0,6,0,0" FontSize="12"
-                                                      Visibility="{Binding HasPurpose, Converter={StaticResource BoolToVis}}">
-                                                <StackPanel Margin="12,4,0,0">
-                                                    <TextBlock Text="{Binding Purpose}" TextWrapping="Wrap" />
-                                                    <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Foreground="#555"
-                                                               Visibility="{Binding HasCost, Converter={StaticResource BoolToVis}}">
-                                                        <Run Text="{loc:T main.cost}" FontWeight="SemiBold" /><Run Text="{Binding Cost, Mode=OneWay}" />
-                                                    </TextBlock>
-                                                </StackPanel>
-                                            </Expander>
-                                            <TextBlock Text="{Binding Notes}" Foreground="#8A6D00" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
-                                                       Visibility="{Binding HasNotes, Converter={StaticResource BoolToVis}}" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Orientation="Vertical" Margin="12,0,0,0" MinWidth="150">
-                                            <Button Content="{loc:T main.open}" Command="{Binding LaunchCommand}" FontWeight="Bold" Margin="0,0,0,6"
-                                                    Visibility="{Binding HasBuild, Converter={StaticResource InverseBoolToVis}}" />
-                                            <Button Content="{loc:T main.buildRom}" Command="{Binding BuildCommand}" FontWeight="Bold" Margin="0,0,0,6"
-                                                    Visibility="{Binding HasBuild, Converter={StaticResource BoolToVis}}" />
-                                            <Button Content="{Binding InstallButtonText}" Command="{Binding InstallCommand}" Margin="0,0,0,6"
-                                                    Visibility="{Binding CanInstallOrUpdate, Converter={StaticResource BoolToVis}}" />
-                                            <Button Content="{loc:T main.folder}" Command="{Binding OpenFolderCommand}" Margin="0,0,0,6"
-                                                    Visibility="{Binding CanInstallOrUpdate, Converter={StaticResource BoolToVis}}" />
-                                            <Button Content="{loc:T main.site}" Command="{Binding OpenHomepageCommand}"
-                                                    Visibility="{Binding CanInstallOrUpdate, Converter={StaticResource BoolToVis}}" />
-                                        </StackPanel>
-                                    </Grid>
+            <!-- Navegação lateral -->
+            <Border Grid.Column="0" Background="{StaticResource NavBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0" Padding="10,12">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom">
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding IsSettings, Mode=TwoWay}" GroupName="nav">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="15" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                                <TextBlock Text="{loc:T nav.settings}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                            </StackPanel>
+                        </RadioButton>
+                        <TextBlock Text="{Binding SelectedLanguage.Name}" Foreground="{StaticResource FaintBrush}" FontSize="11" Margin="12,8,0,0" />
+                    </StackPanel>
+                    <StackPanel>
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding IsHome, Mode=TwoWay}" GroupName="nav">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE80F;" FontFamily="Segoe MDL2 Assets" FontSize="15" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                                <TextBlock Text="{loc:T nav.home}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding IsProjectSection, Mode=TwoWay}" GroupName="nav">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="15" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                                <TextBlock Text="{loc:T nav.project}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding IsTools, Mode=TwoWay}" GroupName="nav">
+                            <DockPanel>
+                                <Border DockPanel.Dock="Right" Background="{StaticResource AccentBrush}" CornerRadius="9" Padding="7,1" Margin="8,0,0,0"
+                                        Visibility="{Binding HasUpdates, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding UpdatesCount}" Foreground="{StaticResource OnAccentBrush}" FontSize="11" FontWeight="Bold" />
                                 </Border>
+                                <TextBlock DockPanel.Dock="Left" Text="&#xE90F;" FontFamily="Segoe MDL2 Assets" FontSize="15" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                                <TextBlock Text="{loc:T nav.tools}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                            </DockPanel>
+                        </RadioButton>
+                        <Button Style="{StaticResource NavButton}" Command="{Binding ShowHistoryCommand}" ToolTip="{loc:T nav.versionsTip}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE81C;" FontFamily="Segoe MDL2 Assets" FontSize="15" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                <TextBlock Text="{loc:T nav.versions}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Seção: Início -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="24,20" Visibility="{Binding IsHome, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <Border Style="{StaticResource Card}" Padding="18,14">
+                        <DockPanel>
+                            <WrapPanel DockPanel.Dock="Right" VerticalAlignment="Center">
+                                <Button Content="{loc:T main.extractRom}" Command="{Binding ExtractRomCommand}" />
+                                <Button Content="{loc:T main.pack}" Command="{Binding PackRomCommand}" />
+                                <Button Content="{loc:T main.saveVersion}" Command="{Binding SaveVersionCommand}" />
+                                <Button Content="{loc:T main.openFolder}" Command="{Binding OpenProjectFolderCommand}" Margin="0" />
+                            </WrapPanel>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding ProjectTitle}" Style="{StaticResource SectionTitle}" />
+                                <TextBlock Text="{Binding ProjectSummary}" Style="{StaticResource Muted}" Margin="0,2,12,0" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <TextBlock Text="{loc:T home.group.edit}" Style="{StaticResource GroupTitle}" Margin="0,20,0,8" />
+                    <ItemsControl ItemsSource="{Binding EditCards}" ItemTemplate="{StaticResource FeatureCard}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+
+                    <TextBlock Text="{loc:T home.group.advanced}" Style="{StaticResource GroupTitle}" />
+                    <ItemsControl ItemsSource="{Binding AdvancedCards}" ItemTemplate="{StaticResource FeatureCard}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Seção: Projeto -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="24,20" Visibility="{Binding IsProjectSection, Converter={StaticResource BoolToVis}}">
+                <StackPanel MaxWidth="900" HorizontalAlignment="Left">
+                    <TextBlock Text="{loc:T nav.project}" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Text="{loc:T project.intro}" Style="{StaticResource Muted}" Margin="0,2,0,16" />
+
+                    <Border Style="{StaticResource Card}" Visibility="{Binding HasProject, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding ProjectTitle}" FontSize="18" FontWeight="Bold" Margin="0,0,0,10" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:T project.game}" Style="{StaticResource Muted}" Margin="0,0,16,4" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ProjectGame}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:T project.generation}" Style="{StaticResource Muted}" Margin="0,0,16,4" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ProjectGeneration}" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{loc:T project.workspace}" Style="{StaticResource Muted}" Margin="0,0,16,4" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ProjectWorkspace}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="{loc:T project.folder}" Style="{StaticResource Muted}" Margin="0,0,16,4" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ProjectDir}" TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                            <WrapPanel Margin="0,14,0,0">
+                                <Button Content="{loc:T main.extractRom}" Command="{Binding ExtractRomCommand}" ToolTip="{loc:T project.extractTip}" />
+                                <Button Content="{loc:T main.pack}" Command="{Binding PackRomCommand}" ToolTip="{loc:T project.packTip}" />
+                                <Button Content="{loc:T main.saveVersion}" Command="{Binding SaveVersionCommand}" ToolTip="{loc:T project.saveTip}" />
+                                <Button Content="{loc:T main.versions}" Command="{Binding ShowHistoryCommand}" ToolTip="{loc:T nav.versionsTip}" />
+                                <Button Content="{loc:T main.openFolder}" Command="{Binding OpenProjectFolderCommand}" />
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="{loc:T project.list}" Style="{StaticResource GroupTitle}" />
+                    <Border Style="{StaticResource Card}" Padding="0">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="12,10">
+                                <Button Content="{loc:T main.newProject}" Command="{Binding NewProjectCommand}" Style="{StaticResource AccentButton}" HorizontalAlignment="Left" />
+                            </Border>
+                            <ListBox ItemsSource="{Binding Projects}" SelectedItem="{Binding CurrentProject}" BorderThickness="0" Background="Transparent" MaxHeight="260">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock>
+                                            <Run Text="{Binding Name, Mode=OneWay}" />
+                                            <Run Text="  " />
+                                            <Run Text="{Binding Config.BaseGame, Mode=OneWay}" Foreground="{StaticResource FaintBrush}" FontSize="11" />
+                                            <Run Text="{Binding Config.GameCode, Mode=OneWay}" Foreground="{StaticResource FaintBrush}" FontSize="11" />
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DockPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Seção: Ferramentas -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="24,20" Visibility="{Binding IsTools, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,8">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{loc:T tools.filter}" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <ComboBox ItemsSource="{Binding ToolsFilters}" SelectedItem="{Binding SelectedToolsFilter}" DisplayMemberPath="Name" MinWidth="150" Margin="0,0,10,0" />
+                            <Button Content="{loc:T tools.checkUpdates}" Command="{Binding CheckUpdatesCommand}" Margin="0">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCheckingUpdates}" Value="True">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                                <Setter Property="Content" Value="{loc:T tools.checking}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="{loc:T nav.tools}" Style="{StaticResource SectionTitle}" />
+                            <TextBlock Text="{loc:T tools.intro}" Style="{StaticResource Muted}" Margin="0,2,16,0" />
+                        </StackPanel>
+                    </DockPanel>
+
+                    <ItemsControl ItemsSource="{Binding ToolGroups}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:ToolGroupViewModel}">
+                                <StackPanel Visibility="{Binding HasTools, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding Title}" Style="{StaticResource GroupTitle}" />
+                                    <Border Style="{StaticResource Card}" Padding="0" Margin="0,0,0,4">
+                                        <ItemsControl ItemsSource="{Binding Tools}" ItemTemplate="{StaticResource ToolRow}" />
+                                    </Border>
+                                </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+
+                    <TextBlock Text="{Binding RuntimesSummary}" Style="{StaticResource Muted}" FontSize="12" Margin="0,12,0,0" />
+                    <Border Background="{StaticResource NoteBgBrush}" BorderBrush="{StaticResource NoteBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,12,0,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left" Text="&#xE946;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource AccentBrush}" Margin="0,2,10,0" />
+                            <TextBlock Text="{loc:T tools.heavyNote}" TextWrapping="Wrap" />
+                        </DockPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Seção: Configurações -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="24,20" Visibility="{Binding IsSettings, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <TextBlock Text="{loc:T nav.settings}" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Text="{loc:T settings.intro}" Style="{StaticResource Muted}" Margin="0,2,0,16" />
+                    <WrapPanel>
+                        <WrapPanel.Resources>
+                            <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                                <Setter Property="Width" Value="420" />
+                                <Setter Property="Margin" Value="0,0,14,14" />
+                                <Setter Property="VerticalAlignment" Value="Top" />
+                            </Style>
+                            <Style x:Key="FieldLabel" TargetType="TextBlock" BasedOn="{StaticResource Muted}">
+                                <Setter Property="Margin" Value="0,8,0,4" />
+                                <Setter Property="FontSize" Value="12" />
+                            </Style>
+                            <Style x:Key="CardTitle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Setter Property="FontSize" Value="15" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Style>
+                        </WrapPanel.Resources>
+
+                        <!-- Geral -->
+                        <Border>
+                            <StackPanel>
+                                <TextBlock Text="{loc:T settings.general}" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="{loc:T main.language}" Style="{StaticResource FieldLabel}" />
+                                <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}" DisplayMemberPath="Name" HorizontalAlignment="Left" MinWidth="200" />
+                                <TextBlock Text="{loc:T main.hubFolder}" Style="{StaticResource FieldLabel}" />
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="{loc:T settings.change}" Command="{Binding ChangeRootCommand}" Margin="0" />
+                                    <Button DockPanel.Dock="Right" Content="{loc:T settings.open}" Command="{Binding OpenRootFolderCommand}" />
+                                    <TextBox Text="{Binding RootPath, Mode=OneWay}" IsReadOnly="True" Margin="0,0,6,0" VerticalContentAlignment="Center" />
+                                </DockPanel>
+                                <TextBlock Text="{loc:T settings.hubFolderHint}" Style="{StaticResource Muted}" FontSize="11" Margin="0,6,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Testar -->
+                        <Border>
+                            <StackPanel>
+                                <TextBlock Text="{loc:T settings.test}" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="{loc:T settings.defaultEmulator}" Style="{StaticResource FieldLabel}" />
+                                <ComboBox ItemsSource="{Binding Emulators}" SelectedItem="{Binding SelectedEmulator}" DisplayMemberPath="Name" HorizontalAlignment="Left" MinWidth="200"
+                                          Visibility="{Binding HasEmulators, Converter={StaticResource BoolToVis}}" />
+                                <TextBlock Text="{loc:T main.noEmulator}" Foreground="{StaticResource AccentBrush}"
+                                           Visibility="{Binding HasEmulators, Converter={StaticResource InverseBoolToVis}}" />
+                                <TextBlock Text="{loc:T settings.testHint}" Style="{StaticResource Muted}" FontSize="11" Margin="0,8,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Versões (Git) -->
+                        <Border>
+                            <StackPanel>
+                                <TextBlock Text="{loc:T settings.git}" Style="{StaticResource CardTitle}" />
+                                <DockPanel Margin="0,10,0,0">
+                                    <Button DockPanel.Dock="Right" Content="{loc:T main.installGit}" Command="{Binding InstallGitCommand}" Margin="0"
+                                            Visibility="{Binding GitMissing, Converter={StaticResource BoolToVis}}" />
+                                    <Ellipse Width="10" Height="10" Margin="0,0,10,0" VerticalAlignment="Center">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="{StaticResource OkBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding GitMissing}" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource WarnBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock Text="{Binding GitStatus}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                                </DockPanel>
+                                <TextBlock Text="{loc:T settings.gitHint}" Style="{StaticResource Muted}" FontSize="11" Margin="0,8,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Decomp -->
+                        <Border>
+                            <StackPanel>
+                                <TextBlock Text="{loc:T settings.decomp}" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="{loc:T settings.shell}" Style="{StaticResource FieldLabel}" />
+                                <ComboBox ItemsSource="{Binding Shells}" SelectedItem="{Binding SelectedShell}" DisplayMemberPath="Description" HorizontalAlignment="Left" MinWidth="300"
+                                          Visibility="{Binding HasShells, Converter={StaticResource BoolToVis}}" />
+                                <TextBlock Text="{loc:T settings.shellNone}" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap"
+                                           Visibility="{Binding HasShells, Converter={StaticResource InverseBoolToVis}}" />
+                                <TextBlock Text="{loc:T settings.decompHint}" Style="{StaticResource Muted}" FontSize="11" Margin="0,8,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Dependências do Windows -->
+                        <Border>
+                            <StackPanel>
+                                <TextBlock Text="{loc:T settings.deps}" Style="{StaticResource CardTitle}" Margin="0,0,0,8" />
+                                <ItemsControl ItemsSource="{Binding Dependencies}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <DockPanel Margin="0,3">
+                                                <Ellipse Width="10" Height="10" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Fill" Value="{StaticResource FaintBrush}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Satisfied}" Value="True">
+                                                                    <Setter Property="Fill" Value="{StaticResource OkBrush}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Satisfied}" Value="False">
+                                                                    <Setter Property="Fill" Value="{StaticResource WarnBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                                <TextBlock TextWrapping="Wrap">
+                                                    <Run Text="{Binding Name, Mode=OneWay}" />
+                                                    <Run Text=" " />
+                                                    <Run Text="{Binding Detail, Mode=OneWay}" Foreground="{StaticResource MutedBrush}" />
+                                                </TextBlock>
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Button Content="{loc:T settings.recheck}" Command="{Binding RefreshDependenciesCommand}" HorizontalAlignment="Left" Margin="0,10,0,0" Style="{StaticResource SmallButton}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Sobre -->
+                        <Border>
+                            <StackPanel>
+                                <TextBlock Text="{loc:T settings.about}" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="{Binding AppVersion}" Margin="0,8,0,0" />
+                                <TextBlock Text="{loc:T settings.aboutText}" Style="{StaticResource Muted}" FontSize="12" Margin="0,4,0,8" />
+                                <Button Content="{x:Static vm:MainViewModel.RepositoryUrl}" Command="{Binding OpenRepositoryCommand}" Style="{StaticResource LinkButton}" />
+                            </StackPanel>
+                        </Border>
+                    </WrapPanel>
                 </StackPanel>
             </ScrollViewer>
         </Grid>
 
-        <GridSplitter x:Name="LogSplitter" Grid.Row="2" HorizontalAlignment="Stretch" Background="#CCC" />
+        <GridSplitter x:Name="LogSplitter" Grid.Row="2" Height="4" HorizontalAlignment="Stretch" Background="{StaticResource BorderBrush}" />
 
         <!-- Log -->
-        <DockPanel Grid.Row="3" Background="#1E1E1E">
-            <DockPanel DockPanel.Dock="Top" Margin="8,4">
-                <TextBlock Text="{loc:T main.log}" Foreground="#AAA" FontWeight="Bold" VerticalAlignment="Center" />
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button x:Name="CopyLogButton" Content="{loc:T main.copyAll}" Click="CopyLog_Click" MinWidth="90" Padding="6,2" />
-                    <Button Content="{loc:T main.clear}" Command="{Binding ClearLogCommand}" MinWidth="60" Padding="6,2" />
-                    <Button x:Name="ToggleLogButton" Content="{loc:T main.hide}" Click="ToggleLog_Click" MinWidth="70" Padding="6,2" Margin="0" />
+        <DockPanel Grid.Row="3" Background="#14161B">
+            <DockPanel DockPanel.Dock="Top" Margin="12,6" LastChildFill="True">
+                <TextBlock DockPanel.Dock="Left" Text="{loc:T main.log}" Foreground="{StaticResource MutedBrush}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,12,0" />
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button x:Name="CopyLogButton" Content="{loc:T main.copyAll}" Click="CopyLog_Click" Style="{StaticResource SmallButton}" />
+                    <Button Content="{loc:T main.clear}" Command="{Binding ClearLogCommand}" Style="{StaticResource SmallButton}" />
+                    <Button x:Name="ToggleLogButton" Content="{loc:T main.hide}" Click="ToggleLog_Click" Style="{StaticResource SmallButton}" Margin="0" />
                 </StackPanel>
+                <TextBlock x:Name="LastLine" Text="{Binding LastLogLine}" Foreground="{StaticResource FaintBrush}" FontSize="12" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" Margin="0,0,12,0" Visibility="Collapsed" />
             </DockPanel>
-            <TextBox x:Name="LogBody" Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True" Background="#1E1E1E" Foreground="#DDD" BorderThickness="0"
-                     FontFamily="Consolas" FontSize="12" VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" Padding="8,0"
+            <TextBox x:Name="LogBody" Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True" Background="#14161B" Foreground="#C7CAD3" BorderThickness="0"
+                     FontFamily="Consolas" FontSize="12" VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" Padding="12,0"
                      TextChanged="Log_TextChanged" />
         </DockPanel>
     </Grid>
 
     <!-- Primeira execução: escolha da pasta raiz com a janela já aberta -->
-    <Border x:Name="FirstRunOverlay" Visibility="Collapsed" Background="#CC2B2D42">
-        <Border Background="White" CornerRadius="8" Padding="28" MaxWidth="560" VerticalAlignment="Center" HorizontalAlignment="Center">
+    <Border x:Name="FirstRunOverlay" Visibility="Collapsed" Background="#CC14161B">
+        <Border Style="{StaticResource Card}" Padding="28" MaxWidth="560" VerticalAlignment="Center" HorizontalAlignment="Center">
             <StackPanel>
                 <DockPanel Margin="0,0,0,12">
-                    <ComboBox DockPanel.Dock="Right" x:Name="FirstRunLanguage" Width="150" DisplayMemberPath="Name" SelectionChanged="FirstRunLanguage_Changed" />
+                    <ComboBox DockPanel.Dock="Right" x:Name="FirstRunLanguage" Width="160" DisplayMemberPath="Name" SelectionChanged="FirstRunLanguage_Changed" />
                     <TextBlock Text="{loc:T firstRun.title}" FontSize="22" FontWeight="Bold" />
                 </DockPanel>
                 <TextBlock TextWrapping="Wrap" Margin="0,0,0,8" Text="{loc:T firstRun.intro}" />
-                <TextBlock FontFamily="Consolas" FontSize="12" Foreground="#444" Margin="12,0,0,12" Text="{loc:T firstRun.tree}" />
-                <TextBlock TextWrapping="Wrap" Foreground="Gray" FontSize="12" Margin="0,0,0,16" Text="{loc:T firstRun.hint}" />
-                <Button Content="{loc:T firstRun.choose}" Click="ChooseRoot_Click" HorizontalAlignment="Right" FontWeight="Bold" Padding="16,6" />
+                <TextBlock FontFamily="Consolas" FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="12,0,0,12" Text="{loc:T firstRun.tree}" />
+                <TextBlock TextWrapping="Wrap" Style="{StaticResource Muted}" FontSize="12" Margin="0,0,0,16" Text="{loc:T firstRun.hint}" />
+                <Button Content="{loc:T firstRun.choose}" Click="ChooseRoot_Click" HorizontalAlignment="Right" Style="{StaticResource AccentButton}" Padding="16,0" Margin="0" />
             </StackPanel>
         </Border>
     </Border>
