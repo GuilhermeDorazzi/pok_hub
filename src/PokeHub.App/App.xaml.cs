@@ -89,7 +89,7 @@ public partial class App : Application
                     }
                 }
                 catch (Exception ex) { Console.Error.WriteLine(ex); }
-                foreach (var (command, suffix) in new[] { ((System.Windows.Input.ICommand)vm.OpenStatsCommand, "stats"), (vm.OpenNarcBrowserCommand, "narcs"), (vm.OpenTablesCommand, "tables"), (vm.OpenScriptsCommand, "scripts") })
+                foreach (var (command, suffix) in new[] { ((System.Windows.Input.ICommand)vm.OpenStatsCommand, "stats"), (vm.OpenNarcBrowserCommand, "narcs"), (vm.OpenTablesCommand, "tables"), (vm.OpenScriptsCommand, "scripts"), (vm.OpenNewEventCommand, "newevent") })
                 {
                     try
                     {
@@ -97,6 +97,13 @@ public partial class App : Application
                         var win = Windows.OfType<Window>().LastOrDefault(w => w != window);
                         if (win is null) continue;
                         if (win.DataContext is StatsEditorViewModel statsVm) statsVm.Selected = statsVm.Filtered.FirstOrDefault(o => o.Id == 25);
+                        if (win.DataContext is NewEventViewModel newEventVm)
+                        {
+                            newEventVm.MapFilter = "R29";
+                            newEventVm.SelectedMap = newEventVm.Maps.FirstOrDefault();
+                            newEventVm.PickTile(40, 20);
+                            newEventVm.IsTalk = false;
+                        }
                         await Task.Delay(800);
                         win.UpdateLayout();
                         var root = win; // a janela inteira: o fundo do tema é dela, não do conteúdo

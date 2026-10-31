@@ -1,0 +1,89 @@
+<Window x:Class="PokeHub.App.Views.NewEventWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:PokeHub.App"
+        xmlns:vm="clr-namespace:PokeHub.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DataContext="{d:DesignInstance vm:NewEventViewModel}"
+        Title="{loc:T newev.title}" Width="1240" Height="780" MinWidth="980" MinHeight="560"
+        WindowStartupLocation="CenterOwner" FontSize="13">
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="340" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Margin="0,0,10,0">
+            <TextBlock DockPanel.Dock="Top" Text="{loc:T newev.step.map}" FontWeight="Bold" Margin="0,0,0,6" />
+            <TextBox DockPanel.Dock="Top" Text="{Binding MapFilter, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" ToolTip="{loc:T newev.mapFilter}" />
+            <ListBox ItemsSource="{Binding Maps}" SelectedItem="{Binding SelectedMap}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+        </DockPanel>
+
+        <DockPanel Grid.Column="1">
+            <TextBlock DockPanel.Dock="Top" Text="{loc:T newev.step.place}" FontWeight="Bold" Margin="0,0,0,6" />
+            <TextBlock DockPanel.Dock="Top" Text="{Binding Position}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,6" />
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <Canvas x:Name="LayoutCanvas" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent" MouseLeftButtonDown="LayoutCanvas_Click" Cursor="Cross">
+                    <Image x:Name="LayoutImageView" Source="{Binding LayoutImage}" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                </Canvas>
+            </ScrollViewer>
+        </DockPanel>
+
+        <ScrollViewer Grid.Column="2" Margin="10,0,0,0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="{loc:T newev.step.look}" FontWeight="Bold" Margin="0,0,0,6" />
+                <ListBox ItemsSource="{Binding Sprites}" SelectedItem="{Binding SelectedSprite}" Height="170" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,6">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding Image}" Width="32" Height="32" ToolTip="{Binding Id}" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <DockPanel Margin="0,0,0,12">
+                    <TextBlock Text="{loc:T newev.facing}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <ComboBox ItemsSource="{Binding Facings}" SelectedItem="{Binding SelectedFacing}" />
+                </DockPanel>
+
+                <TextBlock Text="{loc:T newev.step.does}" FontWeight="Bold" Margin="0,0,0,6" />
+                <RadioButton Content="{loc:T newev.talk}" IsChecked="{Binding IsTalk}" Margin="0,0,0,4" />
+                <RadioButton Content="{loc:T newev.item}" IsChecked="{Binding IsItem, Mode=OneWay}" Checked="Item_Checked" Margin="0,0,0,8" />
+
+                <StackPanel Visibility="{Binding IsTalk, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{loc:T newev.talkText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding TalkText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="80" />
+                </StackPanel>
+
+                <StackPanel Visibility="{Binding IsItem, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{loc:T newev.beforeText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding BeforeText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="60" Margin="0,0,0,8" />
+                    <DockPanel Margin="0,0,0,8">
+                        <TextBlock Text="{loc:T newev.itemName}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox DockPanel.Dock="Right" Text="{Binding Quantity}" Width="44" Margin="8,0,0,0" ToolTip="{loc:T newev.quantity}" />
+                        <ComboBox ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" />
+                    </DockPanel>
+                    <TextBlock Text="{loc:T newev.afterText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding AfterText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="60" />
+                </StackPanel>
+
+                <TextBlock Text="{loc:T newev.hint}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,8,0,0" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <DockPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,8,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="{loc:T newev.create}" Command="{Binding CreateCommand}" FontWeight="Bold" Padding="16,6" Margin="0,0,6,0" />
+                <Button Content="{loc:T common.close}" Click="Close_Click" Padding="16,6" />
+            </StackPanel>
+            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" TextWrapping="Wrap" />
+        </DockPanel>
+    </Grid>
+</Window>

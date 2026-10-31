@@ -90,6 +90,18 @@ public sealed class TextRepository
         return true;
     }
 
+    /// <summary>Acrescenta uma mensagem no fim do banco e devolve o número dela. As existentes não mudam de número.</summary>
+    public int AddText(int bankId, string text)
+    {
+        var bank = Bank(bankId);
+        var message = new Gen4Message();
+        message.SetCodes(Gen4TextArchive.Encode(text));
+        bank.Archive.Messages.Add(message);
+        bank.Texts.Add(text);
+        bank.Dirty = true;
+        return bank.Texts.Count - 1;
+    }
+
     public bool HasChanges => _banks.Any(b => b is { Dirty: true });
 
     public IEnumerable<TextSearchHit> Search(string query, int limit = 500)

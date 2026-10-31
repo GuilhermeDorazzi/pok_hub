@@ -1,0 +1,43 @@
+{
+  "id": "new-event",
+  "group": "edit",
+  "feature": "newevent",
+  "tools": [],
+  "title": {
+    "pt-BR": "Novo evento",
+    "en-US": "New event"
+  },
+  "intro": {
+    "pt-BR": "Cria um NPC completo sem mexer em scripts: você escolhe o mapa, clica onde ele fica, escolhe a aparência e o que ele faz. Por enquanto, em HeartGold e SoulSilver, com os modelos Falar e Dar item.",
+    "en-US": "Creates a complete NPC without touching scripts: pick the map, click where it stands, pick its look and what it does. For now on HeartGold and SoulSilver, with the Talk and Give item templates."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra o card Novo evento e escolha o mapa na lista.",
+      "en-US": "Open the New event card and pick the map in the list."
+    },
+    {
+      "pt-BR": "Clique na planta onde o NPC deve ficar, em um tile livre.",
+      "en-US": "Click on the plan where the NPC should stand, on a free tile."
+    },
+    {
+      "pt-BR": "Escolha o sprite, a direção e o modelo, e escreva as falas. O hub quebra as linhas para caber na caixa do jogo.",
+      "en-US": "Pick the sprite, direction and template, and write the lines. The hub wraps them to fit the game's text box."
+    },
+    {
+      "pt-BR": "Criar grava tudo e salva uma versão antes e outra depois. Depois use Testar.",
+      "en-US": "Create writes everything and saves a version before and after. Then use Test."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "No modelo Dar item, o hub reserva uma flag livre para o item ser entregue uma vez só. Se a mochila estiver cheia, o jogo avisa e o item fica para depois.",
+      "en-US": "In the Give item template, the hub reserves a free flag so the item is given only once. If the bag is full, the game says so and the item stays for later."
+    },
+    {
+      "pt-BR": "A altura do NPC vem do NPC mais próximo no mapa. Em mapas com desníveis, confira no jogo se ele não ficou no ar ou enterrado.",
+      "en-US": "The NPC's height comes from the nearest NPC on the map. On maps with slopes, check in the game that it is not floating or buried."
+    }
+  ],
+  "links": []
+}

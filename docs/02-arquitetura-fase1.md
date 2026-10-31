@@ -148,6 +148,8 @@ Fase 2 concluída em 2026-10-30.
 
 25. **Pokéathlon e concursos** (2026-10-31; tabelas `pokeathlon` e `contestOpponents`). Pokéathlon: `a/1/6/9`, 20 bytes por registro (`PokeathlonBasePerformance`, ordem Força, Resistência, Salto, Técnica, Velocidade), espécies a partir do Bulbasaur e depois formas. As provas ficam no código, ainda só em parte decompilado. Concursos (só Platinum): `contest_data.narc`, membro 0, 96 oponentes de 48 bytes; o formato não está documentado na pokeplatinum, então só espécie e golpes foram deduzidos e conferidos (Sparky é um Pikachu com Thunder Shock). Os outros membros seguem sem significado conhecido.
 
+26. **Novo evento** (2026-10-31; card "Novo evento", `Gen4/Scripts/NewEventService`, só HG/SS). Cria um NPC completo: mensagens acrescentadas no fim do banco do mapa, script novo no fim do arquivo (`ScriptEditor.AddEntry`, a tabela cresce 4 bytes e as entradas antigas são ajustadas) e objeto no fim da lista do arquivo de eventos (`EventFile.AddObject`). Modelos Falar e Dar item, no mesmo formato dos NPCs do jogo. A flag do item vem da faixa entre as de treinador e as do sistema, sem uso em script. A altura copia o NPC mais próximo, porque o terreno 3D não é lido. Falta: Pokémon no mapa, troca, Platinum, editar e remover. MCP: `create_npc`.
+
 Publicado em github.com/GuilhermeDorazzi/pok_hub (privado por enquanto).
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)

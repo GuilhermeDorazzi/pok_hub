@@ -31,6 +31,7 @@ Teste manual sem agente: mandar JSON-RPC por stdin, uma mensagem por linha (`ini
 | `set_table_cell` | altera uma célula; valor fora do limite é recusado | versão antes e depois |
 | `get_script` | comandos de um arquivo de scripts, com posição, argumentos e texto | leitura |
 | `insert_script_command`, `remove_script_command` | inserem e removem comandos, com saltos recalculados | versão antes e depois |
+| `create_npc` | cria um NPC que fala ou dá um item, com script, texto e flag (só HG/SS) | versão antes e depois |
 | `list_code_patches`, `create_code_patch` | patches de código do projeto; criar gera a pasta com um modelo inativo | |
 | `apply_code_patches`, `revert_code_patches` | compila e grava os patches ativos, ou tira tudo do jogo (salva versão antes e depois) | erro de compilação ou checagem não grava nada e volta com a mensagem do compilador |
 | `list_tools` | catálogo com estado de instalação, propósito e custo | leitura |

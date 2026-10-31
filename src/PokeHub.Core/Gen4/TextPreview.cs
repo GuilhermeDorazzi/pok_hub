@@ -150,4 +150,30 @@ public sealed class TextPreview
         }
         return new TextPreview { Image = image, Lines = result };
     }
+
+    /// <summary>Quebra um texto corrido em linhas que cabem na caixa, com duas por tela: \\n dentro da tela e \\r para a próxima.</summary>
+    /// <param name="width">Largura em pixels de um trecho, normalmente medida com a fonte do jogo.</param>
+    public static string Wrap(string text, Func<string, int> width)
+    {
+        var lines = new List<string>();
+        foreach (var paragraph in text.Replace("\r\n", "\n").Split('\n'))
+        {
+            var line = "";
+            foreach (var word in paragraph.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var attempt = line.Length == 0 ? word : line + " " + word;
+                if (line.Length > 0 && width(attempt) > BoxWidth) { lines.Add(line); line = word; }
+                else line = attempt;
+            }
+            lines.Add(line);
+        }
+        var result = new System.Text.StringBuilder();
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (i > 0) result.Append(i % 2 == 1 ? "\\n" : "\\r");
+            result.Append(lines[i]);
+        }
+        return result.ToString();
+    }
 }
+

@@ -59,6 +59,27 @@ public sealed class ScriptEditor
         return ms.ToArray();
     }
 
+    /// <summary>
+    /// Acrescenta um script novo no fim do arquivo e devolve o número dele, o que os eventos usam.
+    /// A tabela ganha 4 bytes: o código antigo anda junto, então só as entradas antigas precisam ser ajustadas, e os saltos continuam certos.
+    /// </summary>
+    public int AddEntry(byte[] code)
+    {
+        const int EntrySize = 4;
+        int count = File.EntryOffsets.Count;
+        int tableEnd = count * EntrySize;
+        var output = new byte[Raw.Length + EntrySize + code.Length];
+        Buffer.BlockCopy(Raw, 0, output, 0, tableEnd);
+        Buffer.BlockCopy(Raw, tableEnd, output, tableEnd + EntrySize, Raw.Length - tableEnd);
+        code.CopyTo(output, Raw.Length + EntrySize);
+        for (int i = 0; i < count; i++)
+            BitConverter.TryWriteBytes(output.AsSpan(i * EntrySize), BitConverter.ToInt32(Raw, i * EntrySize) + EntrySize);
+        BitConverter.TryWriteBytes(output.AsSpan(tableEnd), Raw.Length + EntrySize - (tableEnd + EntrySize));
+        Raw = output;
+        File = new ScriptFile(output, Table);
+        return count + 1;
+    }
+
     /// <summary>Insere antes do comando em <paramref name="before"/>. Quem saltava para ele passa a executar o novo primeiro.</summary>
     public void Insert(int before, int opcode, IReadOnlyList<long> args)
     {

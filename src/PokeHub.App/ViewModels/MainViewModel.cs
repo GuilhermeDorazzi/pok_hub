@@ -139,6 +139,7 @@ public sealed partial class MainViewModel : ObservableObject
         OpenStatsCommand.NotifyCanExecuteChanged();
         OpenTablesCommand.NotifyCanExecuteChanged();
         OpenScriptsCommand.NotifyCanExecuteChanged();
+        OpenNewEventCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(HasProject));
         OnPropertyChanged(nameof(ProjectTitle));
         OnPropertyChanged(nameof(ProjectSummary));
@@ -212,6 +213,25 @@ public sealed partial class MainViewModel : ObservableObject
         Log(Loc.T("patch.applied", saveDlg.FileName));
         var r = MessageBox.Show(Loc.T("patch.appliedText", saveDlg.FileName), Loc.T("patch.title"), MessageBoxButton.YesNo, MessageBoxImage.Information);
         if (r == MessageBoxResult.Yes) await NewProjectAsync(saveDlg.FileName);
+    }
+
+    // ----- novo evento -----
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private void OpenNewEvent()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
+        try
+        {
+            var game = Gen4Game.For(p);
+            if (!PokeHub.Core.Gen4.Scripts.NewEventService.Supports(game)) { Log(Loc.T("core.newev.hgssOnly")); return; }
+            var text = Narc.Read(File.ReadAllBytes(game.TextArchivePath));
+            var items = Gen4TextArchive.Read(text.Files[game.ItemsBank]).Messages.Select(m => Gen4TextArchive.Decode(m)).ToList();
+            var vm = new NewEventViewModel(p, PokeHub.Core.Gen4.Scripts.EventMap.Load(p), items, Log, message => SnapshotForEditorAsync(p, message));
+            new NewEventWindow(vm) { Owner = Application.Current.MainWindow }.Show();
+        }
+        catch (Exception ex) { Log(Loc.T("vm.error", ex.Message)); }
     }
 
     // ----- editor de scripts -----
@@ -716,6 +736,8 @@ public sealed partial class MainViewModel : ObservableObject
         EditCards.Add(new FeatureCardViewModel("tables", FeatureGroup.Edit, "\uF0E2", null, OpenTablesCommand,
             () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
         EditCards.Add(new FeatureCardViewModel("scripts", FeatureGroup.Edit, "\uE943", null, OpenScriptsCommand,
+            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
+        EditCards.Add(new FeatureCardViewModel("newevent", FeatureGroup.Edit, "\uE710", null, OpenNewEventCommand,
             () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
         EditCards.Add(new FeatureCardViewModel("pokemon", FeatureGroup.Edit, "\uE9D9", Tool("pokeditor")));
         EditCards.Add(new FeatureCardViewModel("graphics", FeatureGroup.Edit, "\uE8B9", Tool("nitropaint")));

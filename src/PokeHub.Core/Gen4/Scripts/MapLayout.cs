@@ -20,6 +20,9 @@ public sealed class MapLayout
 
     public int Width { get; }
     public int Height { get; }
+    /// <summary>Tile da matriz que corresponde ao canto da planta: somado a uma posição da planta, dá a posição do arquivo de eventos.</summary>
+    public int OriginX { get; private set; }
+    public int OriginY { get; private set; }
     public List<LayoutMarker> Markers { get; } = [];
     private readonly byte[] _types, _collisions;
     private readonly bool[] _hasTile;
@@ -76,6 +79,8 @@ public sealed class MapLayout
                 layout.ReadCell(file, (cell % width - minX) * CellTiles, (cell / width - minY) * CellTiles, hasSoundSection);
 
         int ox = minX * CellTiles, oy = minY * CellTiles;
+        layout.OriginX = ox;
+        layout.OriginY = oy;
         foreach (var o in events.Objects) layout.Markers.Add(new(EventKind.Npc, o.Index, o.X - ox, o.Z - oy, SpriteId: o.SpriteId));
         foreach (var b in events.Bg) layout.Markers.Add(new(EventKind.Sign, b.Index, b.X - ox, b.Z - oy));
         foreach (var c in events.Coords) layout.Markers.Add(new(EventKind.Trigger, c.Index, c.X - ox, c.Z - oy, Math.Max(1, c.W), Math.Max(1, c.H)));
