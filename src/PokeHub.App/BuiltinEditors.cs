@@ -24,7 +24,7 @@ public static class BuiltinEditors
         ["pokedex-area-editor"] = (project, log, snapshot) =>
         {
             var repo = PokedexAreaRepository.Load(project);
-            log(Loc.T("be.dex", PokedexAreaRepository.SpeciesCount, PokedexAreaRepository.NormalLocations.Count, PokedexAreaRepository.SpecialLocations.Count));
+            log(Loc.T("be.dex", PokedexAreaRepository.SpeciesCount, repo.Normal.Count, repo.Special.Count));
             var vm = new PokedexAreaEditorViewModel(repo, project, log, snapshot);
             new PokedexAreaEditorWindow(vm) { Owner = Application.Current.MainWindow }.Show();
         },

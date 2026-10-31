@@ -10,10 +10,10 @@
         WindowStartupLocation="CenterOwner" FontSize="13" Closing="Window_Closing">
     <Window.Resources>
         <DataTemplate x:Key="BlockTemplate" DataType="{x:Type vm:AreaBlockViewModel}">
-            <Border BorderBrush="#DDD" BorderThickness="1" CornerRadius="4" Margin="4" Padding="6" Background="#FAFAFA">
+            <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="4" Padding="6" Background="{DynamicResource PanelBrush}">
                 <DockPanel>
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
-                        <TextBlock FontWeight="Bold" VerticalAlignment="Center">
+                        <TextBlock DockPanel.Dock="Top" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,0,4" TextTrimming="CharacterEllipsis">
                             <Run Text="{Binding Title, Mode=OneWay}" /><Run Text=" (" /><Run Text="{Binding SelectedCount, Mode=OneWay}" /><Run Text=")" />
                         </TextBlock>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -40,14 +40,14 @@
     </Window.Resources>
     <DockPanel Margin="10">
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-            <TextBlock Text="{Binding GameLabel}" Foreground="Gray" DockPanel.Dock="Right" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding GameLabel}" Foreground="{DynamicResource MutedBrush}" DockPanel.Dock="Right" VerticalAlignment="Center" />
             <TextBlock Text="{loc:T dx.pokemon}" VerticalAlignment="Center" Margin="0,0,8,0" />
             <ComboBox ItemsSource="{Binding Species}" SelectedIndex="{Binding SelectedIndex}" Width="260" MaxDropDownHeight="400" />
             <CheckBox Content="{loc:T dx.orderByName}" IsChecked="{Binding OrderByName}" VerticalAlignment="Center" Margin="16,0,0,0" />
         </DockPanel>
 
         <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
-            <TextBlock Text="{Binding Status}" Foreground="Gray" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="{loc:T common.save}" Command="{Binding SaveCommand}" FontWeight="Bold" Padding="16,6" />
                 <Button Content="{loc:T common.close}" Click="Close_Click" Padding="16,6" />
@@ -55,7 +55,7 @@
         </DockPanel>
 
         <!-- Mapa da Pokédex lido da ROM: áreas do bloco escolhido em destaque; clique alterna -->
-        <Border DockPanel.Dock="Top" BorderBrush="#DDD" BorderThickness="1" CornerRadius="4" Padding="8" Margin="4,0,4,8" Background="#FAFAFA"
+        <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8" Margin="4,0,4,8" Background="{DynamicResource PanelBrush}"
                 Visibility="{Binding HasMap, Converter={StaticResource BoolToVis}}">
             <DockPanel>
                 <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
@@ -66,7 +66,7 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
                     <TextBlock x:Name="HoverText" FontWeight="SemiBold" VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="160" />
-                    <TextBlock Text="{loc:T dx.mapHint}" Foreground="Gray" FontSize="11" VerticalAlignment="Center" Margin="16,0,0,0" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{loc:T dx.mapHint}" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center" Margin="16,0,0,0" TextTrimming="CharacterEllipsis" />
                 </DockPanel>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" HorizontalAlignment="Left">
                     <Grid>
@@ -77,7 +77,7 @@
                 </ScrollViewer>
             </DockPanel>
         </Border>
-        <TextBlock DockPanel.Dock="Top" Text="{Binding MapError}" Foreground="Firebrick" Margin="4,0,4,8"
+        <TextBlock DockPanel.Dock="Top" Text="{Binding MapError}" Foreground="{DynamicResource WarnBrush}" Margin="4,0,4,8"
                    Visibility="{Binding HasMap, Converter={StaticResource InverseBoolToVis}}" />
 
         <Grid>
@@ -87,11 +87,11 @@
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Text="{loc:T dx.normal}" FontWeight="Bold" Margin="4,0" />
             <ItemsControl Grid.Row="1" ItemsSource="{Binding NormalBlocks}" ItemTemplate="{StaticResource BlockTemplate}">
-                <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" Columns="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             </ItemsControl>
             <TextBlock Grid.Row="2" Text="{loc:T dx.special}" FontWeight="Bold" Margin="4,8,4,0" />
             <ItemsControl Grid.Row="3" ItemsSource="{Binding SpecialBlocks}" ItemTemplate="{StaticResource BlockTemplate}">
-                <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" Columns="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             </ItemsControl>
         </Grid>
     </DockPanel>

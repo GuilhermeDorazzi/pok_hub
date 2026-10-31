@@ -232,6 +232,21 @@ public class CodeInjectionTests(ITestOutputHelper output) : IDisposable
     }
 
     [Fact]
+    public async Task Original_bytes_ignore_what_a_patch_already_wrote()
+    {
+        var p = FakeProject();
+        var clean = Arm9(p);
+        var hook = new PatchHook { Address = "0x02001000", Type = "bytes", Bytes = "AABB" };
+        Assert.Equal(clean[0x1000..0x1002], CodePatchService.OriginalBytes(p, hook));
+        WritePatch(p, "a", new PatchManifest { Hooks = [hook] });
+        await Service().ApplyAsync(p, NoLog);
+        Assert.Equal(clean[0x1000..0x1002], CodePatchService.OriginalBytes(p, hook));
+        Assert.Equal(12, CodePatchService.OriginalBytes(p, new PatchHook { Address = "0x02001000", Type = "jump" }).Length);
+        Assert.Equal(14, CodePatchService.OriginalBytes(p, new PatchHook { Address = "0x02001002", Type = "jump" }).Length);
+        Assert.Equal(8, CodePatchService.OriginalBytes(p, new PatchHook { Address = "0x02001000", Type = "jump", Mode = "arm" }).Length);
+    }
+
+    [Fact]
     public void Ndstool_workspace_gets_a_clear_message()
     {
         var p = FakeProject();

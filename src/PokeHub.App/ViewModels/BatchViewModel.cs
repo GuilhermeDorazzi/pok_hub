@@ -85,16 +85,32 @@ public sealed partial class BatchViewModel : ObservableObject
     [RelayCommand]
     private void BuildPreview()
     {
-        Preview.Clear();
         var lines = new List<string>();
         if (TrainersEnabled) lines.AddRange(BatchEditor.PreviewTrainers(_trainers, TrainerOptions()));
         if (EncountersEnabled) lines.AddRange(BatchEditor.PreviewEncounters(_encounters, EncounterOptions()));
-        foreach (var l in lines.Take(2000)) Preview.Add(l);
+        _allPreview = lines;
+        ApplyPreviewFilter();
         Status = lines.Count == 0 ? Loc.T("batch.noChanges") : lines.Count > 2000 ? Loc.T("batch.previewMore", lines.Count) : Loc.T("batch.previewCount", lines.Count);
         ApplyCommand.NotifyCanExecuteChanged();
     }
 
-    private bool CanApply => Preview.Count > 0 && !IsBusy;
+    private List<string> _allPreview = [];
+    [ObservableProperty] private string _previewFilter = "";
+    [ObservableProperty] private string _previewCount = "";
+
+    partial void OnPreviewFilterChanged(string value) => ApplyPreviewFilter();
+
+    /// <summary>Mostra no máximo 2000 linhas por vez; o filtro procura em todas, então nada fica escondido por causa do limite.</summary>
+    private void ApplyPreviewFilter()
+    {
+        Preview.Clear();
+        var query = PreviewFilter.Trim();
+        var matching = query.Length == 0 ? _allPreview : _allPreview.Where(l => l.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+        foreach (var l in matching.Take(2000)) Preview.Add(l);
+        PreviewCount = _allPreview.Count == 0 ? "" : Loc.T("report.shown", Preview.Count, _allPreview.Count);
+    }
+
+    private bool CanApply => _allPreview.Count > 0 && !IsBusy;
 
     [RelayCommand(CanExecute = nameof(CanApply))]
     private async Task ApplyAsync()

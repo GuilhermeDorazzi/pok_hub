@@ -129,14 +129,19 @@ public sealed partial class PokedexAreaEditorViewModel : ObservableObject
         for (int i = 1; i <= PokedexAreaRepository.SpeciesCount; i++)
             Species.Add($"{i:D3}  {(i < repo.SpeciesNames.Count ? repo.SpeciesNames[i] : "")}");
 
-        NormalBlocks.Add(new(PokedexAreaBlock.NormalMorning, Loc.T("dx.morning"), PokedexAreaRepository.NormalLocations, this));
-        NormalBlocks.Add(new(PokedexAreaBlock.NormalDay, Loc.T("dx.day"), PokedexAreaRepository.NormalLocations, this));
-        NormalBlocks.Add(new(PokedexAreaBlock.NormalNight, Loc.T("dx.night"), PokedexAreaRepository.NormalLocations, this));
-        NormalBlocks.Add(new(PokedexAreaBlock.NormalAll, Loc.T("dx.anytime"), PokedexAreaRepository.NormalLocations, this));
-        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialMorning, Loc.T("dx.morning"), PokedexAreaRepository.SpecialLocations, this));
-        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialDay, Loc.T("dx.day"), PokedexAreaRepository.SpecialLocations, this));
-        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialNight, Loc.T("dx.night"), PokedexAreaRepository.SpecialLocations, this));
-        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialAll, Loc.T("dx.anytime"), PokedexAreaRepository.SpecialLocations, this));
+        NormalBlocks.Add(new(PokedexAreaBlock.NormalMorning, Loc.T("dx.morning"), repo.Normal, this));
+        NormalBlocks.Add(new(PokedexAreaBlock.NormalDay, Loc.T("dx.day"), repo.Normal, this));
+        NormalBlocks.Add(new(PokedexAreaBlock.NormalNight, Loc.T("dx.night"), repo.Normal, this));
+        NormalBlocks.Add(new(PokedexAreaBlock.NormalAll, Loc.T(repo.Game.IsPlatinum ? "dx.extra" : "dx.anytime"), repo.Normal, this));
+        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialMorning, Loc.T("dx.morning"), repo.Special, this));
+        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialDay, Loc.T("dx.day"), repo.Special, this));
+        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialNight, Loc.T("dx.night"), repo.Special, this));
+        SpecialBlocks.Add(new(PokedexAreaBlock.SpecialAll, Loc.T(repo.Game.IsPlatinum ? "dx.extra" : "dx.anytime"), repo.Special, this));
+        if (repo.Game.IsPlatinum)
+        {
+            NormalBlocks.Add(new(PokedexAreaBlock.NormalNational, Loc.T("dx.national"), repo.Normal, this));
+            SpecialBlocks.Add(new(PokedexAreaBlock.SpecialNational, Loc.T("dx.national"), repo.Special, this));
+        }
         Blocks.AddRange(NormalBlocks.Concat(SpecialBlocks));
         SelectedMapBlock = NormalBlocks[0]; // manhã
         LoadSpecies();

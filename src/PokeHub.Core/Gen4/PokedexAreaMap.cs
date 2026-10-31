@@ -52,7 +52,7 @@ public sealed class PokedexAreaMap
     public static PokedexAreaMap Load(Project project)
     {
         var game = Gen4Game.For(project);
-        if (!game.IsHgss) throw new NotSupportedException(Loc.T("core.dex.hgssOnly"));
+        if (!game.IsHgss) throw new NotSupportedException(Loc.T("core.dex.mapHgssOnly"));
         var gfxPath = Path.Combine(game.FilesRoot, GraphicsNarcRelativePath);
         if (!File.Exists(gfxPath)) throw new FileNotFoundException(Loc.T("core.dex.mapMissing"), gfxPath);
         var gfx = Narc.Read(File.ReadAllBytes(gfxPath));

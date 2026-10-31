@@ -100,6 +100,16 @@ public sealed partial class EventMapViewModel : ObservableObject
     public const int TileScale = 8;
     public event Action? LayoutChanged;
     public MapLayout? Layout { get; private set; }
+
+    private Dictionary<int, System.Windows.Media.Imaging.BitmapSource?> _npcSprites = [];
+
+    /// <summary>Sprite do NPC na planta, ou null para ficar só com o marcador.</summary>
+    public System.Windows.Media.Imaging.BitmapSource? NpcSprite(LayoutMarker m)
+    {
+        if (m.SpriteId is not { } id || _map.Sprites is not { } sprites) return null;
+        if (!_npcSprites.TryGetValue(id, out var bitmap)) _npcSprites[id] = bitmap = sprites.Render(id)?.ToBitmap();
+        return bitmap;
+    }
     [ObservableProperty] private BitmapSource? _layoutImage;
     [ObservableProperty] private string _layoutStatus = "";
 

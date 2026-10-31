@@ -51,7 +51,7 @@ public partial class HistoryWindow : Window
             IsEnabled = false;
             StatusText.Text = Loc.T("hist.comparing");
             var lines = await _compare(row.Hash);
-            new ChangeReportWindow(Loc.T("report.intro", row.Hash, row.Message), lines) { Owner = this }.ShowDialog();
+            new ChangeReportWindow(Loc.T("report.intro", row.Hash, row.Message), lines, PokeHub.App.ViewModels.SpeciesCatalog.TryForProject(_project)) { Owner = this }.ShowDialog();
             StatusText.Text = Loc.T("hist.count", VersionsList.Items.Count);
         }
         catch (Exception ex)

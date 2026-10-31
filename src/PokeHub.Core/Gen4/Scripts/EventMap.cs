@@ -49,17 +49,13 @@ public sealed record FlagUsage(int Id, string? Name, List<(EventEntry Event, str
 public sealed record FreeRange(int From, int To) { public int Count => To - From + 1; }
 
 /// <summary>
-/// Mapa de eventos do jogo (HGSS): para cada mapa, NPCs, triggers, placas e level scripts com o script que chamam e o que
+/// Mapa de eventos do jogo (HGSS e Platinum): para cada mapa, NPCs, triggers, placas e level scripts com o script que chamam e o que
 /// o script faz (flags, variáveis, mensagens, itens, Pokémon, batalhas, warps); e, por cima disso, o uso de cada flag e
 /// variável do save, com as faixas livres para um hack usar sem colidir com o jogo.
 /// </summary>
 public sealed class EventMap
 {
-    public const string ScriptsNarcRelativePath = @"a\0\1\2";
-    public const string EventsNarcRelativePath = @"a\0\3\2";
-    public const string MatrixNarcRelativePath = @"a\0\4\1";
-    public const string LandNarcRelativePath = @"a\0\6\5";
-
+    public OverworldSprites? Sprites { get; private set; }
     public Gen4Game Game { get; }
     public FlagNames Names { get; }
     public List<EventEntry> Events { get; } = [];
@@ -74,15 +70,15 @@ public sealed class EventMap
 
     private EventMap(Gen4Game game, IReadOnlyList<MapHeaderInfo> headers, IReadOnlyList<string> locationNames)
     {
-        Game = game; Headers = headers; LocationNames = locationNames; Names = FlagNames.Hgss;
+        Game = game; Headers = headers; LocationNames = locationNames; Names = game.IsHgss ? FlagNames.Hgss : FlagNames.Platinum;
     }
 
     public static EventMap Load(Project project, IProgress<string>? log = null)
     {
         var game = Gen4Game.For(project);
-        if (!game.IsHgss) throw new NotSupportedException(Loc.T("core.ev.hgssOnly"));
-        var scriptsPath = Path.Combine(game.FilesRoot, ScriptsNarcRelativePath);
-        var eventsPath = Path.Combine(game.FilesRoot, EventsNarcRelativePath);
+        if (game.IsDp) throw new NotSupportedException(Loc.T("core.ev.hgssOnly"));
+        var scriptsPath = game.ScriptsPath;
+        var eventsPath = game.EventsPath;
         foreach (var f in new[] { scriptsPath, eventsPath, game.TextArchivePath })
             if (!File.Exists(f)) throw new FileNotFoundException(Loc.T("core.ev.fileMissing"), f);
 
@@ -93,7 +89,9 @@ public sealed class EventMap
         var species = Bank(game.SpeciesBank); var items = Bank(game.ItemsBank); var trainers = Bank(game.TrainerNamesBank); var locations = Bank(game.LocationNamesBank);
         var headers = MapHeaders.Load(game);
         var map = new EventMap(game, headers, locations) { _events = events };
-        var table = ScriptCommandTable.Hgss;
+        try { map.Sprites = OverworldSprites.TryLoad(game, project.Paths.Workspace); }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or IndexOutOfRangeException or ArgumentException) { } // o mapa funciona só com os marcadores
+        var table = game.IsHgss ? ScriptCommandTable.Hgss : ScriptCommandTable.Platinum;
         var bankCache = new Dictionary<int, List<string>>();
 
         foreach (var h in headers)
@@ -144,8 +142,8 @@ public sealed class EventMap
         if (!_triedLayouts)
         {
             _triedLayouts = true;
-            var matrices = Path.Combine(Game.FilesRoot, MatrixNarcRelativePath);
-            var land = Path.Combine(Game.FilesRoot, LandNarcRelativePath);
+            var matrices = Game.MatrixPath;
+            var land = Game.LandPath;
             if (File.Exists(matrices) && File.Exists(land))
             {
                 _matrices = Narc.Read(File.ReadAllBytes(matrices));
@@ -188,15 +186,15 @@ public sealed class EventMap
                     case "SetFlag": Flag(new((int)ins.Args[0].Value, "set", null)); break;
                     case "ClearFlag": Flag(new((int)ins.Args[0].Value, "clear", null)); break;
                     case "CheckFlag": Flag(new((int)ins.Args[0].Value, "check", null)); break;
-                    case "SetVar": Var(new((int)ins.Args[0].Value, "set", ins.Args[1].Value)); break;
-                    case "AddVar" or "SubVar" or "CopyVar" or "SetOrCopyVar": Var(new((int)ins.Args[0].Value, "write", ins.Args[1].Value)); break;
+                    case "SetVar" or "SetVarFromValue": Var(new((int)ins.Args[0].Value, "set", ins.Args[1].Value)); break;
+                    case "AddVar" or "SubVar" or "CopyVar" or "SetOrCopyVar" or "SetVarFromVar": Var(new((int)ins.Args[0].Value, "write", ins.Args[1].Value)); break;
                     case "CompareVarToValue": Var(new((int)ins.Args[0].Value, "compare", ins.Args[1].Value)); break;
                     case "CompareVarToVar": Var(new((int)ins.Args[0].Value, "compare", null)); Var(new((int)ins.Args[1].Value, "compare", null)); break;
-                    case "GiveItem": Act(Loc.T("ev.act.item", Sp(items, ins.Args[0].Value))); break;
-                    case "TrainerBattle": Act(Loc.T("ev.act.trainer", Sp(trainers, ins.Args[0].Value))); break;
+                    case "GiveItem" or "AddItem": Act(Loc.T("ev.act.item", Sp(items, ins.Args[0].Value))); break;
+                    case "TrainerBattle" or "StartTrainerBattle": Act(Loc.T("ev.act.trainer", Sp(trainers, ins.Args[0].Value))); break;
                     case "Warp": Act(Loc.T("ev.act.warp", ins.Args[0].Value)); break;
                     default:
-                        if (ins.Name.StartsWith("Give") && ins.Arg("species") is { } sp) Act(Loc.T("ev.act.pokemon", Sp(species, sp.Value)));
+                        if ((ins.Name.StartsWith("Give") || ins.Name.StartsWith("Add")) && ins.Arg("species") is { } sp) Act(Loc.T("ev.act.pokemon", Sp(species, sp.Value)));
                         break;
                 }
                 var msg = ins.Arg("message");

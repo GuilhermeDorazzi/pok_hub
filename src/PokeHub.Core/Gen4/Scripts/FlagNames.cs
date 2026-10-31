@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace PokeHub.Core.Gen4.Scripts;
 
 /// <summary>
-/// Nomes e limites de flags e variáveis do HGSS (constants/flags.h e vars.h do pokeheartgold, embutidos).
+/// Nomes e limites de flags e variáveis (HGSS: constants/flags.h e vars.h do pokeheartgold; Platinum: vars_flags.txt da pokeplatinum; embutidos).
 /// Flags: 0..NumFlags-1 salvas; 0x4000+ são temporárias (não salvas). Variáveis: VarBase..VarBase+NumVars-1 salvas; 0x8000+ especiais.
 /// Nomes UNK_/UNUSED_ indicam que a decomp não identificou uso. GEN5: outros limites.
 /// </summary>
@@ -27,16 +27,20 @@ public sealed class FlagNames
         public Dictionary<string, string> Flags { get; set; } = []; public Dictionary<string, string> Vars { get; set; } = [];
     }
 
-    private static readonly Lazy<FlagNames> _hgss = new(() =>
+    private static FlagNames LoadResource(string resource)
     {
-        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("flagnames-hgss.json")
-            ?? throw new InvalidOperationException("flagnames-hgss.json embutido não encontrado.");
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource)
+            ?? throw new InvalidOperationException($"{resource} embutido não encontrado.");
         var doc = JsonSerializer.Deserialize<Doc>(stream, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
         return new FlagNames(doc.NumFlags, doc.VarBase, doc.NumVars,
             doc.Flags.ToDictionary(k => int.Parse(k.Key), k => k.Value), doc.Vars.ToDictionary(k => int.Parse(k.Key), k => k.Value));
-    });
+    }
+
+    private static readonly Lazy<FlagNames> _hgss = new(() => LoadResource("flagnames-hgss.json"));
+    private static readonly Lazy<FlagNames> _platinum = new(() => LoadResource("flagnames-platinum.json"));
 
     public static FlagNames Hgss => _hgss.Value;
+    public static FlagNames Platinum => _platinum.Value;
 
     public string? Flag(int id) => _flags.GetValueOrDefault(id);
     public string? Var(int id) => _vars.GetValueOrDefault(id);

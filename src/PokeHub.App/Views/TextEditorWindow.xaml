@@ -21,7 +21,7 @@
 
         <!-- busca -->
         <DockPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,8">
-            <TextBlock Text="{Binding GameLabel}" Foreground="Gray" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0" />
+            <TextBlock Text="{Binding GameLabel}" Foreground="{DynamicResource MutedBrush}" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0" />
             <Button DockPanel.Dock="Right" Content="{loc:T txt.search}" Command="{Binding SearchCommand}" IsDefault="True" />
             <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}" ToolTip="{loc:T txt.searchTip}" />
         </DockPanel>
@@ -38,7 +38,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="160" />
+                <RowDefinition Height="190" />
             </Grid.RowDefinitions>
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
@@ -53,7 +53,7 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock TextTrimming="CharacterEllipsis">
-                                    <Run Text="{Binding Bank, Mode=OneWay, StringFormat={}{0:D4}}" Foreground="Gray" /><Run Text=":" Foreground="Gray" /><Run Text="{Binding Index, Mode=OneWay, StringFormat={}{0:D4}}" Foreground="Gray" /><Run Text="  " /><Run Text="{Binding Text, Mode=OneWay}" />
+                                    <Run Text="{Binding Bank, Mode=OneWay, StringFormat={}{0:D4}}" Foreground="{DynamicResource MutedBrush}" /><Run Text=":" Foreground="{DynamicResource MutedBrush}" /><Run Text="{Binding Index, Mode=OneWay, StringFormat={}{0:D4}}" Foreground="{DynamicResource MutedBrush}" /><Run Text="  " /><Run Text="{Binding Text, Mode=OneWay}" />
                                 </TextBlock>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -61,15 +61,29 @@
                 </DockPanel>
             </Grid>
             <DockPanel Grid.Row="1" Margin="0,8,0,4">
-                <TextBlock Text="{Binding CompressedNote}" Foreground="#8A6D00" DockPanel.Dock="Right" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding Hint}" Foreground="Gray" FontSize="11" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding CompressedNote}" Foreground="{DynamicResource AccentBrush}" DockPanel.Dock="Right" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Hint}" Foreground="{DynamicResource MutedBrush}" FontSize="11" TextWrapping="Wrap" />
             </DockPanel>
-            <TextBox Grid.Row="2" Text="{Binding EditText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"
-                     FontFamily="Consolas" VerticalScrollBarVisibility="Auto" LostFocus="Editor_LostFocus" />
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="470" />
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding EditText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"
+                         FontFamily="Consolas" VerticalScrollBarVisibility="Auto" LostFocus="Editor_LostFocus" />
+                <DockPanel Grid.Column="1" Margin="8,0,0,0">
+                    <TextBlock DockPanel.Dock="Bottom" Text="{Binding PreviewNote}" FontSize="11" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Background="{DynamicResource HoverBrush}" ToolTip="{loc:T txt.preview.tip}">
+                        <Image Source="{Binding PreviewImage}" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" RenderOptions.BitmapScalingMode="NearestNeighbor">
+                            <Image.LayoutTransform><ScaleTransform ScaleX="2" ScaleY="2" /></Image.LayoutTransform>
+                        </Image>
+                    </ScrollViewer>
+                </DockPanel>
+            </Grid>
         </Grid>
 
         <DockPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,8,0,0">
-            <TextBlock Text="{Binding Status}" Foreground="Gray" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="{loc:T txt.apply}" Command="{Binding ApplyCommand}" Padding="16,6" />
                 <Button Content="{loc:T common.save}" Command="{Binding SaveCommand}" FontWeight="Bold" Padding="16,6" />

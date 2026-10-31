@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows.Media.Imaging;
 using PokeHub.Core.Gen4;
 
@@ -26,6 +27,19 @@ public sealed class SpeciesCatalog
     {
         _sprites = sprites;
         Options = names.Select((name, id) => new SpeciesOption(id, name, this)).ToList();
+    }
+
+    /// <summary>Catálogo direto de um projeto, para janelas que não carregam os dados do jogo. null se os arquivos não estiverem lá.</summary>
+    public static SpeciesCatalog? TryForProject(PokeHub.Core.Projects.Project project)
+    {
+        try
+        {
+            var game = Gen4Game.For(project);
+            var text = Narc.Read(System.IO.File.ReadAllBytes(game.TextArchivePath));
+            var names = Gen4TextArchive.Read(text.Files[game.SpeciesBank]).Messages.Select(m => Gen4TextArchive.Decode(m)).ToList();
+            return new SpeciesCatalog(names, PokemonSprites.Load(game));
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException) { return null; }
     }
 
     public BitmapSource? Sprite(int species, int form = 0, bool female = false)

@@ -1,0 +1,39 @@
+{
+  "id": "game-tables",
+  "group": "edit",
+  "feature": "tables",
+  "tools": [],
+  "title": {
+    "pt-BR": "Tabelas do jogo",
+    "en-US": "Game tables"
+  },
+  "intro": {
+    "pt-BR": "Um editor só para os dados em forma de tabela: golpes, itens, golpes aprendidos, evoluções, golpes de ovo, filhotes, altura e peso, trocas, TMs, compatibilidade de TMs, lojas, tutores, loja comum, tabela de tipos, Battle Frontier, Headbutt, Safari, posição dos sprites, Pokéathlon, oponentes de concurso e valores de scripts.",
+    "en-US": "One editor for table-shaped data: moves, items, learnsets, evolutions, egg moves, babies, height and weight, trades, TMs, TM compatibility, marts, tutors, common mart, type chart, Battle Frontier, Headbutt, Safari, sprite positions, Pokéathlon, contest opponents and script values."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra o card Tabelas do jogo e escolha a tabela no alto.",
+      "en-US": "Open the Game tables card and pick the table at the top."
+    },
+    {
+      "pt-BR": "Nas tabelas por espécie ou loja, escolha o dono à esquerda. A caixa acima da grade filtra as linhas.",
+      "en-US": "In tables by species or mart, pick the owner on the left. The box above the grid filters the rows."
+    },
+    {
+      "pt-BR": "Salvar grava só as tabelas alteradas e cria uma versão. Depois use Testar.",
+      "en-US": "Save writes only the changed tables and creates a version. Then use Test."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "TMs, lojas, tutores, golpes de ovo do Platinum e a tabela de tipos moram no código do jogo, então só aparecem em projeto ds-rom e não podem crescer: dá para trocar itens e golpes, não acrescentar novos.",
+      "en-US": "TMs, marts, tutors, Platinum egg moves and the type chart live in the game's code, so they only appear in ds-rom projects and cannot grow: you can swap items and moves, not add new ones."
+    },
+    {
+      "pt-BR": "Golpes novos num save antigo só aparecem para Pokémon que subirem de nível depois da troca.",
+      "en-US": "New moves in an old save only show up for Pokémon that level up after the change."
+    }
+  ],
+  "links": []
+}

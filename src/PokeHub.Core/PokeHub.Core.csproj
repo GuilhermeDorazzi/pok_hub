@@ -10,6 +10,8 @@
     <EmbeddedResource Include="Gen4\pokedex-areamap-hgss.json" LogicalName="pokedex-areamap-hgss.json" />
     <EmbeddedResource Include="Gen4\scrcmd-hgss.json" LogicalName="scrcmd-hgss.json" />
     <EmbeddedResource Include="Gen4\flagnames-hgss.json" LogicalName="flagnames-hgss.json" />
+    <EmbeddedResource Include="Gen4\scrcmd-platinum.json" LogicalName="scrcmd-platinum.json" />
+    <EmbeddedResource Include="Gen4\flagnames-platinum.json" LogicalName="flagnames-platinum.json" />
     <EmbeddedResource Include="Localization\pt-BR.json" LogicalName="i18n/pt-BR.json" />
     <EmbeddedResource Include="Localization\en-US.json" LogicalName="i18n/en-US.json" />
   </ItemGroup>

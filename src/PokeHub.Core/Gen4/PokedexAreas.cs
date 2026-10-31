@@ -9,6 +9,8 @@ public enum PokedexAreaBlock
 {
     NormalMorning, NormalDay, NormalNight, NormalAll,
     SpecialMorning, SpecialDay, SpecialNight, SpecialAll,
+    /// <summary>Só em Platinum: variantes do bloco especial com a Pokédex Nacional.</summary>
+    NormalNational, SpecialNational,
 }
 
 public sealed record PokedexLocation(uint Id, string Name);
@@ -16,11 +18,14 @@ public sealed record PokedexLocation(uint Id, string Name);
 /// <summary>
 /// Áreas da Pokédex de HGSS: NARC a/1/3/3. Para cada espécie há um arquivo por bloco, com a lista de ids de área
 /// em u32 little-endian terminada por 0. Offsets e nomes das áreas conforme o pk_dex_editor (whackahack, thread 49867).
-/// GEN5: BW/B2W2 guardam isso de outro jeito; DP/Pt usam zukan_enc_*.narc com outro formato.
+/// Platinum: zukan_enc_platinum.narc, mesma lista, com a ordem de pokedex_enc_data.c na pokeplatinum. Os ids são campo e "dungeon";
+/// o jogo não guarda nomes, então os da tabela vêm de cruzar cada id com os encontros reais de cada mapa.
+/// GEN5: BW/B2W2 guardam isso de outro jeito. DP usa zukan_enc_diamond/pearl, sem ROM para validar.
 /// </summary>
 public sealed class PokedexAreaRepository
 {
     public const string HgssNarcRelativePath = @"a\1\3\3";
+    public const string PlatinumNarcRelativePath = @"application\zukanlist\zkn_data\zukan_enc_platinum.narc";
     public const int SpeciesCount = 493;
 
     private readonly Narc _narc;
@@ -29,6 +34,8 @@ public sealed class PokedexAreaRepository
 
     public Gen4Game Game { get; }
     public IReadOnlyList<string> SpeciesNames { get; }
+    public IReadOnlyList<PokedexLocation> Normal => Game.IsPlatinum ? PlatinumFields : NormalLocations;
+    public IReadOnlyList<PokedexLocation> Special => Game.IsPlatinum ? PlatinumDungeons : SpecialLocations;
 
     private PokedexAreaRepository(Gen4Game game, string narcPath, Narc narc, IReadOnlyList<string> speciesNames)
     {
@@ -39,16 +46,17 @@ public sealed class PokedexAreaRepository
         SpeciesNames = speciesNames;
     }
 
-    public static bool Supports(Gen4Game game) => game.IsHgss;
+    public static bool Supports(Gen4Game game) => game.IsHgss || game.IsPlatinum;
 
     public static PokedexAreaRepository Load(Project project)
     {
         var game = Gen4Game.For(project);
         if (!Supports(game)) throw new NotSupportedException(Loc.T("core.dex.hgssOnly"));
-        var narcPath = Path.Combine(game.FilesRoot, HgssNarcRelativePath);
+        var narcPath = Path.Combine(game.FilesRoot, game.IsPlatinum ? PlatinumNarcRelativePath : HgssNarcRelativePath);
         if (!File.Exists(narcPath)) throw new FileNotFoundException(Loc.T("core.dex.narcMissing"), narcPath);
         var narc = Narc.Read(File.ReadAllBytes(narcPath));
-        if (narc.Files.Count < 3467 + SpeciesCount) throw new InvalidDataException(Loc.T("core.dex.narcShort", narc.Files.Count, 3467 + SpeciesCount));
+        int needed = game.IsPlatinum ? PlatinumFileIndex(SpeciesCount, PokedexAreaBlock.NormalNational) + 1 : 3467 + SpeciesCount;
+        if (narc.Files.Count < needed) throw new InvalidDataException(Loc.T("core.dex.narcShort", narc.Files.Count, needed));
 
         var text = Narc.Read(File.ReadAllBytes(game.TextArchivePath));
         var species = Gen4TextArchive.Read(text.Files[game.SpeciesBank]).Messages.Select(m => Gen4TextArchive.Decode(m)).ToList();
@@ -69,11 +77,29 @@ public sealed class PokedexAreaRepository
         _ => throw new ArgumentOutOfRangeException(nameof(block)),
     };
 
-    public static bool IsSpecial(PokedexAreaBlock block) => block is PokedexAreaBlock.SpecialMorning or PokedexAreaBlock.SpecialDay or PokedexAreaBlock.SpecialNight or PokedexAreaBlock.SpecialAll;
+    /// <summary>Índice em zukan_enc_platinum.narc: quatro arquivos de coordenadas e dez blocos de 495.</summary>
+    public static int PlatinumFileIndex(int species, PokedexAreaBlock block) => 4 + species + 495 * block switch
+    {
+        PokedexAreaBlock.SpecialMorning => 0,
+        PokedexAreaBlock.SpecialDay => 1,
+        PokedexAreaBlock.SpecialNight => 2,
+        PokedexAreaBlock.SpecialAll => 3,
+        PokedexAreaBlock.SpecialNational => 4,
+        PokedexAreaBlock.NormalMorning => 5,
+        PokedexAreaBlock.NormalDay => 6,
+        PokedexAreaBlock.NormalNight => 7,
+        PokedexAreaBlock.NormalAll => 8,
+        PokedexAreaBlock.NormalNational => 9,
+        _ => throw new ArgumentOutOfRangeException(nameof(block)),
+    };
+
+    private int IndexOf(int species, PokedexAreaBlock block) => Game.IsPlatinum ? PlatinumFileIndex(species, block) : FileIndex(species, block);
+
+    public static bool IsSpecial(PokedexAreaBlock block) => block is PokedexAreaBlock.SpecialMorning or PokedexAreaBlock.SpecialDay or PokedexAreaBlock.SpecialNight or PokedexAreaBlock.SpecialAll or PokedexAreaBlock.SpecialNational;
 
     public IReadOnlyList<uint> GetAreas(int species, PokedexAreaBlock block)
     {
-        var data = _narc.Files[FileIndex(species, block)];
+        var data = _narc.Files[IndexOf(species, block)];
         var ids = new List<uint>();
         for (int i = 0; i + 4 <= data.Length; i += 4)
         {
@@ -90,7 +116,7 @@ public sealed class PokedexAreaRepository
         foreach (var id in ids.Distinct().OrderBy(i => i)) ms.Write(BitConverter.GetBytes(id));
         ms.Write(BitConverter.GetBytes(0u));
         var bytes = ms.ToArray();
-        int index = FileIndex(species, block);
+        int index = IndexOf(species, block);
         // mantém os bytes originais quando a lista não mudou (preserva preenchimento e ordem do jogo)
         if (GetAreas(species, block).ToHashSet().SetEquals(ids)) bytes = _narc.Files[index];
         _narc.Files[index] = bytes;
@@ -103,6 +129,30 @@ public sealed class PokedexAreaRepository
         File.WriteAllBytes(_narcPath, _narc.Write());
         for (int i = 0; i < _narc.Files.Count; i++) _original[i] = _narc.Files[i].ToArray();
     }
+
+    // ----- tabelas de áreas (Platinum) -----
+
+    public static IReadOnlyList<PokedexLocation> PlatinumFields { get; } =
+    [
+        new(1, "Canalave City"), new(2, "Eterna City"), new(3, "Pastoria City"), new(4, "Sunyshore City"), new(5, "Pokémon League"),
+        new(6, "Valley Windworks"), new(7, "Fuego Ironworks"), new(8, "Stark Mountain"), new(9, "Iron Island"), new(10, "Valor Lakefront"),
+        new(11, "Acuity Lakefront"), new(12, "Route 201"), new(13, "Route 202"), new(14, "Route 203"), new(15, "Route 204 A"),
+        new(16, "Route 204 B"), new(17, "Route 205 A"), new(18, "Route 205 B"), new(19, "Route 206"), new(20, "Route 207"),
+        new(21, "Route 208"), new(22, "Route 209"), new(23, "Route 210 A"), new(24, "Route 210 B"), new(25, "Route 211 A"),
+        new(26, "Route 211 B"), new(27, "Route 212 A"), new(28, "Route 212 B"), new(29, "Route 213"), new(30, "Route 214"),
+        new(31, "Route 215"), new(32, "Route 216"), new(33, "Route 217"), new(34, "Route 218"), new(35, "Route 219"),
+        new(36, "Route 221"), new(37, "Route 222"), new(38, "Route 224"), new(39, "Route 225"), new(40, "Route 227"),
+        new(41, "Route 228"), new(42, "Route 229"), new(43, "Twinleaf Town"), new(44, "Celestic Town"), new(45, "Resort Area"),
+        new(46, "Route 220"), new(47, "Route 223"), new(48, "Route 226"), new(49, "Route 230"), new(50, "#50"),
+    ];
+
+    public static IReadOnlyList<PokedexLocation> PlatinumDungeons { get; } =
+    [
+        new(1, "Oreburgh Mine"), new(2, "Eterna Forest"), new(3, "Mt. Coronet"), new(4, "Great Marsh"), new(5, "Solaceon Ruins"),
+        new(6, "Victory Road"), new(7, "Ravaged Path"), new(8, "Oreburgh Gate"), new(9, "Stark Mountain"), new(10, "Sendoff Spring / Turnback Cave"),
+        new(11, "Snowpoint Temple"), new(12, "Wayward Cave"), new(13, "Ruin Maniac Cave"), new(14, "Trophy Garden"), new(15, "Iron Island"),
+        new(16, "Old Chateau"), new(17, "Lake Verity"), new(18, "Lake Valor"), new(19, "Lake Acuity"), new(20, "Lost Tower"), new(21, "#21"),
+    ];
 
     // ----- tabelas de áreas (HGSS) -----
 

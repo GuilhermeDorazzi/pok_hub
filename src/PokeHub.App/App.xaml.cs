@@ -15,6 +15,9 @@ public partial class App : Application
         base.OnStartup(e);
         Loc.Instance.Language = Loc.Resolve(HubBootstrapper.SavedLanguage());
 
+        // o tema entra em cada janela, como na principal: no nível do aplicativo, o estilo de TextBlock invadiria os modelos dos controles
+        EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent, new RoutedEventHandler(ApplyTheme));
+
         var window = new MainWindow();
         MainWindow = window;
         window.RootChosen += root => window.DataContext = CreateViewModel(root);
@@ -28,6 +31,18 @@ public partial class App : Application
         var i = Array.IndexOf(e.Args, "--screenshot");
         if (i >= 0 && i + 1 < e.Args.Length && window.DataContext is MainViewModel vm) CaptureSections(window, vm, e.Args[i + 1]);
     }
+
+    private static void ApplyTheme(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Window window || window is MainWindow || window.Resources.Contains(ThemeMark)) return;
+        window.Resources[ThemeMark] = true;
+        var theme = new ResourceDictionary { Source = new Uri("pack://application:,,,/PokeHub;component/Views/Theme.xaml") };
+        window.Resources.MergedDictionaries.Add(theme);
+        window.Background = (System.Windows.Media.Brush)theme["BgBrush"];
+        window.Foreground = (System.Windows.Media.Brush)theme["TextBrush"];
+    }
+
+    private const string ThemeMark = "PokeHub.ThemeApplied";
 
     private void CaptureSections(MainWindow window, MainViewModel vm, string basePath)
     {
@@ -53,17 +68,18 @@ public partial class App : Application
             {
                 try
                 {
-                    foreach (var (id, suffix) in new[] { ("pokedex-area-editor", "pokedex"), ("event-map", "events"), ("trainer-editor", "trainers"), ("encounter-editor", "encounters") })
+                    foreach (var (id, suffix) in new[] { ("pokedex-area-editor", "pokedex"), ("event-map", "events"), ("trainer-editor", "trainers"), ("encounter-editor", "encounters"), ("text-editor", "text") })
                     {
                         BuiltinEditors.Open(id, project, _ => { }, _ => Task.CompletedTask);
                         var win = Windows.OfType<Window>().LastOrDefault(w => w != window);
                         if (win is null) continue;
                         if (win.DataContext is PokedexAreaEditorViewModel dexVm) dexVm.SelectedSpecies = 16; // Pidgey
+                        if (win.DataContext is TextEditorViewModel textVm) textVm.EditText = "Hey, how are your Pok\u00E9mon?\\nThis second line is written long enough to pass the box.\\f{STRVAR_1 3,0,0} got a new line!";
                         if (win.DataContext is EventMapViewModel eventVm) eventVm.MapSearch = "Route 29";
                         if (win.DataContext is TrainerEditorViewModel trainerVm) trainerVm.Selected = trainerVm.FilteredTrainers.ElementAtOrDefault(20); // Falkner
                         await Task.Delay(500);
                         win.UpdateLayout();
-                        var root = (FrameworkElement)win.Content;
+                        var root = win; // a janela inteira: o fundo do tema é dela, não do conteúdo
                         var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
                         bmp.Render(root);
                         var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
@@ -73,6 +89,26 @@ public partial class App : Application
                     }
                 }
                 catch (Exception ex) { Console.Error.WriteLine(ex); }
+                foreach (var (command, suffix) in new[] { ((System.Windows.Input.ICommand)vm.OpenStatsCommand, "stats"), (vm.OpenNarcBrowserCommand, "narcs"), (vm.OpenTablesCommand, "tables"), (vm.OpenScriptsCommand, "scripts") })
+                {
+                    try
+                    {
+                        command.Execute(null);
+                        var win = Windows.OfType<Window>().LastOrDefault(w => w != window);
+                        if (win is null) continue;
+                        if (win.DataContext is StatsEditorViewModel statsVm) statsVm.Selected = statsVm.Filtered.FirstOrDefault(o => o.Id == 25);
+                        await Task.Delay(800);
+                        win.UpdateLayout();
+                        var root = win; // a janela inteira: o fundo do tema é dela, não do conteúdo
+                        var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                        bmp.Render(root);
+                        var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                        enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+                        using (var fs = File.Create(Path.Combine(Path.GetDirectoryName(basePath)!, Path.GetFileNameWithoutExtension(basePath) + "-" + suffix + ".png"))) enc.Save(fs);
+                        win.Close();
+                    }
+                    catch (Exception ex) { Console.Error.WriteLine(ex); }
+                }
             }
             Shutdown();
         }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);

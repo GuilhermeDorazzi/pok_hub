@@ -1,0 +1,35 @@
+{
+  "id": "stats-editor",
+  "group": "edit",
+  "feature": "stats",
+  "tools": [],
+  "title": {
+    "pt-BR": "Stats dos Pokémon",
+    "en-US": "Pokémon stats"
+  },
+  "intro": {
+    "pt-BR": "Muda stats base, tipos, habilidades, itens, taxa de captura e outros dados de cada espécie, com a sprite ao lado. Compatibilidade de TMs, golpes e evoluções ficam no card Tabelas do jogo.",
+    "en-US": "Changes base stats, types, abilities, items, catch rate and other data of each species, with the sprite alongside. TM compatibility, moves and evolutions are in the Game tables card."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra o card Stats dos Pokémon e escolha a espécie na lista, por nome ou número.",
+      "en-US": "Open the Pokémon stats card and pick the species in the list, by name or number."
+    },
+    {
+      "pt-BR": "Ajuste os stats nos controles deslizantes. O total aparece logo abaixo.",
+      "en-US": "Adjust the stats with the sliders. The total appears right below."
+    },
+    {
+      "pt-BR": "Salvar grava no workspace e cria uma versão. Depois use Testar.",
+      "en-US": "Save writes to the workspace and creates a version. Then use Test."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Mudar stats não recalcula Pokémon que já estão num save: teste num jogo novo ou capture outro.",
+      "en-US": "Changing stats does not recalculate Pokémon already in a save: test on a new game or catch another."
+    }
+  ],
+  "links": []
+}

@@ -9,10 +9,14 @@ namespace PokeHub.Core.Gen4;
 /// </summary>
 public static class SpriteStrip
 {
+    /// <summary>Pixels em linhas, em vez de tiles: o campo de tipo do NCGR vale 1.</summary>
+    public static bool IsScanned(byte[] ncgr) => BitConverter.ToUInt32(NitroFile.Sections(ncgr, "NCGR")["CHAR"], 12) == 1;
+
     /// <summary>Primeiro quadro, com a cor 0 transparente. null se o arquivo não está no formato esperado.</summary>
-    public static RgbaImage? Decode(byte[] ncgr, byte[] nclr)
+    public static RgbaImage? Decode(byte[] ncgr, byte[] nclr) => Decode(ncgr, NitroPalette.Read(nclr));
+
+    public static RgbaImage? Decode(byte[] ncgr, NitroPalette palette)
     {
-        var palette = NitroPalette.Read(nclr);
         var ch = NitroFile.Sections(ncgr, "NCGR")["CHAR"];
         int height = BitConverter.ToUInt16(ch, 0) * 8, width = BitConverter.ToUInt16(ch, 2) * 8;
         int size = (int)BitConverter.ToUInt32(ch, 16), offset = (int)BitConverter.ToUInt32(ch, 20);
@@ -38,7 +42,13 @@ public static class SpriteStrip
     /// <summary>Decodifica sem deixar um arquivo estranho derrubar o editor: quem chama só fica sem a imagem.</summary>
     public static RgbaImage? TryDecode(byte[] ncgr, byte[] nclr)
     {
-        try { return Decode(ncgr, nclr); }
+        try { return Decode(ncgr, NitroPalette.Read(nclr)); }
+        catch (Exception ex) when (ex is InvalidDataException or KeyNotFoundException or ArgumentException or IndexOutOfRangeException) { return null; }
+    }
+
+    public static RgbaImage? TryDecode(byte[] ncgr, NitroPalette palette)
+    {
+        try { return Decode(ncgr, palette); }
         catch (Exception ex) when (ex is InvalidDataException or KeyNotFoundException or ArgumentException or IndexOutOfRangeException) { return null; }
     }
 

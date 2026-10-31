@@ -10,7 +10,7 @@
         Title="{loc:T enc.title}" Width="1200" Height="760" MinWidth="900" MinHeight="520"
         WindowStartupLocation="CenterOwner" FontSize="13" Closing="Window_Closing">
     <Window.Resources>
-        <Style TargetType="TextBox"><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
+        <Style TargetType="TextBox"><Setter Property="Foreground" Value="{DynamicResource TextBrush}" /><Setter Property="Background" Value="{DynamicResource BgBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" /><Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
         <DataTemplate x:Key="RowTemplate" DataType="{x:Type vm:EncounterRowViewModel}">
             <Grid Margin="0,1">
                 <Grid.ColumnDefinitions>
@@ -21,7 +21,7 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" Foreground="Gray" />
+                <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" />
                 <views:SpeciesPicker Grid.Column="1" Catalog="{Binding DataContext.Catalog, RelativeSource={RelativeSource AncestorType=Window}}"
                                      SelectedSpecies="{Binding Species}" Margin="0,0,6,0" />
                 <views:SpeciesPicker Grid.Column="2" Catalog="{Binding DataContext.Catalog, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -39,7 +39,7 @@
             </Grid>
         </DataTemplate>
         <DataTemplate x:Key="GroupTemplate" DataType="{x:Type vm:EncounterGroupViewModel}">
-            <Border BorderBrush="#DDD" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,8" Background="#FAFAFA">
+            <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,8" Background="{DynamicResource PanelBrush}">
                 <StackPanel>
                     <DockPanel Margin="0,0,0,4">
                         <TextBlock Text="{Binding Title}" FontWeight="Bold" VerticalAlignment="Center" />
@@ -52,9 +52,9 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="176" /><ColumnDefinition Width="176" /><ColumnDefinition Width="176" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:T enc.morning}" Foreground="Gray" FontSize="11" />
-                        <TextBlock Grid.Column="1" Text="{loc:T enc.dayTime}" Foreground="Gray" FontSize="11" />
-                        <TextBlock Grid.Column="2" Text="{loc:T enc.nightTime}" Foreground="Gray" FontSize="11" />
+                        <TextBlock Grid.Column="0" Text="{loc:T enc.morning}" Foreground="{DynamicResource MutedBrush}" FontSize="11" />
+                        <TextBlock Grid.Column="1" Text="{loc:T enc.dayTime}" Foreground="{DynamicResource MutedBrush}" FontSize="11" />
+                        <TextBlock Grid.Column="2" Text="{loc:T enc.nightTime}" Foreground="{DynamicResource MutedBrush}" FontSize="11" />
                     </Grid>
                     <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource RowTemplate}" />
                 </StackPanel>
@@ -68,7 +68,7 @@
         </Grid.ColumnDefinitions>
 
         <DockPanel Grid.Column="0" Margin="0,0,10,0">
-            <TextBlock DockPanel.Dock="Top" Text="{Binding GameLabel}" Foreground="Gray" Margin="0,0,0,6" TextWrapping="Wrap" />
+            <TextBlock DockPanel.Dock="Top" Text="{Binding GameLabel}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,6" TextWrapping="Wrap" />
             <TextBox DockPanel.Dock="Top" Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" ToolTip="{loc:T enc.filterTip}" />
             <ListBox x:Name="EntryList" ItemsSource="{Binding FilteredEntries}" SelectedItem="{Binding Selected}" FontFamily="Consolas"
                      VirtualizingPanel.IsVirtualizing="True">
@@ -82,7 +82,7 @@
 
         <DockPanel Grid.Column="1">
             <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
-                <TextBlock Text="{Binding Status}" Foreground="Gray" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Status}" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="{loc:T common.save}" Command="{Binding SaveCommand}" FontWeight="Bold" Padding="16,6" />
                     <Button Content="{loc:T common.close}" Click="Close_Click" Padding="16,6" />

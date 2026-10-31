@@ -39,7 +39,7 @@ public partial class NewProjectWindow : Window
             DetectedText.Text = ok
                 ? Loc.T("np.detected", _header.Game, _header.GameCode, _header.Region, _header.Generation, _header.Title)
                 : Loc.T("np.unknown", _header.GameCode, _header.Title); // GEN5
-            DetectedText.Foreground = ok ? System.Windows.Media.Brushes.DarkGreen : System.Windows.Media.Brushes.Firebrick;
+            DetectedText.Foreground = ok ? System.Windows.Media.Brushes.LightGreen : System.Windows.Media.Brushes.Salmon;
             if (string.IsNullOrWhiteSpace(NameBox.Text) && ok)
                 NameBox.Text = Path.GetFileNameWithoutExtension(fileName);
             CreateButton.IsEnabled = ok;
@@ -48,7 +48,7 @@ public partial class NewProjectWindow : Window
         {
             _header = null;
             DetectedText.Text = Loc.T("np.readError", ex.Message);
-            DetectedText.Foreground = System.Windows.Media.Brushes.Firebrick;
+            DetectedText.Foreground = System.Windows.Media.Brushes.Salmon;
             CreateButton.IsEnabled = false;
         }
     }

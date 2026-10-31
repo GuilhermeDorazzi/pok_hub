@@ -29,6 +29,12 @@ public sealed class Gen4Game
     public string PokemonSpritesPath => Path.Combine(FilesRoot, IsHgss ? @"a\0\0\4" : IsPlatinum ? @"poketool\pokegra\pl_pokegra.narc" : @"poketool\pokegra\pokegra.narc");
     public string PokemonFormSpritesPath => Path.Combine(FilesRoot, IsHgss ? @"a\1\1\4" : IsPlatinum ? @"poketool\pokegra\pl_otherpoke.narc" : @"poketool\pokegra\otherpoke.narc");
     public string ItemIconsPath => Path.Combine(FilesRoot, IsHgss ? @"a\0\1\8" : @"itemtool\itemdata\item_icon.narc");
+    public string FontPath => Path.Combine(FilesRoot, IsHgss ? @"a\0\1\6" : IsPlatinum ? @"graphic\pl_font.narc" : @"graphic\font.narc");
+    public string ScriptsPath => Path.Combine(FilesRoot, IsHgss ? @"a\0\1\2" : @"fielddata\script\scr_seq.narc");
+    public string EventsPath => Path.Combine(FilesRoot, IsHgss ? @"a\0\3\2" : @"fielddata\eventdata\zone_event.narc");
+    public string MatrixPath => Path.Combine(FilesRoot, IsHgss ? @"a\0\4\1" : @"fielddata\mapmatrix\map_matrix.narc");
+    public string LandPath => Path.Combine(FilesRoot, IsHgss ? @"a\0\6\5" : @"fielddata\land_data\land_data.narc");
+    public string PersonalPath => Path.Combine(FilesRoot, IsHgss ? @"a\0\0\2" : IsPlatinum ? @"poketool\personal\pl_personal.narc" : @"poketool\personal\personal.narc");
     public string TextArchivePath => Path.Combine(FilesRoot, IsHgss ? @"a\0\2\7" : IsPlatinum ? @"msgdata\pl_msg.narc" : @"msgdata\msg.narc");
     public string EncountersPath => Path.Combine(FilesRoot, Game switch
     {

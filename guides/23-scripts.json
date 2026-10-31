@@ -1,0 +1,39 @@
+{
+  "id": "script-editor",
+  "group": "edit",
+  "feature": "scripts",
+  "tools": [],
+  "title": {
+    "pt-BR": "Editor de scripts",
+    "en-US": "Script editor"
+  },
+  "intro": {
+    "pt-BR": "Mostra os comandos de cada mapa e permite inserir e remover comandos. A tabela de entradas e os saltos são recalculados sozinhos.",
+    "en-US": "Shows each map's commands and lets you insert and remove commands. The entry table and jumps are recalculated automatically."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra o card Editor de scripts e escolha o arquivo do mapa à esquerda.",
+      "en-US": "Open the Script editor card and pick the map's file on the left."
+    },
+    {
+      "pt-BR": "Selecione na lista o comando antes do qual quer inserir, escolha o comando novo à direita e preencha os argumentos.",
+      "en-US": "Select in the list the command to insert before, pick the new command on the right and fill in the arguments."
+    },
+    {
+      "pt-BR": "Salvar grava e cria uma versão. Depois use Testar.",
+      "en-US": "Save writes and creates a version. Then use Test."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Só aparecem comandos alcançados a partir das entradas do arquivo. Para mudar valores sem inserir nada, a tabela Scripts em Tabelas do jogo é mais rápida.",
+      "en-US": "Only commands reached from the file's entries appear. To change values without inserting anything, the Scripts table in Game tables is faster."
+    },
+    {
+      "pt-BR": "O nome e os argumentos de cada comando vêm das decomps, mas nem todo argumento tem significado documentado: teste no jogo.",
+      "en-US": "Each command's name and arguments come from the decomps, but not every argument has a documented meaning: test in the game."
+    }
+  ],
+  "links": []
+}

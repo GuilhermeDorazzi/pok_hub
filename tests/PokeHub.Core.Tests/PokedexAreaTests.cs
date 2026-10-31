@@ -23,6 +23,29 @@ public class PokedexAreaTests
         Assert.DoesNotContain(PokedexAreaRepository.SpecialLocations, l => l.Id == 0x13); // Olivine [SS Aqua] removido como no original
     }
 
+    /// <summary>Starly no Platinum: nas rotas certas pelos nomes derivados dos encontros, e regravar não muda o NARC.</summary>
+    [Fact]
+    public void Real_platinum_reads_starly_with_the_right_names()
+    {
+        var ws = Environment.GetEnvironmentVariable("POKEHUB_PLATINUM_WORKSPACE");
+        if (string.IsNullOrEmpty(ws) || !Directory.Exists(ws)) return;
+        var projectDir = Path.GetDirectoryName(ws.TrimEnd('\\', '/'))!;
+        var project = new Project { Paths = new ProjectPaths(projectDir), Config = ProjectConfig.Load(Path.Combine(projectDir, "project.json")) };
+        var repo = PokedexAreaRepository.Load(project);
+        Assert.Equal(PokedexAreaRepository.PlatinumFields, repo.Normal);
+        var names = repo.GetAreas(396, PokedexAreaBlock.NormalDay).Select(id => repo.Normal.First(l => l.Id == id).Name).ToList();
+        Assert.Contains("Route 201", names);
+        Assert.Contains("Route 202", names);
+        foreach (PokedexAreaBlock block in Enum.GetValues<PokedexAreaBlock>())
+            for (int sp = 1; sp <= PokedexAreaRepository.SpeciesCount; sp++)
+            {
+                var known = PokedexAreaRepository.IsSpecial(block) ? repo.Special : repo.Normal;
+                Assert.All(repo.GetAreas(sp, block), id => Assert.Contains(known, l => l.Id == id));
+                repo.SetAreas(sp, block, repo.GetAreas(sp, block));
+            }
+        Assert.False(repo.HasChanges);
+    }
+
     /// <summary>Com POKEHUB_WORKSPACE (HGSS): lê o Pidgey, regrava sem mudar nada e exige NARC idêntico; depois edita e confere.</summary>
     [Fact]
     public void Real_workspace_reads_pidgey_and_rewrites_identically()

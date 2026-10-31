@@ -9,7 +9,7 @@
         Title="{loc:T ev.title}" Width="1240" Height="800" MinWidth="960" MinHeight="560"
         WindowStartupLocation="CenterOwner" FontSize="13">
     <DockPanel Margin="10">
-        <TextBlock DockPanel.Dock="Top" Text="{Binding Summary}" Foreground="Gray" Margin="0,0,0,8" TextWrapping="Wrap" />
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Summary}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,8" TextWrapping="Wrap" />
         <TabControl>
             <!-- Mapas e eventos -->
             <TabItem Header="{loc:T ev.tab.maps}">
@@ -21,12 +21,12 @@
                     <DockPanel Grid.Column="0" Margin="0,0,10,0">
                         <TextBox DockPanel.Dock="Top" Text="{Binding MapSearch, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" Padding="4,3"
                                  ToolTip="{loc:T ev.searchTip}" />
-                        <TextBlock DockPanel.Dock="Top" Text="{loc:T ev.searchTip}" Foreground="Gray" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6" />
+                        <TextBlock DockPanel.Dock="Top" Text="{loc:T ev.searchTip}" Foreground="{DynamicResource MutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6" />
                         <ListBox ItemsSource="{Binding Maps}" SelectedItem="{Binding SelectedMap}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <DockPanel>
-                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Count}" Foreground="Gray" Margin="8,0,0,0" />
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Count}" Foreground="{DynamicResource MutedBrush}" Margin="8,0,0,0" />
                                         <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
                                     </DockPanel>
                                 </DataTemplate>
@@ -58,7 +58,7 @@
                                                 <TextBlock TextTrimming="CharacterEllipsis">
                                                     <Run Text="{Binding Actions[0], Mode=OneWay}" FontWeight="SemiBold" />
                                                     <Run Text=" " />
-                                                    <Run Text="{Binding Messages[0], Mode=OneWay}" Foreground="#555" />
+                                                    <Run Text="{Binding Messages[0], Mode=OneWay}" Foreground="{DynamicResource MutedBrush}" />
                                                 </TextBlock>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
@@ -66,7 +66,7 @@
                                 </GridView>
                             </ListView.View>
                         </ListView>
-                        <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="#DDD" />
+                        <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="{DynamicResource BorderBrush}" />
                         <DockPanel Grid.Column="2">
                             <WrapPanel DockPanel.Dock="Bottom" Margin="0,4,0,0" TextElement.FontSize="11">
                                 <Border Width="10" Height="10" Background="#E0403A" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.npc}" Margin="0,0,8,0" />
@@ -77,7 +77,7 @@
                                 <Border Width="10" Height="10" Background="#7ABE64" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.grass}" Margin="0,0,8,0" />
                                 <Border Width="10" Height="10" Background="#68A5E1" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.water}" />
                             </WrapPanel>
-                            <TextBlock DockPanel.Dock="Bottom" Text="{Binding LayoutStatus}" Foreground="#555" TextWrapping="Wrap" />
+                            <TextBlock DockPanel.Dock="Bottom" Text="{Binding LayoutStatus}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" />
                             <ScrollViewer x:Name="LayoutScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="#2A2E32">
                                 <Canvas x:Name="LayoutCanvas" HorizontalAlignment="Left" VerticalAlignment="Top">
                                     <Image x:Name="LayoutImageView" Source="{Binding LayoutImage}" RenderOptions.BitmapScalingMode="NearestNeighbor" Stretch="Fill" />
@@ -85,7 +85,7 @@
                             </ScrollViewer>
                         </DockPanel>
                         </Grid>
-                        <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" Background="#DDD" />
+                        <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" Background="{DynamicResource BorderBrush}" />
                         <TextBox Grid.Row="2" Text="{Binding EventDetails, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="12"
                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="6" />
                     </Grid>

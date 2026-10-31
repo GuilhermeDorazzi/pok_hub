@@ -3,7 +3,7 @@ using PokeHub.Core.Graphics;
 namespace PokeHub.Core.Gen4.Scripts;
 
 /// <summary>Algo com posição no mapa, em tiles a partir do canto da área desenhada. Warp leva ao cabeçalho de destino.</summary>
-public sealed record LayoutMarker(EventKind Kind, int Index, int X, int Y, int Width = 1, int Height = 1, int? TargetMap = null);
+public sealed record LayoutMarker(EventKind Kind, int Index, int X, int Y, int Width = 1, int Height = 1, int? SpriteId = null, int? TargetMap = null);
 
 /// <summary>
 /// Planta de um mapa para mostrar os eventos no lugar: colisões e tipos de tile das células da matriz que pertencem ao mapa.
@@ -76,7 +76,7 @@ public sealed class MapLayout
                 layout.ReadCell(file, (cell % width - minX) * CellTiles, (cell / width - minY) * CellTiles, hasSoundSection);
 
         int ox = minX * CellTiles, oy = minY * CellTiles;
-        foreach (var o in events.Objects) layout.Markers.Add(new(EventKind.Npc, o.Index, o.X - ox, o.Z - oy));
+        foreach (var o in events.Objects) layout.Markers.Add(new(EventKind.Npc, o.Index, o.X - ox, o.Z - oy, SpriteId: o.SpriteId));
         foreach (var b in events.Bg) layout.Markers.Add(new(EventKind.Sign, b.Index, b.X - ox, b.Z - oy));
         foreach (var c in events.Coords) layout.Markers.Add(new(EventKind.Trigger, c.Index, c.X - ox, c.Z - oy, Math.Max(1, c.W), Math.Max(1, c.H)));
         foreach (var w in events.Warps) layout.Markers.Add(new(EventKind.Warp, w.Index, w.X - ox, w.Z - oy, TargetMap: w.TargetHeader == DynamicWarpHeader ? null : w.TargetHeader));

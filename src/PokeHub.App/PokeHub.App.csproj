@@ -9,6 +9,7 @@
     <AssemblyName>PokeHub</AssemblyName>
     <RootNamespace>PokeHub.App</RootNamespace>
     <Version>0.3.0</Version>
+    <ApplicationIcon>Assets\pokehub.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\PokeHub.Core\PokeHub.Core.csproj" />

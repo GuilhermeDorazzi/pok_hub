@@ -24,6 +24,13 @@ Teste manual sem agente: mandar JSON-RPC por stdin, uma mensagem por linha (`ini
 | `list_trainers`, `get_trainer` | treinadores com classe, time, golpes e itens | leitura |
 | `list_encounter_areas`, `get_encounters` | tabelas de encontros selvagens com nomes de espécie e local | leitura |
 | `list_events`, `find_events`, `free_flags`, `flag_usage` | mapa de eventos, uso de flags e variáveis e faixas livres (HGSS) | leitura |
+| `get_pokemon_stats` | stats base, tipos e habilidades de uma espécie | leitura |
+| `set_pokemon_stats`, `set_trainer_pokemon`, `set_text` | editam dados do jogo; só o que for informado muda, e valor inválido é recusado antes de gravar | versão antes e depois |
+| `replace_encounter_species` | troca uma espécie em todos os encontros; sem `apply=true`, só mostra o que mudaria | `apply=true`, versão antes e depois |
+| `list_tables`, `list_table_owners`, `get_table_rows` | as tabelas do card "Tabelas do jogo": golpes, itens, evoluções, lojas, scripts e o resto | leitura |
+| `set_table_cell` | altera uma célula; valor fora do limite é recusado | versão antes e depois |
+| `get_script` | comandos de um arquivo de scripts, com posição, argumentos e texto | leitura |
+| `insert_script_command`, `remove_script_command` | inserem e removem comandos, com saltos recalculados | versão antes e depois |
 | `list_code_patches`, `create_code_patch` | patches de código do projeto; criar gera a pasta com um modelo inativo | |
 | `apply_code_patches`, `revert_code_patches` | compila e grava os patches ativos, ou tira tudo do jogo (salva versão antes e depois) | erro de compilação ou checagem não grava nada e volta com a mensagem do compilador |
 | `list_tools` | catálogo com estado de instalação, propósito e custo | leitura |
@@ -36,7 +43,6 @@ Regras de projeto:
 - Ações destrutivas ou pesadas exigem um parâmetro de confirmação explícito; o agente precisa perguntar ao usuário antes de repetir com `confirm=true`.
 - Erros voltam com a mensagem real (projeto inexistente, workspace vazio, ferramenta não instalada), para o agente corrigir a chamada em vez de adivinhar.
 - Os dados do jogo são lidos pelos repositórios dos editores (`TrainerRepository`, `EncounterRepository`), então os ids e nomes batem com a interface.
-- Escrita de dados do jogo (editar time, encontros, textos) ainda não está exposta: próxima fatia, com versão salva automaticamente antes de cada gravação.
 
 `--root` e `POKEHUB_ROOT` valem só para aquela execução: não mudam a pasta do hub gravada nas configurações do aplicativo.
 

@@ -1,0 +1,43 @@
+{
+  "id": "narc-browser",
+  "group": "edit",
+  "feature": "narcs",
+  "tools": [],
+  "title": {
+    "pt-BR": "Navegador de gráficos",
+    "en-US": "Graphics browser"
+  },
+  "intro": {
+    "pt-BR": "Mostra o que há dentro de cada NARC, com miniatura dos gráficos, para achar a imagem certa sem extrair tudo. Daqui você tira o arquivo, edita no NitroPaint e coloca de volta.",
+    "en-US": "Shows what is inside each NARC, with thumbnails of the graphics, so you find the right image without extracting everything. From here you take the file out, edit it in NitroPaint and put it back."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra o card Navegador de gráficos. A lista da esquerda tem todos os NARCs do jogo; filtre pelo caminho, como a/0/0/4.",
+      "en-US": "Open the Graphics browser card. The left list has every NARC in the game; filter by path, like a/0/0/4."
+    },
+    {
+      "pt-BR": "Escolha um NARC. Por padrão aparecem só paletas, tiles e telas; desmarque a opção para ver tudo.",
+      "en-US": "Pick a NARC. By default only palettes, tiles and screens appear; untick the option to see everything."
+    },
+    {
+      "pt-BR": "Clique num arquivo para ver a imagem ampliada. Extrair salva o arquivo original para editar no NitroPaint.",
+      "en-US": "Click a file to see the enlarged image. Extract saves the original file to edit in NitroPaint."
+    },
+    {
+      "pt-BR": "Substituir coloca o arquivo editado no lugar. O hub salva uma versão antes e depois e recusa um arquivo de outro tipo.",
+      "en-US": "Replace puts the edited file in place. The hub saves a version before and after and refuses a file of another type."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "A miniatura usa a paleta mais próxima no mesmo NARC, então as cores podem sair erradas quando o jogo usa outra. O desenho continua certo; no jogo vale a paleta que ele escolhe.",
+      "en-US": "The thumbnail uses the nearest palette in the same NARC, so colors can look wrong when the game uses another. The drawing is still right; in the game, the palette it picks is what counts."
+    },
+    {
+      "pt-BR": "Salve e feche o DSPRE antes de substituir: ele pode ter o mesmo NARC aberto.",
+      "en-US": "Save and close DSPRE before replacing: it may have the same NARC open."
+    }
+  ],
+  "links": []
+}

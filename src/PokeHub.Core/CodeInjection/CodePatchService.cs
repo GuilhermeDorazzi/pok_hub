@@ -90,6 +90,28 @@ public sealed class CodePatchService(HubPaths hub)
         if (WorkspaceService.FormatOf(p) != WorkspaceFormat.DsRom) throw new InvalidOperationException(Loc.T("core.inject.needDsRom"));
     }
 
+    /// <summary>
+    /// Bytes originais do jogo no ponto de um gancho, para preencher o expect: lê o workspace e, onde um patch já gravou, usa o original guardado no registro.
+    /// </summary>
+    public static byte[] OriginalBytes(Project p, PatchHook hook)
+    {
+        RequireDsRom(p);
+        var binaries = new RomBinaries(p.Paths.Workspace);
+        uint address = CodePatch.ParseNumber(hook.Address) & ~1u;
+        var (file, offset) = binaries.Locate(hook.Target, address);
+        int length = hook.Type switch
+        {
+            "jump" => hook.Mode == "arm" ? 8 : address % 4 == 0 ? 12 : 14,
+            "bytes" => CodePatch.ParseHex(hook.Bytes ?? "").Length,
+            _ => 4,
+        };
+        var bytes = File.ReadAllBytes(Path.Combine(p.Paths.Workspace, file));
+        if (offset + length > bytes.Length) throw new InvalidDataException(Loc.T("core.inject.outsideFile", $"0x{address:X8}", hook.Target));
+        foreach (var w in LoadLedger(p).Writes.Where(w => string.Equals(w.File, file, StringComparison.OrdinalIgnoreCase)))
+            Convert.FromHexString(w.Original).CopyTo(bytes, w.Offset);
+        return bytes.AsSpan(offset, length).ToArray();
+    }
+
     /// <summary>Tira do workspace tudo o que foi aplicado. A expansão do ARM9 fica: patches do DSPRE podem depender dela e ela não muda o jogo sozinha.</summary>
     public Task<PatchApplyResult> RevertAsync(Project p, IProgress<string> log, CancellationToken ct = default) => RunAsync(p, [], log, ct);
 

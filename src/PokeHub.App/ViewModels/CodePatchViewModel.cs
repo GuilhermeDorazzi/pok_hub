@@ -14,6 +14,7 @@ namespace PokeHub.App.ViewModels;
 /// <summary>Uma linha da lista de patches. Marcar ou desmarcar grava no patch.json.</summary>
 public sealed partial class CodePatchItem(CodePatch patch, string applied) : ObservableObject
 {
+    public CodePatch Patch { get; } = patch;
     public string Name => patch.Name;
     public string Description => patch.Manifest.Description;
     public int Hooks => patch.Manifest.Hooks.Count;
@@ -48,6 +49,7 @@ public sealed partial class CodePatchViewModel : ObservableObject
     public ObservableCollection<CodePatchItem> Patches { get; } = [];
 
     [ObservableProperty] private string _newName = "";
+    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(EditHooksCommand))] private CodePatchItem? _selectedPatch;
     [ObservableProperty] private string _status = "";
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(ApplyCommand), nameof(RevertCommand), nameof(CreateCommand))] private bool _isBusy;
     /// <summary>Saída do compilador e dos ganchos, para ler o erro sem sair da janela.</summary>
@@ -82,6 +84,15 @@ public sealed partial class CodePatchViewModel : ObservableObject
             Process.Start(new ProcessStartInfo("explorer.exe", patch.Directory) { UseShellExecute = true });
         }
         catch (Exception ex) { Status = ex.Message; }
+    }
+
+    private bool HasSelection => SelectedPatch is not null;
+
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void EditHooks()
+    {
+        new Views.PatchHooksWindow(new PatchHooksViewModel(_project, SelectedPatch!.Patch)) { Owner = System.Windows.Application.Current.Windows.OfType<Views.CodePatchWindow>().FirstOrDefault() }.ShowDialog();
+        Reload();
     }
 
     [RelayCommand]

@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PokeHub.Core.Gen4;
@@ -25,6 +27,7 @@ public sealed partial class TextEditorViewModel : ObservableObject
     private readonly TextRepository _repo;
     private readonly Action<string> _log;
     private readonly Func<string, Task> _snapshot;
+    private readonly Gen4Font? _font;
 
     public ObservableCollection<BankItem> Banks { get; } = [];
     public ObservableCollection<MessageItem> Messages { get; } = [];
@@ -37,6 +40,8 @@ public sealed partial class TextEditorViewModel : ObservableObject
     [ObservableProperty] private string _searchQuery = "";
     [ObservableProperty] private bool _isDirty;
     [ObservableProperty] private string _status = "";
+    [ObservableProperty] private BitmapSource? _previewImage;
+    [ObservableProperty] private string _previewNote = "";
 
     public string GameLabel => Loc.T("txt.gameLabel", _repo.Game.Game, _repo.BankCount);
     public string Hint => Loc.T("txt.hint");
@@ -44,6 +49,7 @@ public sealed partial class TextEditorViewModel : ObservableObject
     public TextEditorViewModel(TextRepository repo, Action<string> log, Func<string, Task> snapshot)
     {
         _repo = repo; _log = log; _snapshot = snapshot;
+        _font = Gen4Font.Load(repo.Game);
         for (int i = 0; i < repo.BankCount; i++)
             Banks.Add(new BankItem(i, repo.LabelOf(i) is { } l ? $"{i:D4}  {l}" : $"{i:D4}", repo.MessageCount(i)));
         SelectedBank = Banks.FirstOrDefault(b => b.Id == repo.Game.SpeciesBank) ?? Banks.FirstOrDefault();
@@ -62,6 +68,24 @@ public sealed partial class TextEditorViewModel : ObservableObject
     {
         EditText = value?.Text ?? "";
         OnPropertyChanged(nameof(CompressedNote));
+    }
+
+    partial void OnEditTextChanged(string value)
+    {
+        if (_font is null) { PreviewNote = Loc.T("txt.preview.noFont"); return; }
+        try
+        {
+            var preview = TextPreview.Render(Gen4TextArchive.Encode(value), _font);
+            PreviewImage = preview.Image.ToBitmap();
+            var over = preview.Lines.Where(l => l.TooLong).ToList();
+            PreviewNote = over.Count == 0
+                ? Loc.T("txt.preview.fits", preview.Lines.Max(l => l.Width), TextPreview.BoxWidth)
+                : Loc.T("txt.preview.over", string.Join(", ", over.Select(l => $"{l.Number} ({l.Width} px)")), TextPreview.BoxWidth);
+        }
+        catch (Exception ex) when (ex is InvalidDataException or FormatException or OverflowException or ArgumentException)
+        {
+            PreviewNote = Loc.T("txt.invalid", ex.Message); // ainda digitando um comando, por exemplo: a imagem anterior fica
+        }
     }
 
     public string CompressedNote => SelectedMessage is { Compressed: true } ? Loc.T("txt.compressed") : "";

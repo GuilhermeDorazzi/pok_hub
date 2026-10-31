@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using PokeHub.App.Views;
 using PokeHub.Core.Decomp;
+using PokeHub.Core.Gen4;
 using PokeHub.Core.Help;
 using PokeHub.Core.Hub;
 using PokeHub.Core.Localization;
@@ -134,6 +135,10 @@ public sealed partial class MainViewModel : ObservableObject
         CreatePatchCommand.NotifyCanExecuteChanged();
         OpenBatchCommand.NotifyCanExecuteChanged();
         OpenCodePatchesCommand.NotifyCanExecuteChanged();
+        OpenNarcBrowserCommand.NotifyCanExecuteChanged();
+        OpenStatsCommand.NotifyCanExecuteChanged();
+        OpenTablesCommand.NotifyCanExecuteChanged();
+        OpenScriptsCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(HasProject));
         OnPropertyChanged(nameof(ProjectTitle));
         OnPropertyChanged(nameof(ProjectSummary));
@@ -207,6 +212,65 @@ public sealed partial class MainViewModel : ObservableObject
         Log(Loc.T("patch.applied", saveDlg.FileName));
         var r = MessageBox.Show(Loc.T("patch.appliedText", saveDlg.FileName), Loc.T("patch.title"), MessageBoxButton.YesNo, MessageBoxImage.Information);
         if (r == MessageBoxResult.Yes) await NewProjectAsync(saveDlg.FileName);
+    }
+
+    // ----- editor de scripts -----
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private void OpenScripts()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
+        try
+        {
+            var vm = new ScriptEditorViewModel(PokeHub.Core.Gen4.Scripts.ScriptArchive.Load(p), Log, message => SnapshotForEditorAsync(p, message));
+            new ScriptEditorWindow(vm) { Owner = Application.Current.MainWindow }.Show();
+        }
+        catch (Exception ex) { Log(Loc.T("vm.error", ex.Message)); }
+    }
+
+    // ----- tabelas do jogo -----
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private void OpenTables()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
+        try
+        {
+            var game = Gen4Game.For(p);
+            var text = Narc.Read(File.ReadAllBytes(game.TextArchivePath));
+            List<string> Bank(int b) => Gen4TextArchive.Read(text.Files[b]).Messages.Select(m => Gen4TextArchive.Decode(m)).ToList();
+            var vm = new GameTablesViewModel(GameTables.Load(p), Bank(game.SpeciesBank), Bank(game.MovesBank), Bank(game.ItemsBank), Bank(game.AbilitiesBank), Log, message => SnapshotForEditorAsync(p, message));
+            new GameTablesWindow(vm) { Owner = Application.Current.MainWindow }.Show();
+        }
+        catch (Exception ex) { Log(Loc.T("vm.error", ex.Message)); }
+    }
+
+    // ----- stats dos Pokémon -----
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private void OpenStats()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
+        try
+        {
+            var vm = new StatsEditorViewModel(PersonalRepository.Load(p), Log, message => SnapshotForEditorAsync(p, message));
+            new StatsEditorWindow(vm) { Owner = Application.Current.MainWindow }.Show();
+        }
+        catch (Exception ex) { Log(Loc.T("vm.error", ex.Message)); }
+    }
+
+    // ----- navegador de gráficos -----
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private void OpenNarcBrowser()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
+        try { new NarcBrowserWindow(new NarcBrowserViewModel(p, SnapshotForEditorAsync)) { Owner = Application.Current.MainWindow }.Show(); }
+        catch (Exception ex) { Log(Loc.T("vm.error", ex.Message)); }
     }
 
     // ----- injeção de código -----
@@ -647,8 +711,16 @@ public sealed partial class MainViewModel : ObservableObject
         EditCards.Add(new FeatureCardViewModel("text", FeatureGroup.Edit, "\uE8D2", Tool("text-editor")));
         EditCards.Add(new FeatureCardViewModel("events", FeatureGroup.Edit, "\uE8A1", Tool("event-map")));
         EditCards.Add(new FeatureCardViewModel("pokedex", FeatureGroup.Edit, "\uE8F1", Tool("pokedex-area-editor")));
+        EditCards.Add(new FeatureCardViewModel("stats", FeatureGroup.Edit, "\uE9D2", null, OpenStatsCommand,
+            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
+        EditCards.Add(new FeatureCardViewModel("tables", FeatureGroup.Edit, "\uF0E2", null, OpenTablesCommand,
+            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
+        EditCards.Add(new FeatureCardViewModel("scripts", FeatureGroup.Edit, "\uE943", null, OpenScriptsCommand,
+            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
         EditCards.Add(new FeatureCardViewModel("pokemon", FeatureGroup.Edit, "\uE9D9", Tool("pokeditor")));
         EditCards.Add(new FeatureCardViewModel("graphics", FeatureGroup.Edit, "\uE8B9", Tool("nitropaint")));
+        EditCards.Add(new FeatureCardViewModel("narcs", FeatureGroup.Edit, "\uE8B3", null, OpenNarcBrowserCommand,
+            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
         EditCards.Add(new FeatureCardViewModel("audio", FeatureGroup.Edit, "\uE8D6", Tool("nitrostudio2")));
         AdvancedCards.Add(new FeatureCardViewModel("emulator", FeatureGroup.Advanced, "\uE768", null, EmulatorCardCommand,
             () => HasEmulators, () => HasEmulators ? PlayButtonText : Loc.T("feature.goTools")));

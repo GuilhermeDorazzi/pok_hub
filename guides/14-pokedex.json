@@ -10,8 +10,8 @@
     "en-US": "Pokédex areas"
   },
   "intro": {
-    "pt-BR": "Controla onde a Pokédex diz que cada Pokémon aparece (mapa de área), por horário e por tipo de encontro normal ou especial. Só HeartGold/SoulSilver.",
-    "en-US": "Controls where the Pokédex says each Pokémon appears (area map), by time of day and by normal or special encounter. HeartGold/SoulSilver only."
+    "pt-BR": "Controla onde a Pokédex diz que cada Pokémon aparece (mapa de área), por horário e por tipo de encontro normal ou especial. HeartGold, SoulSilver e Platinum; o mapa clicável só em HG/SS.",
+    "en-US": "Controls where the Pokédex says each Pokémon appears (area map), by time of day and by normal or special encounter. HeartGold, SoulSilver and Platinum; the clickable map only on HG/SS."
   },
   "steps": [
     {

@@ -2,12 +2,12 @@
   "id": "pokedex-area-editor",
   "name": "Editor de áreas da Pokédex (PokeHub)",
   "description": {
-    "pt-BR": "Editor embutido: em quais rotas, cidades, cavernas e prédios cada Pokémon aparece na Pokédex, por período do dia. Portado do pk_dex_editor. Só HeartGold/SoulSilver.",
-    "en-US": "Built-in editor: which routes, cities, caves and buildings each Pokémon appears in on the Pokédex, by time of day. Ported from pk_dex_editor. HeartGold/SoulSilver only."
+    "pt-BR": "Editor embutido: em quais rotas, cidades, cavernas e prédios cada Pokémon aparece na Pokédex, por período do dia. Portado do pk_dex_editor. HeartGold, SoulSilver e Platinum; o mapa clicável só em HG/SS.",
+    "en-US": "Built-in editor: which routes, cities, caves and buildings each Pokémon appears in on the Pokédex, by time of day. Ported from pk_dex_editor. HeartGold, SoulSilver and Platinum; the clickable map only on HG/SS."
   },
   "purpose": {
-    "pt-BR": "Editor do próprio hub para as áreas da Pokédex do HGSS: em quais rotas, cidades e cavernas cada Pokémon aparece, por período do dia. Não instala nada e grava direto no workspace.",
-    "en-US": "The hub's own HGSS Pokédex area editor: which routes, cities and caves each Pokémon appears in, by time of day. Installs nothing and writes straight to the workspace."
+    "pt-BR": "Editor do próprio hub para as áreas da Pokédex de HGSS e Platinum: em quais rotas, cidades e cavernas cada Pokémon aparece, por período do dia. Não instala nada e grava direto no workspace.",
+    "en-US": "The hub's own HGSS and Platinum Pokédex area editor: which routes, cities and caves each Pokémon appears in, by time of day. Installs nothing and writes straight to the workspace."
   },
   "license": "GPL-3.0",
   "contexts": [
@@ -24,7 +24,7 @@
     "args": []
   },
   "notes": {
-    "pt-BR": "Edita o NARC a/1/3/3. Grava direto no workspace e salva uma versão no git a cada salvamento. Reempacote para testar.",
-    "en-US": "Edits NARC a/1/3/3. Writes straight to the workspace and saves a git version on every save. Repack to test."
+    "pt-BR": "Edita o NARC a/1/3/3 (HGSS) ou zukan_enc_platinum.narc. Grava direto no workspace e salva uma versão no git a cada salvamento. Reempacote para testar.",
+    "en-US": "Edits NARC a/1/3/3 (HGSS) or zukan_enc_platinum.narc. Writes straight to the workspace and saves a git version on every save. Repack to test."
   }
 }

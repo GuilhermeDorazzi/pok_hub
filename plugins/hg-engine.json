@@ -1,0 +1,46 @@
+{
+  "id": "hg-engine",
+  "name": "hg-engine",
+  "description": {
+    "pt-BR": "Motor que moderniza as batalhas do HeartGold em inglês: Pokémon, golpes, habilidades e itens de gerações novas, Mega Evolução, tipo Fada e mais.",
+    "en-US": "Engine overhaul that modernizes English HeartGold's battles: Pokémon, moves, abilities and items from newer generations, Mega Evolution, Fairy type and more."
+  },
+  "purpose": {
+    "pt-BR": "Para quem quer uma base com as mecânicas modernas em vez de recriá-las. Ele é editado como código, e o resultado é uma ROM própria; os editores do hub podem não entender os dados expandidos dela.",
+    "en-US": "For those who want a base with modern mechanics instead of recreating them. It is edited as code and produces its own ROM; the hub's editors may not understand its expanded data."
+  },
+  "cost": {
+    "pt-BR": "Clone grande, mais MSYS2 com várias dependências e a compilação manual da libpng.",
+    "en-US": "Large clone, plus MSYS2 with several dependencies and building libpng by hand."
+  },
+  "confirmInstall": true,
+  "homepage": "https://github.com/BluRosie/hg-engine",
+  "license": "sem licença declarada; o autor proíbe qualquer uso com dinheiro envolvido, até doações",
+  "contexts": [
+    "decomp"
+  ],
+  "generations": [
+    4
+  ],
+  "scope": "project",
+  "source": {
+    "type": "gitClone",
+    "repo": "BluRosie/hg-engine",
+    "recursive": true
+  },
+  "build": {
+    "command": "make",
+    "output": "test.nds",
+    "firstBuildNotice": {
+      "pt-BR": "Este é o primeiro build do hg-engine, e ele pode levar muitos minutos. Confira antes se a ROM limpa do HeartGold em inglês está na pasta clonada com o nome rom.nds e se as dependências do README estão instaladas no MSYS2.",
+      "en-US": "This is the first hg-engine build, and it can take many minutes. First check that the clean English HeartGold ROM is in the cloned folder as rom.nds and that the README dependencies are installed in MSYS2."
+    }
+  },
+  "requires": [
+    "unix-shell"
+  ],
+  "notes": {
+    "pt-BR": "Só HeartGold em inglês. Antes do build, copie a ROM limpa para a pasta clonada com o nome rom.nds. Dependências no README do projeto, seção Windows on MSYS2.",
+    "en-US": "English HeartGold only. Before building, copy the clean ROM into the cloned folder as rom.nds. Dependencies are in the project README, Windows on MSYS2 section."
+  }
+}

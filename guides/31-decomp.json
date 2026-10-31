@@ -4,7 +4,7 @@
   "feature": "decomp",
   "tools": [
     "msys2",
-    "pokeheartgold",
+    "pokeheartgold", "hg-engine",
     "pokeplatinum"
   ],
   "title": {
@@ -38,6 +38,7 @@
     }
   ],
   "tips": [
+    {"pt-BR": "O hg-engine é uma base com batalhas modernas, só para HeartGold em inglês. Antes do build, copie a ROM limpa para a pasta clonada com o nome rom.nds. Os editores do hub podem não entender os dados expandidos dele.", "en-US": "hg-engine is a base with modern battles, for English HeartGold only. Before building, copy the clean ROM into the cloned folder as rom.nds. The hub's editors may not understand its expanded data."},
     {
       "pt-BR": "O log mostra o progresso (ex.: [1234/16680]). Deixe compilar; fechar o hub no meio obriga a recomeçar parte do trabalho.",
       "en-US": "The log shows progress (e.g. [1234/16680]). Let it build; closing the hub midway redoes part of the work."

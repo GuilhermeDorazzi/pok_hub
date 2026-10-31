@@ -5,12 +5,12 @@ namespace PokeHub.Core.Gen4;
 /// <summary>Resumo de um cabeçalho de mapa: o que liga um mapa ao seu arquivo de encontros e ao nome do local.</summary>
 public sealed record MapHeaderInfo(int Id, string InternalName, int? EncounterFile, int LocationNameIndex)
 {
-    /// <summary>HGSS: arquivo de scripts (a/0/1/2), cabeçalho de level scripts (mesmo NARC), banco de texto do mapa e arquivo de eventos (a/0/3/2).</summary>
+    /// <summary>HGSS e Pt: arquivo de scripts, cabeçalho de level scripts (mesmo NARC), banco de texto do mapa e arquivo de eventos.</summary>
     public int ScriptsBank { get; init; } = -1;
     public int ScriptHeaderBank { get; init; } = -1;
     public int MsgBank { get; init; } = -1;
     public int EventsBank { get; init; } = -1;
-    /// <summary>HGSS: matriz do mapa (a/0/4/1).</summary>
+    /// <summary>HGSS e Pt: matriz do mapa.</summary>
     public int MatrixId { get; init; } = -1;
 }
 
@@ -57,7 +57,17 @@ public static class MapHeaders
                 enc = e == 0xFFFF ? null : e;
                 loc = game.IsDp ? BitConverter.ToUInt16(arm9, o + 0x12) : arm9[o + 0x12];
             }
-            list.Add(new MapHeaderInfo(i, name, enc, loc));
+            // Pt: matriz em 2, scripts em 4, level scripts em 6, texto em 8, eventos em 16 (MapHeader da pokeplatinum). DP sem ROM para conferir.
+            list.Add(game.IsPlatinum
+                ? new MapHeaderInfo(i, name, enc, loc)
+                {
+                    MatrixId = BitConverter.ToUInt16(arm9, o + 2),
+                    ScriptsBank = BitConverter.ToUInt16(arm9, o + 4),
+                    ScriptHeaderBank = BitConverter.ToUInt16(arm9, o + 6),
+                    MsgBank = BitConverter.ToUInt16(arm9, o + 8),
+                    EventsBank = BitConverter.ToUInt16(arm9, o + 16),
+                }
+                : new MapHeaderInfo(i, name, enc, loc));
         }
         return list;
     }

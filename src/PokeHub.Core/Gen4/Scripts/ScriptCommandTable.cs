@@ -17,7 +17,7 @@ public sealed class ScriptCommand
 }
 
 /// <summary>
-/// Tabela de comandos de script do HGSS (scrcmd.json do pokeheartgold, embutida). Tamanhos: inteiros 1/2/4;
+/// Tabelas de comandos de script: HGSS (scrcmd.json do pokeheartgold) e Platinum (gerada das macros asm/macros/scrcmd.inc da pokeplatinum), embutidas. Tamanhos: inteiros 1/2/4;
 /// "message" 1 byte; "condition" e "object1" 1; "script", "movement" e "addr" 4 (deslocamento relativo ao fim do argumento);
 /// todos os outros tipos nomeados (var, flag, item, species, trainer, maps...) 2 bytes.
 /// GEN5: BW têm outra tabela.
@@ -30,16 +30,20 @@ public sealed class ScriptCommandTable
 
     private sealed class Doc { public List<ScriptCommand> Commands { get; set; } = []; }
 
-    private static readonly Lazy<ScriptCommandTable> _hgss = new(() =>
+    private static ScriptCommandTable LoadResource(string resource)
     {
-        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("scrcmd-hgss.json")
-            ?? throw new InvalidOperationException("scrcmd-hgss.json embutido não encontrado.");
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource)
+            ?? throw new InvalidOperationException($"{resource} embutido não encontrado.");
         var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
         var doc = JsonSerializer.Deserialize<Doc>(stream, opts)!;
         return new ScriptCommandTable(doc.Commands);
-    });
+    }
+
+    private static readonly Lazy<ScriptCommandTable> _hgss = new(() => LoadResource("scrcmd-hgss.json"));
+    private static readonly Lazy<ScriptCommandTable> _platinum = new(() => LoadResource("scrcmd-platinum.json"));
 
     public static ScriptCommandTable Hgss => _hgss.Value;
+    public static ScriptCommandTable Platinum => _platinum.Value;
 
     public ScriptCommand? Get(int opcode) => opcode >= 0 && opcode < Commands.Count ? Commands[opcode] : null;
 

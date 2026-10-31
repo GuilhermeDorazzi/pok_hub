@@ -43,7 +43,7 @@ public partial class EventMapWindow : Window
     /// <summary>Redesenha só os marcadores; a imagem da planta vem do binding.</summary>
     private void DrawLayout()
     {
-        foreach (var old in LayoutCanvas.Children.OfType<Rectangle>().ToList()) LayoutCanvas.Children.Remove(old);
+        foreach (var old in LayoutCanvas.Children.OfType<FrameworkElement>().Where(c => c != LayoutImageView).ToList()) LayoutCanvas.Children.Remove(old);
         var layout = _vm.Layout;
         int scale = EventMapViewModel.TileScale;
         LayoutImageView.Width = LayoutCanvas.Width = (layout?.Width ?? 0) * scale;
@@ -71,6 +71,16 @@ public partial class EventMapWindow : Window
             Canvas.SetLeft(mark, m.X * scale - grow);
             Canvas.SetTop(mark, m.Y * scale - grow);
             LayoutCanvas.Children.Add(mark);
+            if (_vm.NpcSprite(m) is { } sprite)
+            {
+                // o sprite tem o dobro do tile e fica de pé sobre ele, como no jogo
+                var image = new Image { Source = sprite, Width = scale * 2, Height = scale * 2, ToolTip = mark.ToolTip, Cursor = Cursors.Hand };
+                RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
+                image.MouseLeftButtonDown += (_, e) => { _vm.ActivateMarker(m); e.Handled = true; };
+                Canvas.SetLeft(image, m.X * scale - scale / 2);
+                Canvas.SetTop(image, m.Y * scale - scale);
+                LayoutCanvas.Children.Add(image);
+            }
             if (isSelected) selected = mark;
         }
         if (selected is null) return;

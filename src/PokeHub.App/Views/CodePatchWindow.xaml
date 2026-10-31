@@ -18,9 +18,9 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Text="{loc:T inject.intro}" TextWrapping="Wrap" Foreground="#555" Margin="0,0,0,10" />
+        <TextBlock Text="{loc:T inject.intro}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,10" />
 
-        <DataGrid Grid.Row="1" ItemsSource="{Binding Patches}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+        <DataGrid Grid.Row="1" ItemsSource="{Binding Patches}" SelectedItem="{Binding SelectedPatch}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                   HeadersVisibility="Column" GridLinesVisibility="Horizontal" SelectionMode="Single">
             <DataGrid.Columns>
                 <DataGridTemplateColumn Header="{loc:T inject.enabled}" Width="60">
@@ -42,6 +42,7 @@
             <TextBlock Text="{loc:T inject.newName}" VerticalAlignment="Center" Margin="0,0,6,0" />
             <TextBox Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}" Width="180" Padding="4,2" VerticalContentAlignment="Center" />
             <Button Content="{loc:T inject.create}" Command="{Binding CreateCommand}" Padding="10,3" Margin="6,0,0,0" />
+            <Button DockPanel.Dock="Right" Content="{loc:T inject.editHooks}" Command="{Binding EditHooksCommand}" Padding="10,3" Margin="6,0,0,0" FontWeight="SemiBold" />
             <Button DockPanel.Dock="Right" Content="{loc:T inject.openFolder}" Command="{Binding OpenFolderCommand}" Padding="10,3" />
             <Button DockPanel.Dock="Right" Content="{loc:T inject.reload}" Command="{Binding ReloadCommand}" Padding="10,3" Margin="0,0,6,0" />
         </DockPanel>

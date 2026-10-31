@@ -25,7 +25,7 @@
     "args": []
   },
   "notes": {
-    "pt-BR": "Só HeartGold/SoulSilver por enquanto. Nomes de flags e variáveis vêm da decomp pokeheartgold.",
-    "en-US": "HeartGold/SoulSilver only for now. Flag and variable names come from the pokeheartgold decomp."
+    "pt-BR": "HeartGold, SoulSilver e Platinum. Nomes de flags e variáveis vêm das decomps da pret.",
+    "en-US": "HeartGold, SoulSilver and Platinum. Flag and variable names come from the pret decomps."
   }
 }

@@ -1,0 +1,51 @@
+<Window x:Class="PokeHub.App.Views.GameTablesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:PokeHub.App"
+        xmlns:vm="clr-namespace:PokeHub.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DataContext="{d:DesignInstance vm:GameTablesViewModel}"
+        Title="{loc:T tables.title}" Width="1180" Height="760" MinWidth="820" MinHeight="500"
+        WindowStartupLocation="CenterOwner" FontSize="13" Closing="Window_Closing">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <DockPanel Margin="0,0,0,8">
+            <TextBlock Text="{loc:T tables.table}" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <ComboBox ItemsSource="{Binding Tables}" SelectedItem="{Binding SelectedTable}" DisplayMemberPath="Label" Width="240" Margin="0,0,12,0" />
+            <TextBlock Text="{Binding SelectedTable.Note}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" VerticalAlignment="Center" />
+        </DockPanel>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <DockPanel Width="240" Margin="0,0,10,0" Visibility="{Binding HasOwners, Converter={StaticResource BoolToVis}}">
+                <TextBox DockPanel.Dock="Top" Text="{Binding OwnerFilter, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" Margin="0,0,0,6" ToolTip="{loc:T tables.search}" />
+                <ListBox ItemsSource="{Binding Owners}" SelectedItem="{Binding SelectedOwner}" VirtualizingPanel.IsVirtualizing="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+            </DockPanel>
+            <DockPanel Grid.Column="1">
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Visibility="{Binding CanResize, Converter={StaticResource BoolToVis}}">
+                        <Button Content="{loc:T tables.addRow}" Command="{Binding AddRowCommand}" Padding="10,2" Margin="8,0,6,0" />
+                        <Button Content="{loc:T tables.removeRow}" Command="{Binding RemoveRowCommand}" Padding="10,2" />
+                    </StackPanel>
+                    <TextBox Text="{Binding RowFilter, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" ToolTip="{loc:T tables.searchRows}" />
+                </DockPanel>
+                <DataGrid x:Name="Grid" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                          CanUserReorderColumns="False" HeadersVisibility="Column" EnableRowVirtualization="True" EnableColumnVirtualization="True" SelectionMode="Single" GridLinesVisibility="Horizontal" />
+            </DockPanel>
+        </Grid>
+        <DockPanel Grid.Row="2" Margin="0,8,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="{loc:T common.save}" Command="{Binding SaveCommand}" FontWeight="Bold" Padding="16,6" Margin="0,0,6,0" />
+                <Button Content="{loc:T common.close}" Click="Close_Click" Padding="16,6" />
+            </StackPanel>
+            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
+        </DockPanel>
+    </Grid>
+</Window>

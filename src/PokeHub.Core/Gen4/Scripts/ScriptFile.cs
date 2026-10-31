@@ -7,7 +7,8 @@ public sealed record ScriptInstruction(int Offset, int Opcode, string Name, IRea
     public IEnumerable<ScriptArg> ArgsOf(string type) => Args.Where(a => a.Type == type);
 }
 
-public sealed record ScriptArg(string Type, long Value);
+/// <summary>At e Size dizem onde o valor está no arquivo, para quem for editá-lo no lugar.</summary>
+public sealed record ScriptArg(string Type, long Value, int At = 0, int Size = 0);
 
 /// <summary>Um script (ponto de entrada ou sub-rotina): instruções em ordem de leitura, seguindo saltos e chamadas.</summary>
 public sealed class ScriptRoutine
@@ -98,10 +99,11 @@ public sealed class ScriptFile
             int size = ScriptCommandTable.ArgSize(spec);
             if (p + size > _raw.Length) return false;
             long value = size switch { 1 => _raw[p], 2 => BitConverter.ToUInt16(_raw, p), _ => BitConverter.ToUInt32(_raw, p) };
+            int at = p;
             p += size;
             var type = ScriptCommandTable.ArgType(spec);
             if (type is "script" or "movement" or "addr") value = (int)(value + p); // relativo ao fim do argumento
-            args.Add(new ScriptArg(type, value));
+            args.Add(new ScriptArg(type, value, at, size));
         }
         return true;
     }

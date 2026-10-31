@@ -89,6 +89,47 @@ public class MapLayoutTests(ITestOutputHelper output)
         Assert.True(RuntimeManager.IsManaged("java8"));
     }
 
+    /// <summary>Com POKEHUB_PLATINUM_WORKSPACE: mesma conferência no Platinum, mais falas e flags lidas dos scripts, o que prova a tabela de comandos.</summary>
+    [Fact]
+    public void Real_platinum_events_scripts_and_layouts()
+    {
+        var ws = Environment.GetEnvironmentVariable("POKEHUB_PLATINUM_WORKSPACE");
+        if (string.IsNullOrEmpty(ws) || !Directory.Exists(ws)) return;
+        var projectDir = Path.GetDirectoryName(ws.TrimEnd('\\', '/'))!;
+        var project = new Project { Paths = new ProjectPaths(projectDir), Config = ProjectConfig.Load(Path.Combine(projectDir, "project.json")) };
+        var map = EventMap.Load(project);
+        var npcs = map.Events.Where(e => e.Kind == EventKind.Npc && !e.IsStandardScript).ToList();
+        int withMessages = npcs.Count(e => e.Messages.Count > 0);
+        int withFlags = map.Events.Count(e => e.Flags.Count > 0);
+        int withActions = map.Events.Count(e => e.Actions.Count > 0);
+        output.WriteLine($"mapas {map.MapsWithEvents}, eventos {map.Events.Count}, NPCs com script {npcs.Count}, com fala {withMessages}, com flag {withFlags}, com ação {withActions}");
+        var sample = map.Events.Where(e => e.Messages.Count > 0).Take(3).Select(e => $"{e.MapName}: {e.Messages[0]}");
+        output.WriteLine(string.Join(" | ", sample));
+        var items = map.Events.SelectMany(e => e.Actions).Take(4);
+        output.WriteLine(string.Join(" | ", items));
+        Assert.True(map.MapsWithEvents > 300);
+        Assert.True(withMessages > npcs.Count / 2, $"só {withMessages} de {npcs.Count} NPCs com fala: tabela de comandos suspeita");
+        Assert.True(withFlags > 500);
+        Assert.True(map.FlagUsages.Count > 300);
+
+        int total = 0, outside = 0, onWall = 0, missing = 0;
+        foreach (var id in map.Events.Select(e => e.MapId).Distinct())
+        {
+            var layout = map.LayoutOf(id);
+            if (layout is null) { missing++; continue; }
+            foreach (var m in layout.Markers.Where(m => m.Kind == EventKind.Npc))
+            {
+                total++;
+                if (m.X < 0 || m.Y < 0 || m.X >= layout.Width || m.Y >= layout.Height) outside++;
+                else if (layout.IsBlocked(m.X, m.Y)) onWall++;
+            }
+        }
+        output.WriteLine($"NPCs {total}, fora {outside}, em tile bloqueado {onWall}, sem planta {missing}");
+        Assert.Equal(0, missing);
+        Assert.Equal(0, outside);
+        Assert.True(onWall < total / 3, $"{onWall} de {total} NPCs em tile bloqueado: leitura suspeita");
+    }
+
     /// <summary>Com POKEHUB_WORKSPACE (HGSS): eventos caem dentro da área e NPCs quase nunca em parede. Se a leitura estivesse deslocada, cairiam ao acaso.</summary>
     [Fact]
     public void Real_workspace_events_fall_on_walkable_tiles()

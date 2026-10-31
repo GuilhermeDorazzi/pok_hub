@@ -44,7 +44,7 @@ public sealed class RgbaImage(int width, int height)
 }
 
 /// <summary>Cabeçalho comum dos formatos Nitro (NCLR, NCGR, NSCR): magic, seções nomeadas.</summary>
-internal static class NitroFile
+public static class NitroFile
 {
     public static Dictionary<string, byte[]> Sections(ReadOnlySpan<byte> d, string expectedMagic)
     {
@@ -74,6 +74,10 @@ public sealed class NitroPalette
 
     private NitroPalette((byte, byte, byte)[] colors, bool is8Bit) { Colors = colors; Is8Bit = is8Bit; }
 
+    /// <summary>Para desenhar tiles sem paleta conhecida: o desenho aparece, sem as cores certas.</summary>
+    public static NitroPalette Grayscale() =>
+        new(Enumerable.Range(0, 256).Select(i => ((byte)(i * 17 % 256), (byte)(i * 17 % 256), (byte)(i * 17 % 256))).ToArray(), false);
+
     public static NitroPalette Read(ReadOnlySpan<byte> data)
     {
         var sec = NitroFile.Sections(data, "NCLR");
@@ -99,6 +103,14 @@ public sealed class NitroTiles
     public bool Is8Bit { get; }
 
     private NitroTiles(byte[][] tiles, bool is8Bit) { Tiles = tiles; Is8Bit = is8Bit; }
+
+    /// <summary>Linhas e colunas de tiles declaradas no cabeçalho; 0xFFFF (sem dimensão fixa) volta como está.</summary>
+    public static (int Rows, int Columns) Dimensions(ReadOnlySpan<byte> data)
+    {
+        var ch = NitroFile.Sections(data, "NCGR")["CHAR"];
+        int rows = BitConverter.ToUInt16(ch, 0), columns = BitConverter.ToUInt16(ch, 2);
+        return rows == 0xFFFF || columns == 0xFFFF ? (0, 0) : (rows, columns);
+    }
 
     public static NitroTiles Read(ReadOnlySpan<byte> data)
     {

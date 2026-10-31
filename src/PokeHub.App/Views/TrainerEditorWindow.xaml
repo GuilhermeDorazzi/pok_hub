@@ -10,11 +10,7 @@
         Title="{loc:T tr.title}" Width="1150" Height="720" MinWidth="900" MinHeight="500"
         WindowStartupLocation="CenterOwner" FontSize="13" Closing="Window_Closing">
     <Window.Resources>
-        <Style TargetType="TextBox"><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
-        <Style TargetType="ComboBox">
-            <Setter Property="IsEditable" Value="False" />
-            <Setter Property="MaxDropDownHeight" Value="300" />
-        </Style>
+        <Style TargetType="TextBox"><Setter Property="Foreground" Value="{DynamicResource TextBrush}" /><Setter Property="Background" Value="{DynamicResource BgBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" /><Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
     </Window.Resources>
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
@@ -24,7 +20,7 @@
 
         <!-- lista -->
         <DockPanel Grid.Column="0" Margin="0,0,10,0">
-            <TextBlock DockPanel.Dock="Top" Text="{Binding GameLabel}" Foreground="Gray" Margin="0,0,0,6" />
+            <TextBlock DockPanel.Dock="Top" Text="{Binding GameLabel}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,6" />
             <TextBox DockPanel.Dock="Top" Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"
                      ToolTip="{loc:T tr.filterTip}" />
             <Image DockPanel.Dock="Bottom" Source="{Binding Sprite}" Width="160" Height="160" Margin="0,8,0,0" HorizontalAlignment="Center"
@@ -36,7 +32,7 @@
         <!-- detalhe -->
         <DockPanel Grid.Column="1">
             <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
-                <TextBlock Text="{Binding Status}" Foreground="Gray" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Status}" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="{loc:T common.save}" Command="{Binding SaveCommand}" FontWeight="Bold" Padding="16,6" />
                     <Button Content="{loc:T common.close}" Click="Close_Click" Padding="16,6" />
@@ -103,7 +99,7 @@
                     <ItemsControl ItemsSource="{Binding Party}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="#DDD" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,6" Background="#FAFAFA">
+                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,6" Background="{DynamicResource PanelBrush}">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
@@ -122,7 +118,7 @@
 <TextBlock Text="{loc:T tr.difficulty}" VerticalAlignment="Center" Margin="0,0,4,0" />
                                                 <Slider Maximum="255" Value="{Binding Difficulty}" TickFrequency="1" IsSnapToTickEnabled="True" Width="110" Margin="0,0,4,4" VerticalAlignment="Center" />
                                                 <TextBox Text="{Binding Difficulty}" Width="40" Margin="0,0,4,4" />
-                                                <TextBlock Text="{Binding IvText}" Foreground="Gray" VerticalAlignment="Center" Margin="0,0,12,4" />
+                                                <TextBlock Text="{Binding IvText}" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,12,4" />
 </StackPanel>
                                                 <TextBlock Text="{loc:T tr.item}" VerticalAlignment="Center" Margin="0,0,4,0"
                                                            Visibility="{Binding Owner.HasItems, Converter={StaticResource BoolToVis}}" />
