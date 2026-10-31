@@ -1,0 +1,53 @@
+{
+  "id": "events",
+  "group": "edit",
+  "feature": "events",
+  "tools": [
+    "event-map"
+  ],
+  "title": {
+    "pt-BR": "Mapa de eventos: scripts, flags e variáveis livres",
+    "en-US": "Event map: scripts, flags and free variables"
+  },
+  "intro": {
+    "pt-BR": "Antes de scriptar, veja o jogo inteiro: cada mapa com seus NPCs, triggers, placas e scripts de entrada, o que cada script faz, e quais flags e variáveis do save ainda estão livres.",
+    "en-US": "Before scripting, see the whole game: every map with its NPCs, triggers, signs and on-enter scripts, what each script does, and which save flags and variables are still free."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra pelo card Eventos e scripts. A aba Mapas e eventos lista os mapas (nome do local e nome interno) com a quantidade de eventos; selecione um para ver os eventos.",
+      "en-US": "Open from the Events and scripts card. The Maps and events tab lists maps (location name and internal name) with their event count; select one to see its events."
+    },
+    {
+      "pt-BR": "Cada evento mostra o script que chama e um resumo: flags que liga, desliga ou confere; variáveis que grava ou compara; itens e Pokémon dados; batalhas; as primeiras falas. É o mesmo que você veria lendo o script no DSPRE, já traduzido.",
+      "en-US": "Each event shows the script it calls and a summary: flags it sets, clears or checks; variables it writes or compares; items and Pokémon given; battles; the first lines of dialogue. It is what you would see reading the script in DSPRE, already digested."
+    },
+    {
+      "pt-BR": "A busca aceita três coisas: nome de mapa ou local; um id como 0x2A0, que mostra só os mapas que usam essa flag ou variável; e um trecho de fala, para achar o NPC que diz aquilo.",
+      "en-US": "Search accepts three things: a map or location name; an id such as 0x2A0, which shows only the maps using that flag or variable; and a bit of dialogue, to find the NPC who says it."
+    },
+    {
+      "pt-BR": "Aba Flags: cada flag do save com o nome da decomp, se é usada por scripts, onde, e as faixas livres no alto. Filtro Livres lista só o que você pode usar no hack; pegue números em sequência de uma faixa grande.",
+      "en-US": "Flags tab: every save flag with its decomp name, whether scripts use it, where, and the free ranges at the top. The Free filter lists only what you can use in the hack; take consecutive numbers from a large range."
+    },
+    {
+      "pt-BR": "Aba Variáveis: a mesma coisa para as variáveis (0x4000 em diante). As variáveis especiais 0x8000+ são temporárias e não contam como livres.",
+      "en-US": "Variables tab: the same for variables (0x4000 onward). The special 0x8000+ variables are temporary and are not counted as free."
+    },
+    {
+      "pt-BR": "Anote num arquivo do projeto as flags e variáveis que você reservou; o mapa de eventos só vê o que já está nos scripts.",
+      "en-US": "Keep a note in the project of the flags and variables you reserved; the event map only sees what is already in scripts."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "'Usada pelo jogo (fora de scripts)' significa que a decomp deu nome à flag (o código do jogo a usa), mesmo sem script mexer nela: não use.",
+      "en-US": "'Used by the game (outside scripts)' means the decomp named the flag (game code uses it) even though no script touches it: do not use it."
+    },
+    {
+      "pt-BR": "Scripts padrão (ids altos, como placas genéricas) ficam fora do resumo porque moram no código do jogo, não no mapa.",
+      "en-US": "Standard scripts (high ids, like generic signs) are left out of the summary because they live in game code, not in the map."
+    }
+  ],
+  "links": []
+}

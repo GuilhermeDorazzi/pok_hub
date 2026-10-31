@@ -1,0 +1,31 @@
+{
+  "id": "event-map",
+  "name": "Mapa de eventos (PokeHub)",
+  "description": {
+    "pt-BR": "Lista, mapa a mapa, os NPCs, triggers, placas e scripts de entrada com o que cada script faz (flags, variáveis, itens, Pokémon, batalhas, falas) e mostra as flags e variáveis livres para o hack.",
+    "en-US": "Lists, map by map, NPCs, triggers, signs and on-enter scripts with what each script does (flags, variables, items, Pokémon, battles, dialogue) and shows the free flags and variables for the hack."
+  },
+  "purpose": {
+    "pt-BR": "Visão do jogo inteiro antes de scriptar: quem chama qual script, que flag cada evento liga ou confere, e quais números estão livres. Só leitura; não altera nada.",
+    "en-US": "A whole-game view before scripting: who calls which script, which flag each event sets or checks, and which numbers are free. Read-only; changes nothing."
+  },
+  "license": "GPL-3.0",
+  "contexts": [
+    "scripts",
+    "events"
+  ],
+  "generations": [
+    4
+  ],
+  "scope": "hub",
+  "source": {
+    "type": "builtin"
+  },
+  "launch": {
+    "args": []
+  },
+  "notes": {
+    "pt-BR": "Só HeartGold/SoulSilver por enquanto. Nomes de flags e variáveis vêm da decomp pokeheartgold.",
+    "en-US": "HeartGold/SoulSilver only for now. Flag and variable names come from the pokeheartgold decomp."
+  }
+}

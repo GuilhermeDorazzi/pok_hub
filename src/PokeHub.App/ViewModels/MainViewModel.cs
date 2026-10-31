@@ -633,6 +633,7 @@ public sealed partial class MainViewModel : ObservableObject
         EditCards.Add(new FeatureCardViewModel("trainers", FeatureGroup.Edit, "\uE716", Tool("trainer-editor")));
         EditCards.Add(new FeatureCardViewModel("encounters", FeatureGroup.Edit, "\uE909", Tool("encounter-editor")));
         EditCards.Add(new FeatureCardViewModel("text", FeatureGroup.Edit, "\uE8D2", Tool("text-editor")));
+        EditCards.Add(new FeatureCardViewModel("events", FeatureGroup.Edit, "\uE8A1", Tool("event-map")));
         EditCards.Add(new FeatureCardViewModel("pokedex", FeatureGroup.Edit, "\uE8F1", Tool("pokedex-area-editor")));
         EditCards.Add(new FeatureCardViewModel("pokemon", FeatureGroup.Edit, "\uE9D9", Tool("pokeditor")));
         EditCards.Add(new FeatureCardViewModel("graphics", FeatureGroup.Edit, "\uE8B9", Tool("nitropaint")));

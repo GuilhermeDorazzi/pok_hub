@@ -3,7 +3,14 @@ using PokeHub.Core.Rom;
 namespace PokeHub.Core.Gen4;
 
 /// <summary>Resumo de um cabeçalho de mapa: o que liga um mapa ao seu arquivo de encontros e ao nome do local.</summary>
-public sealed record MapHeaderInfo(int Id, string InternalName, int? EncounterFile, int LocationNameIndex);
+public sealed record MapHeaderInfo(int Id, string InternalName, int? EncounterFile, int LocationNameIndex)
+{
+    /// <summary>HGSS: arquivo de scripts (a/0/1/2), cabeçalho de level scripts (mesmo NARC), banco de texto do mapa e arquivo de eventos (a/0/3/2).</summary>
+    public int ScriptsBank { get; init; } = -1;
+    public int ScriptHeaderBank { get; init; } = -1;
+    public int MsgBank { get; init; } = -1;
+    public int EventsBank { get; init; } = -1;
+}
 
 /// <summary>
 /// Tabela de cabeçalhos de mapa (24 bytes cada) dentro do arm9. HGSS: byte 0 = arquivo de encontros (0xFF = nenhum),
@@ -32,6 +39,14 @@ public static class MapHeaders
             {
                 enc = arm9[o] == 0xFF ? null : arm9[o];
                 loc = arm9[o + 0x12];
+                list.Add(new MapHeaderInfo(i, name, enc, loc)
+                {
+                    ScriptsBank = BitConverter.ToUInt16(arm9, o + 6),
+                    ScriptHeaderBank = BitConverter.ToUInt16(arm9, o + 8),
+                    MsgBank = BitConverter.ToUInt16(arm9, o + 10),
+                    EventsBank = BitConverter.ToUInt16(arm9, o + 16),
+                });
+                continue;
             }
             else
             {

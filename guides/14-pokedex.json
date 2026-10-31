@@ -19,10 +19,6 @@
       "en-US": "Open from the Pokédex card and pick the species."
     },
     {
-      "pt-BR": "O mapa no alto é o mesmo da tela de áreas do jogo, lido da sua ROM (Johto à esquerda, Kanto à direita). Escolha o bloco em 'Mostrar no mapa': as áreas marcadas ficam amarelas; clique numa área para marcar ou desmarcar.",
-      "en-US": "The map at the top is the game's own area screen, read from your ROM (Johto on the left, Kanto on the right). Pick the block under 'Show on map': checked areas turn yellow; click an area to check or uncheck it."
-    },
-    {
       "pt-BR": "Para cada bloco (normal/especial × manhã/dia/noite/qualquer hora), marque as áreas onde a espécie deve aparecer.",
       "en-US": "For each block (normal/special × morning/day/night/any time), check the areas where the species should appear."
     },

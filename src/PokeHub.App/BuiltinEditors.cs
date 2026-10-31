@@ -42,6 +42,12 @@ public static class BuiltinEditors
             var vm = new TextEditorViewModel(repo, log, snapshot);
             new TextEditorWindow(vm) { Owner = Application.Current.MainWindow }.Show();
         },
+        ["event-map"] = (project, log, snapshot) =>
+        {
+            var map = PokeHub.Core.Gen4.Scripts.EventMap.Load(project);
+            log(Loc.T("be.events", map.MapsWithEvents, map.Events.Count));
+            new EventMapWindow(new EventMapViewModel(map)) { Owner = Application.Current.MainWindow }.Show();
+        },
         // GEN5: editores de Gen 5 entram aqui com o mesmo mecanismo
     };
 
