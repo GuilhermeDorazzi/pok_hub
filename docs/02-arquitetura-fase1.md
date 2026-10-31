@@ -103,7 +103,9 @@ Fase 2 concluída em 2026-10-30.
 
 11. **Mais plugins** (2026-10-31): DeSmuME 0.9.13 (emulador com depurador; `executable` aceita curinga, `DeSmuME_*_x64.exe`), Universal Pokémon Randomizer ZX 4.6.1 (jar, Java 17 gerenciado; gera uma ROM nova a partir da build), Nitro Studio 2 (áudio SDAT; sem releases no GitHub, então `source.type = system`: o usuário aponta o executável baixado do site do autor).
 
-Próximos: publicar no GitHub.
+12. **Testar/Parar e seletor de emulador** (2026-10-31). "Empacotar e rodar" virou o botão "▶ Testar", que empacota o workspace e abre a ROM no emulador escolhido no seletor ao lado (emuladores instalados do contexto Emulator; escolha salva em `hub.json` → `preferredEmulator`). Com o emulador aberto pelo hub o botão vira "■ Parar" e encerra o processo. Instalar um emulador atualiza o seletor na hora.
+
+Publicado em github.com/GuilhermeDorazzi/pok_hub (privado por enquanto).
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)
 

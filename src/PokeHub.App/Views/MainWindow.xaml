@@ -30,7 +30,14 @@
                 <Separator DockPanel.Dock="Left" Width="12" Background="Transparent" />
                 <Button DockPanel.Dock="Left" Content="{loc:T main.extractRom}" Command="{Binding ExtractRomCommand}" />
                 <Button DockPanel.Dock="Left" Content="{loc:T main.pack}" Command="{Binding PackRomCommand}" />
-                <Button DockPanel.Dock="Left" Content="{loc:T main.packAndRun}" Command="{Binding PackAndRunCommand}" FontWeight="Bold" />
+                <Separator DockPanel.Dock="Left" Width="12" Background="Transparent" />
+                <Button DockPanel.Dock="Left" Content="{Binding PlayButtonText}" Command="{Binding PlayCommand}" FontWeight="Bold" MinWidth="96"
+                        ToolTip="{loc:T main.playTip}" />
+                <ComboBox DockPanel.Dock="Left" Width="130" ItemsSource="{Binding Emulators}" SelectedItem="{Binding SelectedEmulator}"
+                          DisplayMemberPath="Name" VerticalAlignment="Center" ToolTip="{loc:T main.emulator}"
+                          Visibility="{Binding HasEmulators, Converter={StaticResource BoolToVis}}" />
+                <TextBlock DockPanel.Dock="Left" Text="{loc:T main.noEmulator}" Foreground="#F3C969" FontSize="11" VerticalAlignment="Center" Margin="4,0,0,0"
+                           Visibility="{Binding HasEmulators, Converter={StaticResource InverseBoolToVis}}" />
                 <Separator DockPanel.Dock="Left" Width="12" Background="Transparent" />
                 <Button DockPanel.Dock="Left" Content="{loc:T main.saveVersion}" Command="{Binding SaveVersionCommand}" />
                 <Button DockPanel.Dock="Left" Content="{loc:T main.versions}" Command="{Binding ShowHistoryCommand}" />

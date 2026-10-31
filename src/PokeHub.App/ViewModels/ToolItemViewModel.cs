@@ -23,6 +23,7 @@ public sealed partial class ToolItemViewModel : ObservableObject
     private readonly Func<Project?> _currentProject;
     private readonly Action<string> _log;
     private readonly Func<Project, string, Task> _snapshot;
+    private readonly Action? _installedChanged;
 
     public PluginManifest Manifest { get; }
 
@@ -32,8 +33,9 @@ public sealed partial class ToolItemViewModel : ObservableObject
     [ObservableProperty] private string _statusText = "";
 
     public ToolItemViewModel(PluginManifest manifest, PluginInstaller installer, ToolLauncher launcher, DecompBuildService builds,
-        DependencyChecker deps, Func<Project?> currentProject, Action<string> log, Func<Project, string, Task> snapshot)
+        DependencyChecker deps, Func<Project?> currentProject, Action<string> log, Func<Project, string, Task> snapshot, Action? installedChanged = null)
     {
+        _installedChanged = installedChanged;
         Manifest = manifest;
         _installer = installer;
         _launcher = launcher;
@@ -205,6 +207,7 @@ public sealed partial class ToolItemViewModel : ObservableObject
         {
             IsBusy = false;
             Refresh();
+            _installedChanged?.Invoke();
         }
     }
 

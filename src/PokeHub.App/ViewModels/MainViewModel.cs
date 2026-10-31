@@ -53,7 +53,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         ExtractRomCommand.NotifyCanExecuteChanged();
         PackRomCommand.NotifyCanExecuteChanged();
-        PackAndRunCommand.NotifyCanExecuteChanged();
+        PlayCommand.NotifyCanExecuteChanged();
         SaveVersionCommand.NotifyCanExecuteChanged();
         ShowHistoryCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ProjectSummary));
@@ -75,8 +75,55 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
     private Task PackRomAsync() => PackInternalAsync(run: false);
 
-    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
-    private Task PackAndRunAsync() => PackInternalAsync(run: true);
+    // ----- emuladores e Testar/Parar -----
+
+    public ObservableCollection<EmulatorOption> Emulators { get; } = [];
+    [ObservableProperty] private EmulatorOption? _selectedEmulator;
+    [ObservableProperty] private bool _isEmulatorRunning;
+    private RunningTool? _emulatorRun;
+
+    public bool HasEmulators => Emulators.Count > 0;
+    public string PlayButtonText => IsEmulatorRunning ? Loc.T("main.stop") : Loc.T("main.play");
+
+    /// <summary>Emuladores instalados (contexto Emulator); mantém a escolha salva em hub.json quando ainda está instalada.</summary>
+    public void RefreshEmulators()
+    {
+        var current = SelectedEmulator?.Id ?? _config.PreferredEmulator;
+        Emulators.Clear();
+        foreach (var m in _catalog.ForContext(ToolContext.Emulator, CurrentProject?.Config.Generation))
+            if (_installer.GetInstalled(m, CurrentProject) is not null) Emulators.Add(new EmulatorOption(m.Id, m.Name));
+        SelectedEmulator = Emulators.FirstOrDefault(e => e.Id == current) ?? Emulators.FirstOrDefault();
+        OnPropertyChanged(nameof(HasEmulators));
+        PlayCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedEmulatorChanged(EmulatorOption? value)
+    {
+        if (value is null || value.Id == _config.PreferredEmulator) return;
+        _config.PreferredEmulator = value.Id;
+        _config.Save(_paths.ConfigFile);
+    }
+
+    partial void OnIsEmulatorRunningChanged(bool value)
+    {
+        OnPropertyChanged(nameof(PlayButtonText));
+        PlayCommand.NotifyCanExecuteChanged();
+    }
+
+    private bool CanPlay => IsEmulatorRunning || (HasProjectAndIdle && SelectedEmulator is not null);
+
+    /// <summary>Testar: empacota e abre no emulador escolhido. Parar: encerra o emulador aberto pelo hub.</summary>
+    [RelayCommand(CanExecute = nameof(CanPlay))]
+    private async Task PlayAsync()
+    {
+        if (IsEmulatorRunning)
+        {
+            try { _emulatorRun?.Process.Kill(entireProcessTree: true); Log(Loc.T("vm.emulatorStopped")); }
+            catch (Exception ex) { Log(Loc.T("vm.error", ex.Message)); }
+            return;
+        }
+        await PackInternalAsync(run: true);
+    }
 
     private async Task PackInternalAsync(bool run)
     {
@@ -90,16 +137,19 @@ public sealed partial class MainViewModel : ObservableObject
         var output = await RunBusy(Loc.T("vm.packing", p.Name), () => _workspace.PackAsync(p, new Progress<string>(Log)));
         if (output is null || !run) return;
 
-        var melon = _catalog.Get("melonds");
-        var installed = melon is null ? null : _installer.GetInstalled(melon, p);
-        if (melon is null || installed is null)
+        var emulator = SelectedEmulator is { } sel ? _catalog.Get(sel.Id) : null;
+        var installed = emulator is null ? null : _installer.GetInstalled(emulator, p);
+        if (emulator is null || installed is null)
         {
-            Log(Loc.T("vm.melonMissingLog"));
-            MessageBox.Show(Loc.T("vm.melonMissingText"), Loc.T("vm.emulatorTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
+            Log(Loc.T("vm.emulatorMissingLog"));
+            MessageBox.Show(Loc.T("vm.emulatorMissingText"), Loc.T("vm.emulatorTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        var rt = _launcher.Launch(melon, installed, p, new Progress<string>(Log));
-        Log(Loc.T("vm.melonOpened", output, rt.Process.Id));
+        var rt = _launcher.Launch(emulator, installed, p, new Progress<string>(Log));
+        _emulatorRun = rt;
+        IsEmulatorRunning = true;
+        rt.Process.Exited += (_, _) => Application.Current.Dispatcher.Invoke(() => { if (ReferenceEquals(_emulatorRun, rt)) { _emulatorRun = null; IsEmulatorRunning = false; } });
+        Log(Loc.T("vm.emulatorOpened", emulator.Name, output, rt.Process.Id));
     }
 
     private async Task<T?> RunBusy<T>(string what, Func<Task<T>> work)
@@ -281,7 +331,8 @@ public sealed partial class MainViewModel : ObservableObject
         // GEN5: quando houver projeto Gen 5 aberto, o filtro por geração esconde os plugins só de Gen 4.
         var gen = CurrentProject?.Config.Generation;
         foreach (var m in _catalog.ForContext(SelectedContext.Context, gen))
-            Tools.Add(new ToolItemViewModel(m, _installer, _launcher, _builds, _deps, () => CurrentProject, Log, SnapshotForEditorAsync));
+            Tools.Add(new ToolItemViewModel(m, _installer, _launcher, _builds, _deps, () => CurrentProject, Log, SnapshotForEditorAsync, RefreshEmulators));
+        RefreshEmulators();
     }
 
     public void Log(string line)

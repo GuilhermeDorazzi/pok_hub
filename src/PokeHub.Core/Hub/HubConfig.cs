@@ -14,6 +14,8 @@ public sealed class HubConfig
     public string? LastProject { get; set; }
     /// <summary>Shell Unix preferido para compilar decomps (MSYS2 ou WSL).</summary>
     public PreferredShell? PreferredShell { get; set; }
+    /// <summary>Id do plugin de emulador usado pelo botão Testar.</summary>
+    public string? PreferredEmulator { get; set; }
 
     public static readonly JsonSerializerOptions JsonOptions = new()
     {
