@@ -116,5 +116,30 @@ public class MapLayoutTests(ITestOutputHelper output)
         Assert.Equal(0, missing);
         Assert.Equal(0, outside);
         Assert.True(onWall < total / 3, $"{onWall} de {total} NPCs em tile bloqueado: leitura suspeita");
+
+        // os outros tipos de marcador: dentro da área, e warp com destino que existe
+        foreach (var kind in new[] { EventKind.Trigger, EventKind.Sign, EventKind.Warp })
+        {
+            int count = 0, off = 0, blocked = 0;
+            foreach (var id in map.Headers.Select(h => h.Id))
+            {
+                if (map.LayoutOf(id) is not { } layout) continue;
+                foreach (var m in layout.Markers.Where(m => m.Kind == kind))
+                {
+                    count++;
+                    if (m.X < 0 || m.Y < 0 || m.X + m.Width > layout.Width || m.Y + m.Height > layout.Height) off++;
+                    else if (layout.IsBlocked(m.X, m.Y)) blocked++;
+                }
+            }
+            output.WriteLine($"{kind}: {count}, fora {off}, em tile bloqueado {blocked}");
+            Assert.True(count > 0);
+            Assert.True(off <= count / 50, $"{off} de {count} marcadores {kind} fora da área");
+        }
+        var headers = map.Headers.Select(h => h.Id).ToHashSet();
+        var warps = map.Headers.SelectMany(h => map.LayoutOf(h.Id)?.Markers.Where(m => m.Kind == EventKind.Warp) ?? []).ToList();
+        int dynamic = warps.Count(w => w.TargetMap is null);
+        var badTargets = warps.Where(w => w.TargetMap is { } t && !headers.Contains(t)).Select(w => w.TargetMap).Distinct().ToList();
+        output.WriteLine($"warps {warps.Count}, dinâmicos {dynamic}, destino inexistente: {string.Join(", ", badTargets)}");
+        Assert.Empty(badTargets);
     }
 }

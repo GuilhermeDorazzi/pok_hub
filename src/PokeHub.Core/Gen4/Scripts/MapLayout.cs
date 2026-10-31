@@ -15,6 +15,8 @@ public sealed class MapLayout
     private const int CellTiles = 32, PermissionBytes = CellTiles * CellTiles * 2;
     private const ushort NoCell = 0xFFFF, SoundSignature = 0x1234;
     private const byte Blocked = 0x80;
+    /// <summary>Warp dinâmico: o destino é o lugar de onde o jogador veio, guardado no save. Por isso TargetMap fica null.</summary>
+    private const int DynamicWarpHeader = 0xFFF;
 
     public int Width { get; }
     public int Height { get; }
@@ -77,7 +79,7 @@ public sealed class MapLayout
         foreach (var o in events.Objects) layout.Markers.Add(new(EventKind.Npc, o.Index, o.X - ox, o.Z - oy));
         foreach (var b in events.Bg) layout.Markers.Add(new(EventKind.Sign, b.Index, b.X - ox, b.Z - oy));
         foreach (var c in events.Coords) layout.Markers.Add(new(EventKind.Trigger, c.Index, c.X - ox, c.Z - oy, Math.Max(1, c.W), Math.Max(1, c.H)));
-        foreach (var w in events.Warps) layout.Markers.Add(new(EventKind.Warp, w.Index, w.X - ox, w.Z - oy, TargetMap: w.TargetHeader));
+        foreach (var w in events.Warps) layout.Markers.Add(new(EventKind.Warp, w.Index, w.X - ox, w.Z - oy, TargetMap: w.TargetHeader == DynamicWarpHeader ? null : w.TargetHeader));
         return layout;
     }
 

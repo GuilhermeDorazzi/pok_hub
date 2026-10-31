@@ -31,7 +31,8 @@
   "launch": {
     "args": [
       "${rom}"
-    ]
+    ],
+    "hook": "melonds-default-keys"
   },
   "notes": {
     "pt-BR": "CLI: melonDS.exe <rom.nds> [-f] [-b auto|always|never]. GEN5: adicionar 5 em generations.",

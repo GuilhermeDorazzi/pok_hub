@@ -28,6 +28,10 @@
       "en-US": "Click Test. The hub saves a version, packs (a few seconds) and opens the ROM."
     },
     {
+      "pt-BR": "Teclas do melonDS, que o hub configura enquanto nenhuma foi escolhida: setas = direcional, X = A, Z = B, S = X, A = Y, Q = L, W = R, Enter = Start, Backspace = Select. O mouse é a tela de toque. Para trocar: Config > Input and hotkeys; o hub não mexe mais depois disso.",
+      "en-US": "melonDS keys, which the hub sets up while none has been chosen: arrows = D-pad, X = A, Z = B, S = X, A = Y, Q = L, W = R, Enter = Start, Backspace = Select. The mouse is the touch screen. To change them: Config > Input and hotkeys; the hub leaves them alone after that."
+    },
+    {
       "pt-BR": "No melonDS: Config > Emu settings para BIOS/firmware (não são necessários para jogos comerciais); System > Save state para guardar um ponto do jogo; Ctrl+F para tela cheia.",
       "en-US": "In melonDS: Config > Emu settings for BIOS/firmware (not needed for commercial games); System > Save state to keep a point in the game; Ctrl+F for fullscreen."
     },

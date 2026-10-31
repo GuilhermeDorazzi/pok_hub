@@ -28,8 +28,8 @@ public sealed class ToolLauncher(HubPaths hub, RuntimeManager runtimes)
     public RunningTool Launch(PluginManifest m, InstalledTool tool, Project? project, IProgress<string>? log = null)
     {
         var launch = m.Launch ?? new LaunchSpec();
-        LaunchHooks.Run(launch.Hook, m, project, log ?? new Progress<string>(_ => { }));
         var exe = tool.ExecutablePath;
+        LaunchHooks.Run(launch.Hook, m, project, exe, log ?? new Progress<string>(_ => { }));
         var vars = BuildVariables(project, exe);
 
         var psi = new ProcessStartInfo

@@ -107,7 +107,7 @@ public sealed partial class EventMapViewModel : ObservableObject
 
     public string MarkerTip(LayoutMarker m)
     {
-        if (m.Kind == EventKind.Warp) return Loc.T("ev.layout.warpTip", m.Index, m.TargetMap is { } t ? _map.MapTitle(t) : "?");
+        if (m.Kind == EventKind.Warp) return m.TargetMap is { } t ? Loc.T("ev.layout.warpTip", m.Index, _map.MapTitle(t)) : Loc.T("ev.layout.warpDynamic", m.Index);
         var e = EventOf(m);
         if (e is null) return Loc.T("ev.position", m.X, m.Y);
         var summary = e.Actions.FirstOrDefault() ?? e.Messages.FirstOrDefault();
@@ -120,7 +120,7 @@ public sealed partial class EventMapViewModel : ObservableObject
     public void ActivateMarker(LayoutMarker m)
     {
         if (m.Kind != EventKind.Warp) { if (EventOf(m) is { } e) SelectedEvent = e; return; }
-        if (m.TargetMap is not { } target) return;
+        if (m.TargetMap is not { } target) { LayoutStatus = Loc.T("ev.layout.warpDynamic", m.Index); return; }
         var row = AllMaps.FirstOrDefault(r => r.Id == target);
         if (row is null) { LayoutStatus = Loc.T("ev.layout.noEvents", _map.MapTitle(target)); return; }
         if (!Maps.Contains(row)) MapSearch = "";

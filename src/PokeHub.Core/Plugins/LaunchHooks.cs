@@ -10,18 +10,34 @@ namespace PokeHub.Core.Plugins;
 /// </summary>
 public static class LaunchHooks
 {
-    public delegate void Hook(PluginManifest manifest, Project? project, IProgress<string> log);
+    public delegate void Hook(PluginManifest manifest, Project? project, string executable, IProgress<string> log);
 
     public static readonly IReadOnlyDictionary<string, Hook> All = new Dictionary<string, Hook>(StringComparer.OrdinalIgnoreCase)
     {
         ["dspre-open-workspace"] = DspreOpenWorkspace,
+        ["melonds-default-keys"] = MelonDsDefaultKeys,
     };
 
-    public static void Run(string? hookId, PluginManifest manifest, Project? project, IProgress<string> log)
+    public static void Run(string? hookId, PluginManifest manifest, Project? project, string executable, IProgress<string> log)
     {
         if (hookId is null) return;
         if (!All.TryGetValue(hookId, out var hook)) { log.Report(Loc.T("core.hook.unknown", hookId)); return; }
-        hook(manifest, project, log);
+        hook(manifest, project, executable, log);
+    }
+
+    /// <summary>A configuração fica ao lado do executável, na instalação do hub. Um erro aqui não pode impedir o emulador de abrir.</summary>
+    private static void MelonDsDefaultKeys(PluginManifest manifest, Project? project, string executable, IProgress<string> log)
+    {
+        var file = Path.Combine(Path.GetDirectoryName(executable) ?? "", "melonDS.toml");
+        try
+        {
+            var updated = MelonDsKeys.WithDefaults(File.Exists(file) ? File.ReadAllText(file) : null);
+            if (updated is null) return;
+            File.WriteAllText(file, updated);
+            log.Report(Loc.T("core.hook.melonKeys"));
+        }
+        catch (IOException ex) { log.Report(Loc.T("core.hook.melonKeysFailed", ex.Message)); }
+        catch (UnauthorizedAccessException ex) { log.Report(Loc.T("core.hook.melonKeysFailed", ex.Message)); }
     }
 
     /// <summary>
@@ -31,7 +47,7 @@ public static class LaunchHooks
     public static string DspreSettingsFile =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DSPRE", "userSettings.json");
 
-    private static void DspreOpenWorkspace(PluginManifest manifest, Project? project, IProgress<string> log)
+    private static void DspreOpenWorkspace(PluginManifest manifest, Project? project, string executable, IProgress<string> log)
     {
         if (project is null || !WorkspaceService.IsExtracted(project)) return;
         SetDspreOpenDefaultRom(DspreSettingsFile, project.Paths.Workspace);
