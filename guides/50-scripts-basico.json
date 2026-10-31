@@ -1,0 +1,77 @@
+{
+  "id": "scripts-basics",
+  "group": "edit",
+  "feature": null,
+  "tools": [
+    "dspre"
+  ],
+  "title": {
+    "pt-BR": "Como funcionam os scripts (Gen 4)",
+    "en-US": "How scripts work (Gen 4)"
+  },
+  "intro": {
+    "pt-BR": "Quase tudo que acontece num mapa (um NPC falar, uma porta levar a outro lugar, um item no chão, o rival aparecer) é um script: uma lista de comandos que o jogo executa em ordem. Este guia explica a estrutura antes de você abrir o Script Editor do DSPRE.",
+    "en-US": "Almost everything that happens on a map (an NPC talking, a door leading elsewhere, an item on the ground, the rival showing up) is a script: a list of commands the game runs in order. This guide explains the structure before you open DSPRE's Script Editor."
+  },
+  "steps": [
+    {
+      "pt-BR": "Onde ficam: cada mapa (Header) aponta para um arquivo de scripts. Um arquivo tem três seções: Scripts (os pontos de entrada), Functions (sub-rotinas chamadas pelos scripts) e Movements (sequências de passos para NPCs ou para o jogador).",
+      "en-US": "Where they live: each map (Header) points to a script file. A file has three sections: Scripts (entry points), Functions (subroutines called by scripts) and Movements (step sequences for NPCs or the player)."
+    },
+    {
+      "pt-BR": "Quem chama: no Event Editor, cada NPC, trigger (tile que dispara ao pisar) e sinal tem um número de script. Falar com o NPC roda o Script com esse número. Scripts de nível (level scripts) rodam ao entrar no mapa.",
+      "en-US": "Who calls them: in the Event Editor, each NPC, trigger (tile that fires when stepped on) and sign has a script number. Talking to the NPC runs the Script with that number. Level scripts run when the map loads."
+    },
+    {
+      "pt-BR": "Forma de um diálogo simples: LockAll (congela todos), FacePlayer (o NPC olha para você), Message N (mostra a mensagem N do banco de texto do mapa), WaitButton, CloseMessage, ReleaseAll, End. A ordem importa: sem Release o jogo fica travado.",
+      "en-US": "Shape of a simple dialogue: LockAll (freeze everyone), FacePlayer (the NPC faces you), Message N (shows message N of the map's text bank), WaitButton, CloseMessage, ReleaseAll, End. Order matters: without Release the game stays frozen."
+    },
+    {
+      "pt-BR": "Texto: Message usa um número, não o texto. O texto vive no banco do mapa (Editor de textos; o DSPRE mostra qual banco é). Para uma fala nova, adicione a mensagem no banco e use o número dela.",
+      "en-US": "Text: Message takes a number, not the text. The text lives in the map's bank (Text editor; DSPRE shows which bank). For a new line, add the message to the bank and use its number."
+    },
+    {
+      "pt-BR": "Flags: um bit ligado ou desligado, salvo no save. Servem para 'isso já aconteceu?': SetFlag depois de dar um item, CheckFlag no começo do script para não dar de novo. Cada flag tem um número; os do jogo original já estão em uso, então escolha números livres (o DSPRE lista os conhecidos).",
+      "en-US": "Flags: a bit that is on or off, stored in the save. They answer 'has this happened?': SetFlag after giving an item, CheckFlag at the start of the script so it is not given again. Each flag has a number; the original game's are in use, so pick free ones (DSPRE lists the known ones)."
+    },
+    {
+      "pt-BR": "Variáveis: guardam um número (0 a 65535), também no save. Usadas para contar e para o progresso da história (a variável da trama muda a cada evento). SetVar, AddVar, CompareVar funcionam sobre elas.",
+      "en-US": "Variables: hold a number (0 to 65535), also in the save. Used for counting and for story progress (the plot variable advances at each event). SetVar, AddVar, CompareVar operate on them."
+    },
+    {
+      "pt-BR": "Decisões: CheckFlag ou CompareVar deixam um resultado; em seguida um salto condicional (If ... Jump/Call) vai para outra Function. Sem condição verdadeira, o script continua na linha seguinte.",
+      "en-US": "Decisions: CheckFlag or CompareVar leave a result; then a conditional jump (If ... Jump/Call) goes to another Function. With no true condition, the script continues on the next line."
+    },
+    {
+      "pt-BR": "Movimento: Movement X aplica uma sequência (andar 2 para cima, virar à esquerda, esperar) a um NPC ou ao jogador; WaitMovement espera terminar. As sequências ficam na seção Movements.",
+      "en-US": "Movement: Movement X applies a sequence (walk 2 up, turn left, wait) to an NPC or the player; WaitMovement waits for it to end. Sequences live in the Movements section."
+    },
+    {
+      "pt-BR": "Ciclo de trabalho: edite no Script Editor do DSPRE, salve, feche o DSPRE (o hub guarda uma versão), Testar. Se o jogo travar, Versões volta ao estado anterior.",
+      "en-US": "Workflow: edit in DSPRE's Script Editor, save, close DSPRE (the hub keeps a version), Test. If the game freezes, Versions goes back to the previous state."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Os nomes dos comandos são os que o DSPRE mostra (em inglês). Outras ferramentas usam nomes diferentes para os mesmos códigos.",
+      "en-US": "Command names are the ones DSPRE shows (in English). Other tools use different names for the same opcodes."
+    },
+    {
+      "pt-BR": "Comece copiando um script que já faz algo parecido no mesmo mapa e mude só o necessário. É como a comunidade aprende.",
+      "en-US": "Start by copying a script that already does something similar on the same map and change only what is needed. That is how the community learns."
+    },
+    {
+      "pt-BR": "Um script que não termina em End (ou Return numa Function) faz o jogo continuar lendo lixo e travar.",
+      "en-US": "A script that does not end with End (or Return in a Function) makes the game keep reading garbage and freeze."
+    }
+  ],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "Documentação de scripts do DSPRE (inglês)",
+        "en-US": "DSPRE scripting docs (English)"
+      },
+      "url": "https://github.com/DS-Pokemon-Rom-Editor/DS-Pokemon-Rom-Editor-Reloaded/wiki"
+    }
+  ]
+}

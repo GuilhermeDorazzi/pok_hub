@@ -14,6 +14,7 @@ public sealed partial class FeatureCardViewModel : ObservableObject
 {
     private readonly Func<bool>? _customReady;
     private readonly Func<string>? _customAction;
+    private readonly Func<string>? _customNotReadyStatus;
 
     public string Key { get; }
     public FeatureGroup Group { get; }
@@ -24,7 +25,7 @@ public sealed partial class FeatureCardViewModel : ObservableObject
     public ICommand? CustomCommand { get; }
 
     public FeatureCardViewModel(string key, FeatureGroup group, string glyph, ToolItemViewModel? tool,
-        ICommand? customCommand = null, Func<bool>? customReady = null, Func<string>? customAction = null)
+        ICommand? customCommand = null, Func<bool>? customReady = null, Func<string>? customAction = null, Func<string>? customNotReadyStatus = null)
     {
         Key = key;
         Group = group;
@@ -33,6 +34,7 @@ public sealed partial class FeatureCardViewModel : ObservableObject
         CustomCommand = customCommand;
         _customReady = customReady;
         _customAction = customAction;
+        _customNotReadyStatus = customNotReadyStatus;
         if (tool is not null) tool.PropertyChanged += (_, _) => Refresh();
     }
 
@@ -55,7 +57,7 @@ public sealed partial class FeatureCardViewModel : ObservableObject
         if (CustomCommand is not null)
         {
             IsReady = _customReady?.Invoke() ?? true;
-            StatusText = IsReady ? Loc.T("feature.ready") : Loc.T("tool.status.notInstalled");
+            StatusText = IsReady ? Loc.T("feature.ready") : _customNotReadyStatus?.Invoke() ?? Loc.T("tool.status.notInstalled");
             ActionText = _customAction?.Invoke() ?? Loc.T("main.open");
             ActionCommand = CustomCommand;
             HasAction = true;

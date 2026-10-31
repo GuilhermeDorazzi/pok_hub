@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using PokeHub.Core.Localization;
 using PokeHub.Core.Projects;
+using PokeHub.Core.Reports;
 
 namespace PokeHub.App.Views;
 
@@ -10,14 +11,16 @@ public partial class HistoryWindow : Window
     private readonly WorkspaceGit _git;
     private readonly Project _project;
     private readonly Action<string> _log;
+    private readonly Func<string, Task<IReadOnlyList<ChangeLine>>> _compare;
 
     private sealed record Row(string Hash, string Message);
 
     /// <summary>true se alguma versão foi restaurada enquanto a janela esteve aberta.</summary>
     public bool Restored { get; private set; }
 
-    public HistoryWindow(WorkspaceGit git, Project project, Action<string> log)
+    public HistoryWindow(WorkspaceGit git, Project project, Action<string> log, Func<string, Task<IReadOnlyList<ChangeLine>>> compare)
     {
+        _compare = compare;
         _git = git;
         _project = project;
         _log = log;
@@ -33,8 +36,31 @@ public partial class HistoryWindow : Window
         StatusText.Text = history.Count == 0 ? Loc.T("hist.none") : Loc.T("hist.count", history.Count);
     }
 
-    private void VersionsList_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
+    private void VersionsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
         RestoreButton.IsEnabled = VersionsList.SelectedItem is Row && VersionsList.SelectedIndex > 0;
+        CompareButton.IsEnabled = VersionsList.SelectedItem is Row;
+    }
+
+    /// <summary>Compara a versão selecionada com o workspace atual e mostra o relatório em termos de jogo.</summary>
+    private async void Compare_Click(object sender, RoutedEventArgs e)
+    {
+        if (VersionsList.SelectedItem is not Row row) return;
+        try
+        {
+            IsEnabled = false;
+            StatusText.Text = Loc.T("hist.comparing");
+            var lines = await _compare(row.Hash);
+            new ChangeReportWindow(Loc.T("report.intro", row.Hash, row.Message), lines) { Owner = this }.ShowDialog();
+            StatusText.Text = Loc.T("hist.count", VersionsList.Items.Count);
+        }
+        catch (Exception ex)
+        {
+            _log(Loc.T("hist.error", row.Hash, ex.Message));
+            MessageBox.Show(this, ex.Message, Loc.T("hist.errorTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally { IsEnabled = true; }
+    }
 
     private async void Restore_Click(object sender, RoutedEventArgs e)
     {

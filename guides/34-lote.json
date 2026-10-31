@@ -1,0 +1,47 @@
+{
+  "id": "batch",
+  "group": "advanced",
+  "feature": "batch",
+  "tools": [],
+  "title": {
+    "pt-BR": "Operações em lote",
+    "en-US": "Batch operations"
+  },
+  "intro": {
+    "pt-BR": "Regras aplicadas a muitos treinadores ou a todas as tabelas de encontros de uma vez: subir níveis em porcentagem, trocar uma espécie em todo o jogo, dar um item segurado a todos os times.",
+    "en-US": "Rules applied to many trainers or to every encounter table at once: raise levels by a percentage, swap a species across the whole game, give a held item to every team."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra pelo card Operações em lote (ou Projeto > Operações em lote).",
+      "en-US": "Open from the Batch operations card (or Project > Batch operations)."
+    },
+    {
+      "pt-BR": "Treinadores: filtre por classe ou por texto no nome, defina ×% e +/- de nível com mínimo e máximo, item segurado e troca de espécie.",
+      "en-US": "Trainers: filter by class or by text in the name, set level ×% and +/- with min and max, held item and species swap."
+    },
+    {
+      "pt-BR": "Encontros: troque uma espécie em todas as tabelas e escale os níveis.",
+      "en-US": "Encounters: swap a species in every table and scale the levels."
+    },
+    {
+      "pt-BR": "Clique em Prévia: cada linha é uma mudança concreta (treinador, slot, antes → depois). Nada é gravado ainda.",
+      "en-US": "Click Preview: each line is one concrete change (trainer, slot, before → after). Nothing is written yet."
+    },
+    {
+      "pt-BR": "Aplicar grava no workspace. O hub salva uma versão antes e outra depois, então Versões desfaz tudo num clique.",
+      "en-US": "Apply writes to the workspace. The hub saves a version before and another after, so Versions undoes everything in one click."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Treinadores sem campo de item no time (a maioria dos comuns) são pulados na regra de item; a prévia avisa.",
+      "en-US": "Trainers whose teams have no item field (most regular ones) are skipped by the item rule; the preview says so."
+    },
+    {
+      "pt-BR": "Para um level cap suave, use ×% com máximo: por exemplo ×120% e máximo 60 até a quarta insígnia.",
+      "en-US": "For a soft level cap use ×% with a max: for example ×120% and max 60 until the fourth badge."
+    }
+  ],
+  "links": []
+}

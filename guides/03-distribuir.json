@@ -1,0 +1,51 @@
+{
+  "id": "patch",
+  "group": "start",
+  "feature": "patch",
+  "tools": [],
+  "title": {
+    "pt-BR": "Distribuir seu hack: patch BPS",
+    "en-US": "Distributing your hack: BPS patch"
+  },
+  "intro": {
+    "pt-BR": "Você não distribui a ROM (é conteúdo da Nintendo), e sim um patch: um arquivo pequeno com só as suas mudanças. Quem joga aplica o patch sobre a própria ROM limpa. O PokeHub gera e aplica patches BPS, o formato mais usado pela comunidade.",
+    "en-US": "You do not distribute the ROM (it is Nintendo's content) but a patch: a small file with only your changes. Players apply the patch to their own clean ROM. PokeHub creates and applies BPS patches, the format the community uses most."
+  },
+  "steps": [
+    {
+      "pt-BR": "Na tela Início ou em Projeto, clique em Gerar patch. O hub empacota o workspace e escreve projects/<nome>/builds/<nome>.bps.",
+      "en-US": "On the Home screen or under Project, click Create patch. The hub packs the workspace and writes projects/<name>/builds/<name>.bps."
+    },
+    {
+      "pt-BR": "Publique o .bps junto com o nome e a região da ROM base (ex.: Pokémon SoulSilver USA). O patch só funciona sobre essa ROM exata; qualquer outra dá erro de CRC.",
+      "en-US": "Publish the .bps along with the name and region of the base ROM (e.g. Pokémon SoulSilver USA). The patch only works on that exact ROM; any other fails the CRC check."
+    },
+    {
+      "pt-BR": "Para testar como o jogador: Projeto > Projeto a partir de patch, escolha a ROM limpa, o .bps e onde salvar. O hub confere os CRCs e oferece criar um projeto com o resultado.",
+      "en-US": "To test as a player would: Project > Project from patch, choose the clean ROM, the .bps and where to save. The hub checks the CRCs and offers to create a project from the result."
+    },
+    {
+      "pt-BR": "Quem não usa o PokeHub aplica com qualquer aplicador BPS (Floating IPS, beat, Rom Patcher JS no navegador).",
+      "en-US": "People without PokeHub can apply it with any BPS tool (Floating IPS, beat, Rom Patcher JS in the browser)."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Gere o patch sempre a partir de uma versão salva, assim você sabe exatamente o que cada versão publicada contém.",
+      "en-US": "Always create the patch from a saved version, so you know exactly what each published release contains."
+    },
+    {
+      "pt-BR": "O patch do PokeHub é um pouco maior que o do beat em hacks com arquivos movidos, mas é lido por qualquer aplicador.",
+      "en-US": "PokeHub's patch is a bit larger than beat's for hacks with moved files, but any applier reads it."
+    }
+  ],
+  "links": [
+    {
+      "label": {
+        "pt-BR": "Rom Patcher JS (aplicador no navegador)",
+        "en-US": "Rom Patcher JS (browser applier)"
+      },
+      "url": "https://www.marcrobledo.com/RomPatcher.js/"
+    }
+  ]
+}

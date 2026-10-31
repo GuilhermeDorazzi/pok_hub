@@ -69,6 +69,23 @@ public sealed class WorkspaceGit(RuntimeManager runtimes)
         await SnapshotAsync(p, Loc.T("core.git.restoredFrom", hash), log, ct);
     }
 
+    /// <summary>Arquivos alterados entre uma versão e o workspace atual (caminhos relativos ao workspace).</summary>
+    public async Task<IReadOnlyList<string>> ChangedFilesAsync(Project p, string hash)
+    {
+        var git = RequireGit();
+        var (code, output) = await ProcessRunner.CaptureAsync(git, ["-C", p.Paths.Workspace, "diff", "--name-only", hash, "--"], timeoutMs: 60000);
+        if (code != 0) return [];
+        return output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+    }
+
+    /// <summary>Lê um arquivo do workspace como estava numa versão; null se não existia.</summary>
+    public async Task<byte[]?> ReadFileAtAsync(Project p, string hash, string relativePath)
+    {
+        var git = RequireGit();
+        var (code, bytes) = await ProcessRunner.CaptureBytesAsync(git, ["-C", p.Paths.Workspace, "show", $"{hash}:{relativePath.Replace('\\', '/')}"]);
+        return code == 0 ? bytes : null;
+    }
+
     private string RequireGit() => runtimes.ResolveGit()
         ?? throw new InvalidOperationException(Loc.T("core.git.missing"));
 

@@ -14,27 +14,34 @@ public partial class NewProjectWindow : Window
 
     public Project? Created { get; private set; }
 
-    public NewProjectWindow(ProjectService projects)
+    public NewProjectWindow(ProjectService projects, string? romPath = null)
     {
         _projects = projects;
         InitializeComponent();
+        if (romPath is not null) Loaded += (_, _) => UseRom(romPath);
     }
 
     private void Browse_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new OpenFileDialog { Title = Loc.T("np.dialogTitle"), Filter = Loc.T("np.filter") };
         if (dlg.ShowDialog(this) != true) return;
-        RomBox.Text = dlg.FileName;
+        UseRom(dlg.FileName);
+    }
+
+    /// <summary>Preenche a janela com uma ROM (escolhida no diálogo ou vinda de um patch aplicado).</summary>
+    private void UseRom(string fileName)
+    {
+        RomBox.Text = fileName;
         try
         {
-            _header = NdsRomHeader.Read(dlg.FileName);
+            _header = NdsRomHeader.Read(fileName);
             var ok = _header.Game != BaseGame.Unknown;
             DetectedText.Text = ok
                 ? Loc.T("np.detected", _header.Game, _header.GameCode, _header.Region, _header.Generation, _header.Title)
                 : Loc.T("np.unknown", _header.GameCode, _header.Title); // GEN5
             DetectedText.Foreground = ok ? System.Windows.Media.Brushes.DarkGreen : System.Windows.Media.Brushes.Firebrick;
             if (string.IsNullOrWhiteSpace(NameBox.Text) && ok)
-                NameBox.Text = Path.GetFileNameWithoutExtension(dlg.FileName);
+                NameBox.Text = Path.GetFileNameWithoutExtension(fileName);
             CreateButton.IsEnabled = ok;
         }
         catch (Exception ex)

@@ -57,6 +57,21 @@ public static class ProcessRunner
         return (p.ExitCode, output);
     }
 
+    /// <summary>Captura stdout binário de um comando curto (ex.: git show de um arquivo).</summary>
+    public static async Task<(int ExitCode, byte[] Output)> CaptureBytesAsync(string fileName, IEnumerable<string> args, int timeoutMs = 30000)
+    {
+        var psi = new ProcessStartInfo(fileName) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = true, CreateNoWindow = true };
+        foreach (var a in args) psi.ArgumentList.Add(a);
+        using var p = Process.Start(psi) ?? throw new InvalidOperationException(Loc.T("core.process.startFailed", fileName));
+        p.StandardInput.Close();
+        p.BeginErrorReadLine();
+        using var cts = new CancellationTokenSource(timeoutMs);
+        var ms = new MemoryStream();
+        await p.StandardOutput.BaseStream.CopyToAsync(ms, cts.Token);
+        await p.WaitForExitAsync(cts.Token);
+        return (p.ExitCode, ms.ToArray());
+    }
+
     public static bool IsOnPath(string exe)
     {
         try

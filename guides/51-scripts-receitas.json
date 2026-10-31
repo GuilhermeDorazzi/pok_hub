@@ -1,0 +1,53 @@
+{
+  "id": "scripts-recipes",
+  "group": "edit",
+  "feature": null,
+  "tools": [
+    "dspre"
+  ],
+  "title": {
+    "pt-BR": "Receitas de script: NPC, item, Pokémon de presente",
+    "en-US": "Script recipes: NPC, item, gift Pokémon"
+  },
+  "intro": {
+    "pt-BR": "Quatro padrões que cobrem a maior parte do que um hack precisa. Cada um mostra a ideia e a sequência de comandos; os números de mensagem, flag e variável são os que você escolher.",
+    "en-US": "Four patterns that cover most of what a hack needs. Each shows the idea and the command sequence; the message, flag and variable numbers are the ones you choose."
+  },
+  "steps": [
+    {
+      "pt-BR": "NPC que só fala: LockAll · FacePlayer · Message 3 · WaitButton · CloseMessage · ReleaseAll · End. Troque o 3 pelo número da sua mensagem no banco do mapa.",
+      "en-US": "NPC that only talks: LockAll · FacePlayer · Message 3 · WaitButton · CloseMessage · ReleaseAll · End. Replace 3 with your message number in the map's bank."
+    },
+    {
+      "pt-BR": "NPC que dá um item uma vez: CheckFlag 0x2A0 · If equal Jump JaDeu · LockAll · FacePlayer · Message 4 · GiveItem (id do item, quantidade) · SetFlag 0x2A0 · WaitButton · CloseMessage · ReleaseAll · End. Function JaDeu: LockAll · FacePlayer · Message 5 · WaitButton · CloseMessage · ReleaseAll · End.",
+      "en-US": "NPC that gives an item once: CheckFlag 0x2A0 · If equal Jump AlreadyGave · LockAll · FacePlayer · Message 4 · GiveItem (item id, amount) · SetFlag 0x2A0 · WaitButton · CloseMessage · ReleaseAll · End. Function AlreadyGave: LockAll · FacePlayer · Message 5 · WaitButton · CloseMessage · ReleaseAll · End."
+    },
+    {
+      "pt-BR": "Pokémon de presente: mesma estrutura do item, trocando GiveItem por GivePokemon (espécie, nível, item segurado). Verifique antes se há espaço no time (o DSPRE tem um comando de checagem) e trate o caso de time cheio com outra mensagem.",
+      "en-US": "Gift Pokémon: same structure as the item, swapping GiveItem for GivePokemon (species, level, held item). Check for team space first (DSPRE has a check command) and handle the full-team case with another message."
+    },
+    {
+      "pt-BR": "Pergunta sim/não: Message 6 · YesNoBox var · CompareVar var 1 · If equal Jump DisseSim · ... caminho do não ... · End. A resposta cai numa variável; 1 costuma ser Sim.",
+      "en-US": "Yes/no question: Message 6 · YesNoBox var · CompareVar var 1 · If equal Jump SaidYes · ... the no path ... · End. The answer lands in a variable; 1 is usually Yes."
+    },
+    {
+      "pt-BR": "Bloquear um caminho até certo ponto da história: um trigger no tile com CompareVar (variável da trama) · If less Jump Bloqueado; em Bloqueado, Movement empurrando o jogador um passo para trás e uma mensagem.",
+      "en-US": "Blocking a path until a story point: a trigger on the tile with CompareVar (plot variable) · If less Jump Blocked; in Blocked, a Movement pushing the player one step back and a message."
+    },
+    {
+      "pt-BR": "Depois de qualquer mudança: salvar no DSPRE, Testar, falar com o NPC duas vezes (a segunda prova que a flag funcionou), e Salvar versão quando estiver certo.",
+      "en-US": "After any change: save in DSPRE, Test, talk to the NPC twice (the second time proves the flag worked), and Save version when it is right."
+    }
+  ],
+  "tips": [
+    {
+      "pt-BR": "Flags livres: use números altos que o jogo original não toca; anote num arquivo do projeto quais você usou.",
+      "en-US": "Free flags: use high numbers the original game does not touch; keep a note in the project of which ones you used."
+    },
+    {
+      "pt-BR": "Para achar como o jogo faz algo, abra o script de um NPC original que faz aquilo (o Event Editor mostra o número) e leia.",
+      "en-US": "To find how the game does something, open the script of an original NPC that does it (the Event Editor shows the number) and read it."
+    }
+  ],
+  "links": []
+}

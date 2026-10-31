@@ -1,0 +1,34 @@
+{
+  "id": "what-changed",
+  "group": "start",
+  "feature": null,
+  "tools": [],
+  "title": {
+    "pt-BR": "O que mudou entre versões",
+    "en-US": "What changed between versions"
+  },
+  "intro": {
+    "pt-BR": "Em Versões, selecione uma versão e clique em O que mudou: o hub compara aquele ponto com o workspace atual e descreve as diferenças em termos de jogo (treinadores, encontros, textos), não em bytes.",
+    "en-US": "Under Versions, select a version and click What changed: the hub compares that point with the current workspace and describes the differences in game terms (trainers, encounters, text), not bytes."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra Versões na navegação lateral e selecione a versão de referência (por exemplo, a última publicada).",
+      "en-US": "Open Versions in the side navigation and select the reference version (for example, the last one published)."
+    },
+    {
+      "pt-BR": "Clique em O que mudou. A lista mostra, por treinador, o que foi alterado (espécie, nível, item, golpes); por rota, cada slot trocado; e por banco de texto, as mensagens editadas.",
+      "en-US": "Click What changed. The list shows, per trainer, what was altered (species, level, item, moves); per route, each swapped slot; and per text bank, the edited messages."
+    },
+    {
+      "pt-BR": "Arquivos que o hub ainda não interpreta (mapas, scripts, gráficos) aparecem só pelo caminho, em Outros arquivos alterados.",
+      "en-US": "Files the hub does not yet interpret (maps, scripts, graphics) show up by path only, under Other changed files."
+    },
+    {
+      "pt-BR": "Copiar tudo joga o relatório na área de transferência: serve de changelog para publicar com o patch.",
+      "en-US": "Copy all puts the report on the clipboard: it works as a changelog to publish with the patch."
+    }
+  ],
+  "tips": [],
+  "links": []
+}

@@ -11,6 +11,8 @@ using PokeHub.Core.Decomp;
 using PokeHub.Core.Help;
 using PokeHub.Core.Hub;
 using PokeHub.Core.Localization;
+using PokeHub.Core.Patch;
+using PokeHub.Core.Reports;
 using PokeHub.Core.Plugins;
 using PokeHub.Core.Processes;
 using PokeHub.Core.Projects;
@@ -129,6 +131,8 @@ public sealed partial class MainViewModel : ObservableObject
         SaveVersionCommand.NotifyCanExecuteChanged();
         ShowHistoryCommand.NotifyCanExecuteChanged();
         OpenProjectFolderCommand.NotifyCanExecuteChanged();
+        CreatePatchCommand.NotifyCanExecuteChanged();
+        OpenBatchCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(HasProject));
         OnPropertyChanged(nameof(ProjectTitle));
         OnPropertyChanged(nameof(ProjectSummary));
@@ -153,6 +157,93 @@ public sealed partial class MainViewModel : ObservableObject
 
     [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
     private Task PackRomAsync() => PackInternalAsync(run: false);
+
+    // ----- patch BPS -----
+
+    /// <summary>Gera builds/&lt;nome&gt;.bps: diferença entre a ROM base e a ROM empacotada agora.</summary>
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private async Task CreatePatchAsync()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
+        var output = await RunBusy(Loc.T("vm.packing", p.Name), () => _workspace.PackAsync(p, new Progress<string>(Log)));
+        if (output is null) return;
+        var patchFile = Path.Combine(p.Paths.Builds, p.Name + ".bps");
+        var result = await RunBusy(Loc.T("patch.creating"), async () =>
+        {
+            var source = await File.ReadAllBytesAsync(p.Paths.BaseRom);
+            var target = await File.ReadAllBytesAsync(output);
+            var patch = await Task.Run(() => Bps.Create(source, target, $"PokeHub {p.Name}"));
+            await File.WriteAllBytesAsync(patchFile, patch);
+            return patch.Length;
+        });
+        if (result == 0) return;
+        Log(Loc.T("patch.created", patchFile, result / 1024));
+        MessageBox.Show(Loc.T("patch.createdText", patchFile, result / 1024), Loc.T("patch.title"), MessageBoxButton.OK, MessageBoxImage.Information);
+        Process.Start(new ProcessStartInfo("explorer.exe", "/select,\"" + patchFile + "\"") { UseShellExecute = true });
+    }
+
+    /// <summary>Aplica um .bps sobre uma ROM limpa e salva a ROM resultante; o usuário pode criar um projeto a partir dela.</summary>
+    [RelayCommand]
+    private async Task ApplyPatchAsync()
+    {
+        var romDlg = new OpenFileDialog { Title = Loc.T("patch.pickRom"), Filter = Loc.T("np.filter") };
+        if (romDlg.ShowDialog() != true) return;
+        var patchDlg = new OpenFileDialog { Title = Loc.T("patch.pickPatch"), Filter = Loc.T("patch.filter") };
+        if (patchDlg.ShowDialog() != true) return;
+        var saveDlg = new SaveFileDialog { Title = Loc.T("patch.pickOutput"), Filter = Loc.T("np.filter"),
+            FileName = Path.GetFileNameWithoutExtension(patchDlg.FileName) + ".nds", InitialDirectory = Path.GetDirectoryName(patchDlg.FileName) };
+        if (saveDlg.ShowDialog() != true) return;
+        var ok = await RunBusy(Loc.T("patch.applying"), async () =>
+        {
+            var source = await File.ReadAllBytesAsync(romDlg.FileName);
+            var patch = await File.ReadAllBytesAsync(patchDlg.FileName);
+            var target = await Task.Run(() => Bps.Apply(source, patch));
+            await File.WriteAllBytesAsync(saveDlg.FileName, target);
+            return true;
+        });
+        if (!ok) return;
+        Log(Loc.T("patch.applied", saveDlg.FileName));
+        var r = MessageBox.Show(Loc.T("patch.appliedText", saveDlg.FileName), Loc.T("patch.title"), MessageBoxButton.YesNo, MessageBoxImage.Information);
+        if (r == MessageBoxResult.Yes) await NewProjectAsync(saveDlg.FileName);
+    }
+
+    // ----- operações em lote -----
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private void OpenBatch()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
+        try
+        {
+            var vm = new BatchViewModel(p, Log, SnapshotForEditorAsync);
+            new BatchWindow(vm) { Owner = Application.Current.MainWindow }.ShowDialog();
+            if (vm.Applied) NotifyProjectCommands();
+        }
+        catch (Exception ex)
+        {
+            Log(Loc.T("vm.error", ex.Message));
+            MessageBox.Show(ex.Message, Loc.T("batch.title"), MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>"O que mudou" entre uma versão e o workspace atual, em termos de jogo.</summary>
+    public async Task<IReadOnlyList<ChangeLine>> CompareVersionAsync(Project p, string hash)
+    {
+        var changed = await _git.ChangedFilesAsync(p, hash);
+        if (changed.Count == 0) return [];
+        var temp = Path.Combine(Path.GetTempPath(), "pokehub-compare", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var old = await ChangeReport.ExportVersionAsync(_git, p, hash, temp);
+            return await Task.Run(() => ChangeReport.Compare(old, p, changed));
+        }
+        finally
+        {
+            try { Directory.Delete(temp, recursive: true); } catch { }
+        }
+    }
 
     // ----- emuladores e Testar/Parar -----
 
@@ -351,7 +442,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var p = CurrentProject!;
         if (!WorkspaceGit.IsRepo(p)) { Log(Loc.T("vm.git.notRepo")); return; }
-        var win = new HistoryWindow(_git, p, Log) { Owner = Application.Current.MainWindow };
+        var win = new HistoryWindow(_git, p, Log, hash => CompareVersionAsync(p, hash)) { Owner = Application.Current.MainWindow };
         win.ShowDialog();
         if (win.Restored) NotifyProjectCommands();
     }
@@ -552,6 +643,10 @@ public sealed partial class MainViewModel : ObservableObject
         AdvancedCards.Add(new FeatureCardViewModel("decomp", FeatureGroup.Advanced, "\uE943", DecompTool()));
         AdvancedCards.Add(new FeatureCardViewModel("randomizer", FeatureGroup.Advanced, "\uE8B1", Tool("randomizer-zx")));
         AdvancedCards.Add(new FeatureCardViewModel("files", FeatureGroup.Advanced, "\uE8B7", Tool("tinke")));
+        AdvancedCards.Add(new FeatureCardViewModel("batch", FeatureGroup.Advanced, "\uE8FD", null, OpenBatchCommand,
+            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
+        AdvancedCards.Add(new FeatureCardViewModel("patch", FeatureGroup.Advanced, "\uE8C8", null, CreatePatchCommand,
+            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("patch.create"), () => Loc.T("tool.status.openProject")));
         RefreshCards();
     }
 
@@ -575,9 +670,11 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task NewProjectAsync()
+    private Task NewProjectAsync() => NewProjectAsync(null);
+
+    private async Task NewProjectAsync(string? romPath)
     {
-        var win = new NewProjectWindow(_projects) { Owner = Application.Current.MainWindow };
+        var win = new NewProjectWindow(_projects, romPath) { Owner = Application.Current.MainWindow };
         if (win.ShowDialog() == true && win.Created is { } created)
         {
             Log(Loc.T("vm.newProject.created", created.Name, created.Config.BaseGame, created.Config.GameCode, created.Paths.Dir));
