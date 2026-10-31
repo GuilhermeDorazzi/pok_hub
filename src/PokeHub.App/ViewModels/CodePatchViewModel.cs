@@ -94,7 +94,7 @@ public sealed partial class CodePatchViewModel : ObservableObject
 
     [RelayCommand(CanExecute = nameof(CanRun))]
     private Task ApplyAsync() => RunAsync(_service.ApplyAsync, "inject.snapshotBefore", "inject.snapshotAfter",
-        r => Loc.T("inject.done", r.Patches.Count, r.FreeBytes));
+        r => Loc.T("inject.done", r.Patches.Count(p => p.Size > 0 || p.Hooks > 0), r.FreeBytes)); // patch ativo ainda sem código nem ganchos não muda o jogo
 
     [RelayCommand(CanExecute = nameof(CanRun))]
     private Task RevertAsync()

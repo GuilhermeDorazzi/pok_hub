@@ -23,7 +23,14 @@
         <DataGrid Grid.Row="1" ItemsSource="{Binding Patches}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                   HeadersVisibility="Column" GridLinesVisibility="Horizontal" SelectionMode="Single">
             <DataGrid.Columns>
-                <DataGridCheckBoxColumn Header="{loc:T inject.enabled}" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" Width="60" />
+                <DataGridTemplateColumn Header="{loc:T inject.enabled}" Width="60">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <!-- a coluna de checkbox do DataGrid pede dois cliques: um para selecionar a linha e outro para marcar -->
+                            <CheckBox IsChecked="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="{loc:T inject.name}" Binding="{Binding Name}" IsReadOnly="True" Width="170" />
                 <DataGridTextColumn Header="{loc:T inject.description}" Binding="{Binding Description}" IsReadOnly="True" Width="*" />
                 <DataGridTextColumn Header="{loc:T inject.hooks}" Binding="{Binding Hooks}" IsReadOnly="True" Width="70" />
@@ -42,7 +49,7 @@
         <TextBlock Grid.Row="3" Text="{Binding Status}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,10,0,6" />
 
         <TextBox Grid.Row="4" Text="{Binding Output, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="12"
-                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextWrapping="NoWrap" />
+                 VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" TextChanged="Output_TextChanged" />
 
         <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
             <Button Content="{loc:T inject.revert}" Command="{Binding RevertCommand}" Padding="12,4" Margin="0,0,6,0" />

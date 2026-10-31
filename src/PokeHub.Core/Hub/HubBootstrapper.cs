@@ -43,11 +43,13 @@ public static class HubBootstrapper
         SaveSettings(s);
     }
 
-    public static HubPaths Initialize(string root)
+    /// <param name="remember">false deixa settings.json como está: uma pasta passada só para esta execução não muda a do aplicativo.</param>
+    public static HubPaths Initialize(string root, bool remember = true)
     {
         var paths = new HubPaths(root);
         foreach (var dir in paths.AllDirectories()) Directory.CreateDirectory(dir);
         if (!File.Exists(paths.ConfigFile)) new HubConfig().Save(paths.ConfigFile);
+        if (!remember) return paths;
 
         var s = LoadSettings();
         s.RootPath = paths.Root;

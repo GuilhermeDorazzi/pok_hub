@@ -23,6 +23,9 @@ Teste manual sem agente: mandar JSON-RPC por stdin, uma mensagem por linha (`ini
 | `restore_version` | volta o workspace a uma versão | `confirm=true` |
 | `list_trainers`, `get_trainer` | treinadores com classe, time, golpes e itens | leitura |
 | `list_encounter_areas`, `get_encounters` | tabelas de encontros selvagens com nomes de espécie e local | leitura |
+| `list_events`, `find_events`, `free_flags`, `flag_usage` | mapa de eventos, uso de flags e variáveis e faixas livres (HGSS) | leitura |
+| `list_code_patches`, `create_code_patch` | patches de código do projeto; criar gera a pasta com um modelo inativo | |
+| `apply_code_patches`, `revert_code_patches` | compila e grava os patches ativos, ou tira tudo do jogo (salva versão antes e depois) | erro de compilação ou checagem não grava nada e volta com a mensagem do compilador |
 | `list_tools` | catálogo com estado de instalação, propósito e custo | leitura |
 | `install_tool` | instala ou atualiza uma ferramenta | `confirm=true` para itens pesados (MSYS2, decomps) |
 | `launch_tool` | abre uma ferramenta externa apontando para o projeto | |
@@ -34,6 +37,8 @@ Regras de projeto:
 - Erros voltam com a mensagem real (projeto inexistente, workspace vazio, ferramenta não instalada), para o agente corrigir a chamada em vez de adivinhar.
 - Os dados do jogo são lidos pelos repositórios dos editores (`TrainerRepository`, `EncounterRepository`), então os ids e nomes batem com a interface.
 - Escrita de dados do jogo (editar time, encontros, textos) ainda não está exposta: próxima fatia, com versão salva automaticamente antes de cada gravação.
+
+`--root` e `POKEHUB_ROOT` valem só para aquela execução: não mudam a pasta do hub gravada nas configurações do aplicativo.
 
 ## Lição registrada
 

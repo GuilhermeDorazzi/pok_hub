@@ -78,12 +78,15 @@ public sealed partial class ArmToolchain(string? binDir)
         var roots = patch.Manifest.Hooks.Select(h => h.Symbol).Where(s => s is not null && !CodePatch.IsNumber(s) && !patch.Manifest.Symbols.ContainsKey(s)).Distinct().Select(s => "-Wl,-u," + s);
         await Run("gcc", [.. CpuFlags, "-nostdlib", "-T", script, "-Wl,--gc-sections", "-Wl,--no-warn-rwx-segments", "-Wl,-Map=" + Path.Combine(buildDir, "patch.map"), .. roots, .. objects, "-lgcc", "-o", elf]);
 
-        var bin = Path.Combine(buildDir, "patch.bin");
-        await Run("objcopy", ["-O", "binary", elf, bin]);
-
         var (code, output) = await ProcessRunner.CaptureAsync(Exe("readelf"), ["-sW", elf]);
         if (code != 0) throw new InvalidOperationException(Loc.T("core.inject.compileFailed", patch.Name, "readelf", code));
         var symbols = ParseSymbols(output);
+        // nenhum gancho alcança código (modelo recém-ativado, símbolo que não existe): o objcopy falharia num arquivo sem seções.
+        // Quem chama decide: sem ganchos, é um patch vazio; com símbolo inexistente, o erro diz qual é.
+        if (symbols["__patch_end"] == address) return new BuiltPatch(address, [], symbols);
+
+        var bin = Path.Combine(buildDir, "patch.bin");
+        await Run("objcopy", ["-O", "binary", elf, bin]);
         // o .bss não vai para o arquivo do objcopy, mas precisa de espaço reservado (e zerado) na imagem
         var loaded = File.ReadAllBytes(bin);
         var image = new byte[Math.Max(symbols["__patch_end"] - address, (uint)loaded.Length)];

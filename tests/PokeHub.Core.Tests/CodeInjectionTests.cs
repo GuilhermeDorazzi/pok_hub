@@ -319,6 +319,16 @@ public class CodeInjectionTests(ITestOutputHelper output) : IDisposable
             int MyHook(int a, int b) { Game_Func(); counter += table[a % 3] / b; return counter; }
             """);
 
+        // modelo ativado sem ganchos: nada alcança o código, e isso não é erro
+        var template = CodePatchService.Create(p, "modelo");
+        template.Manifest.Enabled = true;
+        template.Save();
+        // gancho para função que não existe: o erro precisa dizer qual, não falar do objcopy
+        var missing = WritePatch(p, "faltando", new PatchManifest { Hooks = [new PatchHook { Address = "0x02001200", Type = "call", Symbol = "NaoExiste" }] }, "void Outra(void) { }\n");
+        var missingError = await Assert.ThrowsAsync<InvalidDataException>(() => new CodePatchService(new HubPaths(hubRoot)).ApplyAsync(p, new Progress<string>()));
+        Assert.Contains("NaoExiste", missingError.Message);
+        Directory.Delete(missing.Directory, recursive: true);
+
         var log = new List<string>();
         var service = new CodePatchService(new HubPaths(hubRoot));
         var progress = new Progress<string>(l => { lock (log) log.Add(l); });
@@ -326,7 +336,8 @@ public class CodeInjectionTests(ITestOutputHelper output) : IDisposable
         lock (log) foreach (var l in log) output.WriteLine(l);
 
         Assert.True(result.ExpansionAdded);
-        var info = Assert.Single(result.Patches);
+        Assert.Equal(0, result.Patches.Single(x => x.Name == "modelo").Size);
+        var info = result.Patches.Single(x => x.Name == "real");
         Assert.Equal(Arm9Expansion.LoadAddress + Arm9Expansion.WindowStart, info.Address);
         uint hook = info.Symbols["MyHook"];
         Assert.Equal(1u, hook & 1); // função Thumb

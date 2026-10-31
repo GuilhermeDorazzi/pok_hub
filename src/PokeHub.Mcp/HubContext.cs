@@ -23,9 +23,9 @@ public sealed class HubContext
     public WorkspaceGit Git { get; }
     public ProjectService Projects { get; }
 
-    private HubContext(string root)
+    private HubContext(string root, bool isConfiguredRoot)
     {
-        Paths = HubBootstrapper.Initialize(root);
+        Paths = HubBootstrapper.Initialize(root, remember: isConfiguredRoot);
         Config = HubConfig.Load(Paths.ConfigFile);
         Catalog = PluginCatalog.LoadFromDirectory(Path.Combine(AppContext.BaseDirectory, "plugins"));
         Installer = new PluginInstaller(Paths, Config);
@@ -41,11 +41,11 @@ public sealed class HubContext
     {
         Loc.Instance.Language = Loc.Resolve(HubBootstrapper.SavedLanguage());
         var i = Array.IndexOf(args, "--root");
-        var root = i >= 0 && i + 1 < args.Length ? args[i + 1]
-            : Environment.GetEnvironmentVariable("POKEHUB_ROOT")
+        var chosen = i >= 0 && i + 1 < args.Length ? args[i + 1] : Environment.GetEnvironmentVariable("POKEHUB_ROOT");
+        var root = chosen
             ?? HubBootstrapper.FindConfiguredRoot()
             ?? throw new InvalidOperationException("Pasta do hub não configurada: abra o PokeHub uma vez, ou passe --root <pasta> / POKEHUB_ROOT.");
-        return new HubContext(root);
+        return new HubContext(root, isConfiguredRoot: chosen is null);
     }
 
     /// <summary>Projeto pelo nome; erro claro quando não existe.</summary>
