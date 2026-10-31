@@ -1,0 +1,22 @@
+{
+  "id": "encounter-editor",
+  "name": "Editor de encontros (PokeHub)",
+  "description": {
+    "pt-BR": "Editor embutido: Pokémon selvagens de cada área (grama por período, surf, rock smash, varas, enxame, sons do PokéGear), com os mapas e nomes de local vindos do jogo.",
+    "en-US": "Built-in editor: wild Pokémon of each area (grass by time of day, surf, rock smash, rods, swarm, PokéGear sounds), with map and location names read from the game."
+  },
+  "purpose": {
+    "pt-BR": "Editor do próprio hub para os encontros selvagens: qual Pokémon aparece em cada rota, com que nível e probabilidade. Lê os cabeçalhos de mapa do arm9 para mostrar o nome de cada local. Não instala nada e grava direto no workspace.",
+    "en-US": "The hub's own wild encounter editor: which Pokémon appears on each route, at what level and odds. Reads the map headers from the arm9 to show each location's name. Installs nothing and writes straight to the workspace."
+  },
+  "license": "GPL-3.0",
+  "contexts": ["pokemon", "maps"],
+  "generations": [4],
+  "scope": "hub",
+  "source": { "type": "builtin" },
+  "launch": { "args": [] },
+  "notes": {
+    "pt-BR": "HGSS validado com ROM real; DP/Pt implementados a partir do formato do DSPRE, sem validação com ROM. Grava uma versão no git a cada salvamento.",
+    "en-US": "HGSS validated with a real ROM; DP/Pt implemented from DSPRE's format without ROM validation. Saves a git version on every save."
+  }
+}

@@ -28,6 +28,13 @@ public static class BuiltinEditors
             var vm = new PokedexAreaEditorViewModel(repo, log, snapshot);
             new PokedexAreaEditorWindow(vm) { Owner = Application.Current.MainWindow }.Show();
         },
+        ["encounter-editor"] = (project, log, snapshot) =>
+        {
+            var repo = EncounterRepository.Load(project);
+            log(Loc.T("be.enc", repo.Entries.Count, repo.Headers.Count, repo.Species.Count));
+            var vm = new EncounterEditorViewModel(repo, log, snapshot);
+            new EncounterEditorWindow(vm) { Owner = Application.Current.MainWindow }.Show();
+        },
         // GEN5: editores de Gen 5 entram aqui com o mesmo mecanismo
     };
 
