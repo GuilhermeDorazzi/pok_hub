@@ -17,7 +17,8 @@ public partial class PokedexAreaEditorWindow : Window
     private readonly PokedexAreaEditorViewModel _vm;
     private static readonly Brush SelectedFill = new SolidColorBrush(Color.FromArgb(150, 255, 210, 60));
     private static readonly Brush SelectedStroke = new SolidColorBrush(Color.FromArgb(255, 200, 120, 0));
-    private static readonly Brush OtherStroke = new SolidColorBrush(Color.FromArgb(70, 0, 0, 0));
+    private static readonly Brush HoverStroke = new SolidColorBrush(Color.FromArgb(220, 255, 255, 255));
+    private uint? _hovered;
 
     public PokedexAreaEditorWindow(PokedexAreaEditorViewModel vm)
     {
@@ -47,7 +48,7 @@ public partial class PokedexAreaEditorWindow : Window
         return bmp;
     }
 
-    /// <summary>Desenha as áreas do bloco mostrado: marcadas em amarelo, as outras só com contorno fino.</summary>
+    /// <summary>Desenha as áreas marcadas do bloco mostrado (amarelo) e o contorno da área sob o mouse.</summary>
     private void DrawOverlay()
     {
         MapCanvas.Children.Clear();
@@ -57,23 +58,20 @@ public partial class PokedexAreaEditorWindow : Window
         foreach (var area in block.Areas)
         {
             if (map.Shape(area.Location.Id, special) is not { } s) continue;
-            for (int y = 0; y < s.Height; y++)
-                for (int x = 0; x < s.Width; x++)
-                {
-                    if (!s.Covers(s.X + x, s.Y + y)) continue;
-                    var r = new Rectangle
-                    {
-                        Width = t, Height = t,
-                        Fill = area.IsSelected ? SelectedFill : Brushes.Transparent,
-                        Stroke = area.IsSelected ? SelectedStroke : OtherStroke,
-                        StrokeThickness = area.IsSelected ? 1 : 0.5,
-                        IsHitTestVisible = false,
-                        ToolTip = area.Name,
-                    };
-                    Canvas.SetLeft(r, (s.X + x) * t);
-                    Canvas.SetTop(r, (s.Y + y) * t);
-                    MapCanvas.Children.Add(r);
-                }
+            bool hovered = _hovered == area.Location.Id;
+            if (!area.IsSelected && !hovered) continue;
+            var r = new Rectangle
+            {
+                Width = s.Width * t, Height = s.Height * t,
+                Fill = area.IsSelected ? SelectedFill : Brushes.Transparent,
+                Stroke = hovered ? HoverStroke : SelectedStroke,
+                StrokeThickness = hovered ? 1.5 : 1,
+                RadiusX = 1.5, RadiusY = 1.5,
+                IsHitTestVisible = false,
+            };
+            Canvas.SetLeft(r, s.X * t);
+            Canvas.SetTop(r, s.Y * t);
+            MapCanvas.Children.Add(r);
         }
     }
 
@@ -92,9 +90,16 @@ public partial class PokedexAreaEditorWindow : Window
     private void MapCanvas_MouseMove(object sender, MouseEventArgs e)
     {
         var (x, y) = TileAt(e);
-        var name = _vm.AreaNameAt(x, y);
-        HoverText.Text = name ?? (x < PokedexAreaMap.KantoFirstColumn ? Loc.T("dx.johto") : Loc.T("dx.kanto"));
+        var (id, name) = _vm.AreaAt(x, y);
+        HoverText.Text = name ?? "";
         MapCanvas.Cursor = name is null ? Cursors.Arrow : Cursors.Hand;
+        if (id != _hovered) { _hovered = id; DrawOverlay(); }
+    }
+
+    private void MapCanvas_MouseLeave(object sender, MouseEventArgs e)
+    {
+        HoverText.Text = "";
+        if (_hovered is not null) { _hovered = null; DrawOverlay(); }
     }
 
     private void Window_Closing(object sender, CancelEventArgs e)

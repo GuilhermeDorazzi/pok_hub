@@ -28,11 +28,11 @@ public class PokedexMapTests(ITestOutputHelper output)
         var project = new ProjectService(new HubPaths(root)).Open(name)!;
         var map = PokedexAreaMap.Load(project);
         output.WriteLine($"mapa {map.Image.Width}x{map.Image.Height}, {map.Overworlds.Count} áreas normais, {map.Dungeons.Count} especiais");
-        Assert.Equal(PokedexAreaMap.Columns * 8, map.Image.Width);
+        Assert.Equal(512, map.Image.Width);
         Assert.True(map.Overworlds.Count >= 70 && map.Dungeons.Count >= 26);
-        var r29 = map.Overworlds[2];
+        var r29 = map.Overworlds[2]!;
         output.WriteLine($"Route 29: x={r29.X} y={r29.Y} {r29.Width}x{r29.Height}");
-        Assert.True(r29.Width >= 1 && r29.X < PokedexAreaMap.KantoFirstColumn);
+        Assert.True(r29.Width >= 1 && r29.X < 32);
         // nenhum pixel magenta (cor de índice fora da paleta)
         int magenta = 0;
         for (int i = 0; i < map.Image.Pixels.Length; i += 4)

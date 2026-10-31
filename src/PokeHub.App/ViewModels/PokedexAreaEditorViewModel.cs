@@ -109,12 +109,12 @@ public sealed partial class PokedexAreaEditorViewModel : ObservableObject
         area.IsSelected = !area.IsSelected;
     }
 
-    public string? AreaNameAt(int tileX, int tileY)
+    public (uint? Id, string? Name) AreaAt(int tileX, int tileY)
     {
-        if (Map is null || SelectedMapBlock is null) return null;
+        if (Map is null || SelectedMapBlock is null) return (null, null);
         bool special = PokedexAreaRepository.IsSpecial(SelectedMapBlock.Block);
         var hit = Map.HitTest(tileX, tileY, special, SelectedMapBlock.Areas.Select(a => a.Location.Id));
-        return hit is null ? null : SelectedMapBlock.Areas.First(a => a.Location.Id == hit).Name;
+        return hit is null ? (null, null) : (hit, SelectedMapBlock.Areas.First(a => a.Location.Id == hit).Name);
     }
 
     private readonly PokeHub.Core.Projects.Project _project;

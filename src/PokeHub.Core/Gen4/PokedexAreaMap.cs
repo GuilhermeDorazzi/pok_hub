@@ -1,42 +1,52 @@
+using System.Reflection;
+using System.Text.Json;
 using PokeHub.Core.Graphics;
+using PokeHub.Core.Hub;
 using PokeHub.Core.Localization;
 using PokeHub.Core.Projects;
 
 namespace PokeHub.Core.Gen4;
 
-/// <summary>Forma de uma área no mapa da Pokédex, em tiles de 8 px: retângulo com máscara (áreas normais) ou ponto (especiais).</summary>
-public sealed record PokedexAreaShape(int Id, int X, int Y, int Width, int Height, bool[] Mask)
+/// <summary>Retângulo de uma área no mapa do Pokégear, em tiles de 8 px.</summary>
+public sealed record PokedexAreaShape(int Id, int X, int Y, int Width, int Height)
 {
-    public bool Covers(int tileX, int tileY)
-    {
-        int dx = tileX - X, dy = tileY - Y;
-        if (dx < 0 || dy < 0 || dx >= Width || dy >= Height) return false;
-        int i = dy * Width + dx;
-        return i < Mask.Length && Mask[i];
-    }
+    public bool Covers(int tileX, int tileY) => tileX >= X && tileY >= Y && tileX < X + Width && tileY < Y + Height;
 }
 
 /// <summary>
-/// Mapa da tela de áreas da Pokédex do HGSS, lido da própria ROM: tilemap NSCR 86 + tiles NCGR 87 + paleta NCLR 18 de
-/// a/0/6/8 (zukan_gra), e as formas das áreas nos dois primeiros arquivos de a/1/3/3 (gDungeons: x,y; gOverworlds: x,y,w,h + máscara de 32),
-/// conforme o pokeheartgold. O jogo rola esse tilemap para x = 72 (Johto) e x = -104 (Kanto); as colunas 0..44 cobrem as duas regiões.
-/// GEN5: BW usam outro formato de mapa.
+/// Mapa de Johto/Kanto para o editor de Pokédex do HGSS: o mapa do Pokégear lido da própria ROM
+/// (NARC a/1/4/4 = pgmap_gra do pokeheartgold: NSCR 11 + NCGR 10 + NCLR 20, tilemap 512×512 do qual a parte de cima
+/// é o mapa) e, para cada área da Pokédex, o retângulo que o Pokégear usa para esse local (tabela sLocationSpecs do
+/// pokeheartgold, ligada às áreas por sOverworldMapIDs/sDungeonMapIDs; embutida em pokedex-areamap-hgss.json porque
+/// no jogo ela fica dentro do overlay, não num arquivo de dados). GEN5: BW usam outro formato de mapa.
 /// </summary>
 public sealed class PokedexAreaMap
 {
-    public const string GraphicsNarcRelativePath = @"a\0\6\8";
-    public const int ScreenFile = 86, TilesFile = 87, PaletteFile = 18;
-    public const int Columns = 45, Rows = 16, Tile = 8;
-    /// <summary>Colunas a partir desta pertencem a Kanto (o jogo testa x >= 22).</summary>
-    public const int KantoFirstColumn = 22;
+    public const string GraphicsNarcRelativePath = @"a\1\4\4";
+    public const int ScreenFile = 11, TilesFile = 10, PaletteFile = 20;
+    public const int Tile = 8;
+    /// <summary>Linhas de tiles do tilemap que formam o mapa (o resto são peças de ícones).</summary>
+    public const int Rows = 20;
 
     public RgbaImage Image { get; }
-    public IReadOnlyList<PokedexAreaShape> Overworlds { get; }
-    public IReadOnlyList<PokedexAreaShape> Dungeons { get; }
+    public IReadOnlyList<PokedexAreaShape?> Overworlds { get; }
+    public IReadOnlyList<PokedexAreaShape?> Dungeons { get; }
 
-    private PokedexAreaMap(RgbaImage image, List<PokedexAreaShape> overworlds, List<PokedexAreaShape> dungeons)
+    private PokedexAreaMap(RgbaImage image, List<PokedexAreaShape?> overworlds, List<PokedexAreaShape?> dungeons)
     {
         Image = image; Overworlds = overworlds; Dungeons = dungeons;
+    }
+
+    private sealed class Table { public List<Rect?> Overworlds { get; set; } = []; public List<Rect?> Dungeons { get; set; } = []; }
+    private sealed class Rect { public int X { get; set; } public int Y { get; set; } public int W { get; set; } public int H { get; set; } }
+
+    private static (List<PokedexAreaShape?> Overworlds, List<PokedexAreaShape?> Dungeons) LoadTable()
+    {
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("pokedex-areamap-hgss.json")
+            ?? throw new InvalidOperationException("pokedex-areamap-hgss.json embutido não encontrado.");
+        var t = JsonSerializer.Deserialize<Table>(stream, HubConfig.JsonOptions)!;
+        List<PokedexAreaShape?> Convert(List<Rect?> rects) => rects.Select((r, i) => r is null ? null : new PokedexAreaShape(i, r.X, r.Y, r.W, r.H)).ToList();
+        return (Convert(t.Overworlds), Convert(t.Dungeons));
     }
 
     public static PokedexAreaMap Load(Project project)
@@ -44,31 +54,17 @@ public sealed class PokedexAreaMap
         var game = Gen4Game.For(project);
         if (!game.IsHgss) throw new NotSupportedException(Loc.T("core.dex.hgssOnly"));
         var gfxPath = Path.Combine(game.FilesRoot, GraphicsNarcRelativePath);
-        var areasPath = Path.Combine(game.FilesRoot, PokedexAreaRepository.HgssNarcRelativePath);
-        if (!File.Exists(gfxPath) || !File.Exists(areasPath)) throw new FileNotFoundException(Loc.T("core.dex.mapMissing"), gfxPath);
-
+        if (!File.Exists(gfxPath)) throw new FileNotFoundException(Loc.T("core.dex.mapMissing"), gfxPath);
         var gfx = Narc.Read(File.ReadAllBytes(gfxPath));
-        if (gfx.Files.Count <= ScreenFile) throw new InvalidDataException(Loc.T("core.dex.mapMissing"));
+        if (gfx.Files.Count <= PaletteFile) throw new InvalidDataException(Loc.T("core.dex.mapMissing"));
         var screen = NitroScreen.Read(Lz10.DecompressIfNeeded(gfx.Files[ScreenFile]));
         var tiles = NitroTiles.Read(Lz10.DecompressIfNeeded(gfx.Files[TilesFile]));
         var palette = NitroPalette.Read(Lz10.DecompressIfNeeded(gfx.Files[PaletteFile]));
         var full = screen.Render(tiles, palette);
-        var image = full.Crop(0, 0, Math.Min(Columns * Tile, full.Width), Math.Min(Rows * Tile, full.Height));
-
-        var areas = Narc.Read(File.ReadAllBytes(areasPath));
-        var dungeons = new List<PokedexAreaShape>();
-        var d = areas.Files[0];
-        for (int i = 0; i + 4 <= d.Length; i += 4)
-            dungeons.Add(new(i / 4, d[i], d[i + 1], 1, 1, [true]));
-        var overworlds = new List<PokedexAreaShape>();
-        var o = areas.Files[1];
-        for (int i = 0; i + 36 <= o.Length; i += 36)
-        {
-            int w = Math.Max(1, (int)o[i + 2]), h = Math.Max(1, (int)o[i + 3]);
-            var mask = new bool[w * h];
-            for (int k = 0; k < mask.Length && k < 32; k++) mask[k] = o[i + 4 + k] != 0;
-            overworlds.Add(new(i / 36, o[i], o[i + 1], w, h, mask));
-        }
+        var (overworlds, dungeons) = LoadTable();
+        // largura útil: até a última coluna ocupada por alguma área (o resto do tilemap é sobra)
+        int columns = overworlds.Concat(dungeons).Where(s => s is not null).Max(s => s!.X + s.Width) + 1;
+        var image = full.Crop(0, 0, Math.Min(columns * Tile, full.Width), Math.Min(Rows * Tile, full.Height));
         return new PokedexAreaMap(image, overworlds, dungeons);
     }
 
@@ -78,11 +74,12 @@ public sealed class PokedexAreaMap
         return areaId < list.Count ? list[(int)areaId] : null;
     }
 
-    /// <summary>Área (id) sob um tile, dentro de um conjunto de ids candidatos; null se nenhuma.</summary>
+    /// <summary>Área (id) sob um tile, dentro de um conjunto de ids candidatos; null se nenhuma. A menor área ganha.</summary>
     public uint? HitTest(int tileX, int tileY, bool special, IEnumerable<uint> candidates)
     {
+        uint? best = null; int bestArea = int.MaxValue;
         foreach (var id in candidates)
-            if (Shape(id, special) is { } s && s.Covers(tileX, tileY)) return id;
-        return null;
+            if (Shape(id, special) is { } s && s.Covers(tileX, tileY) && s.Width * s.Height < bestArea) { best = id; bestArea = s.Width * s.Height; }
+        return best;
     }
 }

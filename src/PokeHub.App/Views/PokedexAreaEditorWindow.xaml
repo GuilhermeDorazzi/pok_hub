@@ -72,7 +72,7 @@
                     <Grid>
                         <Grid.LayoutTransform><ScaleTransform ScaleX="2" ScaleY="2" /></Grid.LayoutTransform>
                         <Image x:Name="MapImage" Stretch="None" RenderOptions.BitmapScalingMode="NearestNeighbor" />
-                        <Canvas x:Name="MapCanvas" Background="Transparent" MouseLeftButtonDown="MapCanvas_MouseDown" MouseMove="MapCanvas_MouseMove" />
+                        <Canvas x:Name="MapCanvas" Background="Transparent" MouseLeftButtonDown="MapCanvas_MouseDown" MouseMove="MapCanvas_MouseMove" MouseLeave="MapCanvas_MouseLeave" />
                     </Grid>
                 </ScrollViewer>
             </DockPanel>

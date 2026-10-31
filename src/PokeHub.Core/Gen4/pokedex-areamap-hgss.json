@@ -1,0 +1,662 @@
+{
+ "source": "pret/pokeheartgold: sLocationSpecs (pokegear_map.c), sOverworldMapIDs e sDungeonMapIDs (ov18_021E5C40.c)",
+ "tile": 8,
+ "overworlds": [
+  null,
+  {
+   "x": 21,
+   "y": 14,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_NEW_BARK"
+  },
+  {
+   "x": 18,
+   "y": 14,
+   "w": 3,
+   "h": 1,
+   "map": "MAP_ROUTE_29"
+  },
+  {
+   "x": 16,
+   "y": 14,
+   "w": 2,
+   "h": 1,
+   "map": "MAP_CHERRYGROVE"
+  },
+  {
+   "x": 17,
+   "y": 11,
+   "w": 1,
+   "h": 3,
+   "map": "MAP_ROUTE_30"
+  },
+  {
+   "x": 16,
+   "y": 10,
+   "w": 2,
+   "h": 1,
+   "map": "MAP_ROUTE_31"
+  },
+  {
+   "x": 14,
+   "y": 9,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_VIOLET"
+  },
+  {
+   "x": 14,
+   "y": 11,
+   "w": 1,
+   "h": 4,
+   "map": "MAP_ROUTE_32"
+  },
+  {
+   "x": 14,
+   "y": 16,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ROUTE_33"
+  },
+  {
+   "x": 11,
+   "y": 14,
+   "w": 1,
+   "h": 3,
+   "map": "MAP_ROUTE_34"
+  },
+  {
+   "x": 11,
+   "y": 10,
+   "w": 1,
+   "h": 2,
+   "map": "MAP_ROUTE_35"
+  },
+  {
+   "x": 11,
+   "y": 9,
+   "w": 3,
+   "h": 1,
+   "map": "MAP_ROUTE_36"
+  },
+  {
+   "x": 12,
+   "y": 8,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ROUTE_37"
+  },
+  {
+   "x": 11,
+   "y": 6,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_ECRUTEAK"
+  },
+  {
+   "x": 9,
+   "y": 7,
+   "w": 2,
+   "h": 1,
+   "map": "MAP_ROUTE_38"
+  },
+  {
+   "x": 8,
+   "y": 7,
+   "w": 1,
+   "h": 2,
+   "map": "MAP_ROUTE_39"
+  },
+  {
+   "x": 8,
+   "y": 9,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_OLIVINE"
+  },
+  {
+   "x": 7,
+   "y": 10,
+   "w": 1,
+   "h": 2,
+   "map": "MAP_ROUTE_40"
+  },
+  {
+   "x": 6,
+   "y": 12,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_ROUTE_41"
+  },
+  {
+   "x": 5,
+   "y": 12,
+   "w": 1,
+   "h": 2,
+   "map": "MAP_CIANWOOD"
+  },
+  {
+   "x": 13,
+   "y": 7,
+   "w": 3,
+   "h": 1,
+   "map": "MAP_ROUTE_42"
+  },
+  {
+   "x": 16,
+   "y": 5,
+   "w": 1,
+   "h": 2,
+   "map": "MAP_ROUTE_43"
+  },
+  {
+   "x": 15,
+   "y": 3,
+   "w": 3,
+   "h": 2,
+   "map": "MAP_LAKE_OF_RAGE"
+  },
+  {
+   "x": 17,
+   "y": 7,
+   "w": 3,
+   "h": 1,
+   "map": "MAP_ROUTE_44"
+  },
+  {
+   "x": 20,
+   "y": 6,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_BLACKTHORN"
+  },
+  {
+   "x": 20,
+   "y": 9,
+   "w": 1,
+   "h": 4,
+   "map": "MAP_ROUTE_45"
+  },
+  {
+   "x": 19,
+   "y": 13,
+   "w": 1,
+   "h": 2,
+   "map": "MAP_ROUTE_46"
+  },
+  {
+   "x": 2,
+   "y": 13,
+   "w": 3,
+   "h": 2,
+   "map": "MAP_ROUTE_47"
+  },
+  {
+   "x": 25,
+   "y": 10,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_MOUNT_SILVER"
+  },
+  {
+   "x": 44,
+   "y": 10,
+   "w": 1,
+   "h": 3,
+   "map": "MAP_ROUTE_12"
+  },
+  {
+   "x": 37,
+   "y": 16,
+   "w": 1,
+   "h": 2,
+   "map": "MAP_ROUTE_19"
+  },
+  {
+   "x": 33,
+   "y": 17,
+   "w": 4,
+   "h": 1,
+   "map": "MAP_ROUTE_20"
+  },
+  {
+   "x": 32,
+   "y": 13,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_PALLET"
+  },
+  {
+   "x": 31,
+   "y": 9,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_VIRIDIAN"
+  },
+  {
+   "x": 40,
+   "y": 5,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_CERULEAN"
+  },
+  {
+   "x": 40,
+   "y": 11,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_VERMILION"
+  },
+  {
+   "x": 37,
+   "y": 9,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_CELADON"
+  },
+  {
+   "x": 37,
+   "y": 14,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_FUCHSIA"
+  },
+  {
+   "x": 32,
+   "y": 17,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_CINNABAR_ISLAND"
+  },
+  {
+   "x": 2,
+   "y": 12,
+   "w": 2,
+   "h": 1,
+   "map": "MAP_ROUTE_48"
+  },
+  {
+   "x": 28,
+   "y": 11,
+   "w": 1,
+   "h": 4,
+   "map": "MAP_ROUTE_26"
+  },
+  {
+   "x": 22,
+   "y": 14,
+   "w": 6,
+   "h": 1,
+   "map": "MAP_ROUTE_27"
+  },
+  {
+   "x": 26,
+   "y": 10,
+   "w": 2,
+   "h": 1,
+   "map": "MAP_ROUTE_28"
+  },
+  {
+   "x": 32,
+   "y": 11,
+   "w": 1,
+   "h": 2,
+   "map": "MAP_ROUTE_1"
+  },
+  {
+   "x": 32,
+   "y": 8,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ROUTE_2"
+  },
+  {
+   "x": 34,
+   "y": 5,
+   "w": 2,
+   "h": 1,
+   "map": "MAP_ROUTE_3"
+  },
+  {
+   "x": 37,
+   "y": 5,
+   "w": 3,
+   "h": 1,
+   "map": "MAP_ROUTE_4"
+  },
+  {
+   "x": 40,
+   "y": 7,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ROUTE_5"
+  },
+  {
+   "x": 40,
+   "y": 10,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ROUTE_6"
+  },
+  {
+   "x": 39,
+   "y": 9,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ROUTE_7"
+  },
+  {
+   "x": 42,
+   "y": 9,
+   "w": 2,
+   "h": 1,
+   "map": "MAP_ROUTE_8"
+  },
+  {
+   "x": 42,
+   "y": 6,
+   "w": 2,
+   "h": 1,
+   "map": "MAP_ROUTE_9"
+  },
+  {
+   "x": 44,
+   "y": 8,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ROUTE_10"
+  },
+  {
+   "x": 43,
+   "y": 11,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ROUTE_11"
+  },
+  {
+   "x": 42,
+   "y": 13,
+   "w": 3,
+   "h": 1,
+   "map": "MAP_ROUTE_13"
+  },
+  {
+   "x": 42,
+   "y": 14,
+   "w": 1,
+   "h": 2,
+   "map": "MAP_ROUTE_14"
+  },
+  {
+   "x": 39,
+   "y": 15,
+   "w": 3,
+   "h": 1,
+   "map": "MAP_ROUTE_15"
+  },
+  {
+   "x": 35,
+   "y": 10,
+   "w": 2,
+   "h": 1,
+   "map": "MAP_ROUTE_16"
+  },
+  {
+   "x": 35,
+   "y": 11,
+   "w": 1,
+   "h": 4,
+   "map": "MAP_ROUTE_17"
+  },
+  {
+   "x": 35,
+   "y": 15,
+   "w": 2,
+   "h": 1,
+   "map": "MAP_ROUTE_18"
+  },
+  {
+   "x": 32,
+   "y": 14,
+   "w": 1,
+   "h": 3,
+   "map": "MAP_ROUTE_21"
+  },
+  {
+   "x": 29,
+   "y": 10,
+   "w": 2,
+   "h": 1,
+   "map": "MAP_ROUTE_22"
+  },
+  {
+   "x": 41,
+   "y": 4,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ROUTE_24"
+  },
+  {
+   "x": 41,
+   "y": 3,
+   "w": 4,
+   "h": 1,
+   "map": "MAP_ROUTE_25"
+  },
+  {
+   "x": 32,
+   "y": 8,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ROUTE_2"
+  },
+  {
+   "x": 32,
+   "y": 4,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_PEWTER"
+  },
+  {
+   "x": 12,
+   "y": 16,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_AZALEA"
+  },
+  {
+   "x": 2,
+   "y": 10,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_SAFARI_ZONE_GATE"
+  },
+  {
+   "x": 35,
+   "y": 10,
+   "w": 2,
+   "h": 1,
+   "map": "MAP_ROUTE_16"
+  },
+  null
+ ],
+ "dungeons": [
+  null,
+  {
+   "x": 15,
+   "y": 9,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_SPROUT_TOWER_1F"
+  },
+  {
+   "x": 13,
+   "y": 10,
+   "w": 1,
+   "h": 2,
+   "map": "MAP_RUINS_OF_ALPH_UNUSED"
+  },
+  {
+   "x": 14,
+   "y": 15,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_UNION_CAVE_1F"
+  },
+  {
+   "x": 13,
+   "y": 16,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_SLOWPOKE_WELL_ENTRANCE"
+  },
+  {
+   "x": 11,
+   "y": 16,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ILEX_FOREST"
+  },
+  {
+   "x": 10,
+   "y": 8,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_NATIONAL_PARK"
+  },
+  {
+   "x": 11,
+   "y": 6,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_BURNED_TOWER_1F"
+  },
+  {
+   "x": 12,
+   "y": 6,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_BELL_TOWER_1F"
+  },
+  {
+   "x": 7,
+   "y": 13,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_WHIRL_ISLANDS_1F"
+  },
+  {
+   "x": 14,
+   "y": 7,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_MOUNT_MORTAR_1F_ENTRANCE"
+  },
+  {
+   "x": 21,
+   "y": 6,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ICE_PATH_1F"
+  },
+  {
+   "x": 20,
+   "y": 6,
+   "w": 2,
+   "h": 2,
+   "map": "MAP_BLACKTHORN"
+  },
+  {
+   "x": 20,
+   "y": 8,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_DARK_CAVE_ROUTE_45_SIDE"
+  },
+  {
+   "x": 36,
+   "y": 5,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_MOUNT_MOON"
+  },
+  {
+   "x": 35,
+   "y": 17,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_SEAFOAM_ISLANDS_1F"
+  },
+  {
+   "x": 25,
+   "y": 10,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_MOUNT_SILVER"
+  },
+  {
+   "x": 2,
+   "y": 13,
+   "w": 3,
+   "h": 2,
+   "map": "MAP_ROUTE_47"
+  },
+  {
+   "x": 2,
+   "y": 13,
+   "w": 3,
+   "h": 2,
+   "map": "MAP_ROUTE_47"
+  },
+  {
+   "x": 24,
+   "y": 16,
+   "w": 3,
+   "h": 3,
+   "map": "MAP_SS_AQUA_1F"
+  },
+  {
+   "x": 44,
+   "y": 6,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_ROCK_TUNNEL_1F"
+  },
+  {
+   "x": 28,
+   "y": 9,
+   "w": 1,
+   "h": 2,
+   "map": "MAP_VICTORY_ROAD_1F"
+  },
+  {
+   "x": 23,
+   "y": 14,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_TOHJO_FALLS"
+  },
+  {
+   "x": 42,
+   "y": 11,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_DIGLETT_CAVE"
+  },
+  {
+   "x": 32,
+   "y": 7,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_VIRIDIAN_FOREST"
+  },
+  {
+   "x": 40,
+   "y": 5,
+   "w": 1,
+   "h": 1,
+   "map": "MAP_CERULEAN_CAVE_1F"
+  }
+ ]
+}
