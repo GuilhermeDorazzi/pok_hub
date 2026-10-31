@@ -31,4 +31,7 @@ public partial class EncounterEditorWindow : Window
             value is EncounterEntry e ? vm.LabelOf(e) : "";
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
     }
+
+    /// <summary>Janela aberta com Show(): IsCancel não fecha, então o botão fecha explicitamente (Closing confirma se houver edição).</summary>
+    private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }

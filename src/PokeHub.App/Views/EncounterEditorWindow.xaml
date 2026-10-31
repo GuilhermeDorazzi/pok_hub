@@ -83,7 +83,7 @@
                 <TextBlock Text="{Binding Status}" Foreground="Gray" VerticalAlignment="Center" />
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="{loc:T common.save}" Command="{Binding SaveCommand}" FontWeight="Bold" Padding="16,6" />
-                    <Button Content="{loc:T common.close}" IsCancel="True" Padding="16,6" />
+                    <Button Content="{loc:T common.close}" Click="Close_Click" Padding="16,6" />
                 </StackPanel>
             </DockPanel>
             <TextBlock DockPanel.Dock="Top" Text="{Binding SelectedLabel}" FontWeight="Bold" FontSize="15" Margin="0,0,0,8" TextWrapping="Wrap" />

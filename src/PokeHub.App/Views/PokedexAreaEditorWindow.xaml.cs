@@ -109,4 +109,7 @@ public partial class PokedexAreaEditorWindow : Window
             MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) e.Cancel = true;
     }
+
+    /// <summary>Janela aberta com Show(): IsCancel não fecha, então o botão fecha explicitamente (Closing confirma se houver edição).</summary>
+    private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }
