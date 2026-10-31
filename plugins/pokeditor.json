@@ -2,17 +2,28 @@
   "id": "pokeditor",
   "name": "PokEditor",
   "description": "Stats, learnsets, evoluções, moves e sprites de Pokémon (Gen 4).",
+  "purpose": "Editor de dados de Pokémon: stats base, golpes aprendidos, evoluções e sprites. Complementa o DSPRE nessa parte. Precisa de Java, que o hub instala junto.",
+  "cost": "14 MB da ferramenta + 46 MB do Java (Temurin 21) em runtimes/, uns 2 minutos.",
   "homepage": "https://github.com/turtleisaac/PokEditor",
   "license": "GPL-3.0",
-  "contexts": ["pokemon"],
-  "generations": [4],
+  "contexts": [
+    "pokemon"
+  ],
+  "generations": [
+    4
+  ],
   "scope": "hub",
   "source": {
     "type": "gitHubRelease",
     "repo": "turtleisaac/PokEditor",
     "assetPattern": "^PokEditor-.*\\.jar$"
   },
-  "launch": { "runtime": "java", "args": [] },
-  "requires": ["java21"],
+  "launch": {
+    "runtime": "java",
+    "args": []
+  },
+  "requires": [
+    "java21"
+  ],
   "notes": "Precisa de Java 20+. O hub instala o Temurin JRE 21 em runtimes/ junto com a ferramenta."
 }

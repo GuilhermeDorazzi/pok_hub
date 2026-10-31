@@ -85,10 +85,17 @@ public sealed partial class ToolItemViewModel : ObservableObject
     {
         var project = _currentProject();
         if (Installed is null || project is null) return;
+        bool firstBuild = !Directory.Exists(Path.Combine(Installed.ExecutablePath, "build"));
+        if (firstBuild && Manifest.Build?.FirstBuildNotice is { } notice)
+        {
+            var r = MessageBox.Show(notice + "\n\nIniciar o primeiro build agora?", $"Primeiro build: {Manifest.Name}",
+                MessageBoxButton.YesNo, MessageBoxImage.Information);
+            if (r != MessageBoxResult.Yes) { _log($"{Manifest.Name}: build cancelado."); return; }
+        }
         try
         {
             IsBusy = true;
-            StatusText = "Compilando...";
+            StatusText = firstBuild ? "Compilando (primeiro build, demora)..." : "Compilando...";
             var rom = await _builds.BuildAsync(Manifest, Installed, project, new Progress<string>(_log));
             _log($"{Manifest.Name}: ROM copiada para {rom}. Use 'Abrir' no melonDS ou 'Empacotar e rodar' para testar.");
         }
@@ -105,6 +112,18 @@ public sealed partial class ToolItemViewModel : ObservableObject
     }
     public string? Notes => Manifest.Notes;
     public bool HasNotes => !string.IsNullOrWhiteSpace(Manifest.Notes);
+    public string? Purpose => Manifest.Purpose;
+    public string? Cost => Manifest.Cost;
+    public bool HasPurpose => !string.IsNullOrWhiteSpace(Manifest.Purpose);
+    public bool HasCost => !string.IsNullOrWhiteSpace(Manifest.Cost);
+
+    /// <summary>Instalações pesadas pedem confirmação mostrando o propósito e o custo.</summary>
+    private bool ConfirmHeavyInstall()
+    {
+        if (!Manifest.ConfirmInstall || IsInstalled) return true;
+        var text = $"{Manifest.Name}\n\n{Manifest.Purpose}\n\nCusto: {Manifest.Cost}\n\nInstalar agora?";
+        return MessageBox.Show(text, "Antes de instalar", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes;
+    }
     public bool IsInstalled => Installed is not null;
     public bool IsBuiltin => Manifest.Source.Type == SourceType.Builtin;
     public bool IsRuntime => Manifest.Source.Type == SourceType.Runtime;
@@ -149,6 +168,7 @@ public sealed partial class ToolItemViewModel : ObservableObject
     {
         var project = _currentProject();
         if (!ConfirmDependencies("instalar")) return;
+        if (!ConfirmHeavyInstall()) { _log($"{Manifest.Name}: instalação cancelada."); return; }
         try
         {
             IsBusy = true;

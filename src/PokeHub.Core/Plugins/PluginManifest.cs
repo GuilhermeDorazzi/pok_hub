@@ -29,6 +29,12 @@ public sealed class PluginManifest
     public required string Id { get; set; }
     public required string Name { get; set; }
     public string Description { get; set; } = "";
+    /// <summary>Para que serve, quem precisa e o que acontece ao instalar. Mostrado no card em "Para que serve?".</summary>
+    public string? Purpose { get; set; }
+    /// <summary>Custo em disco, download e tempo (ex.: "40 MB de download, 2,3 GB em disco, uns 5 minutos").</summary>
+    public string? Cost { get; set; }
+    /// <summary>true = pedir confirmação antes de instalar, mostrando o custo (instalações pesadas).</summary>
+    public bool ConfirmInstall { get; set; }
     public string? Homepage { get; set; }
     public string? License { get; set; }
     public List<ToolContext> Contexts { get; set; } = [];
@@ -75,6 +81,8 @@ public sealed class BuildSpec
     public string Command { get; set; } = "make";
     /// <summary>Caminho relativo da ROM gerada (ex.: "build/pokeplatinum.us.nds").</summary>
     public required string Output { get; set; }
+    /// <summary>Aviso mostrado antes do primeiro build (quando ainda não existe a pasta de build).</summary>
+    public string? FirstBuildNotice { get; set; }
 }
 
 public sealed class LaunchSpec

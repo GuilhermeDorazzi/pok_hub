@@ -30,7 +30,7 @@ public class Msys2Tests
     }
 
     [Fact]
-    public void Hub_msys2_is_detected_first_when_present()
+    public async Task Hub_msys2_is_detected_first_when_present()
     {
         var root = Path.Combine(Path.GetTempPath(), $"pokehub-msys-{Guid.NewGuid():N}");
         try
@@ -38,7 +38,7 @@ public class Msys2Tests
             var bash = Path.Combine(root, "runtimes", "msys2", "msys64", "usr", "bin", "bash.exe");
             Directory.CreateDirectory(Path.GetDirectoryName(bash)!);
             File.WriteAllBytes(bash, []);
-            var shells = UnixShell.DetectAsync(Path.Combine(root, "runtimes")).Result;
+            var shells = await UnixShell.DetectAsync(Path.Combine(root, "runtimes"));
             Assert.Equal(UnixShellKind.Msys2, shells[0].Kind);
             Assert.Equal("MSYS2 do hub", shells[0].Description);
         }

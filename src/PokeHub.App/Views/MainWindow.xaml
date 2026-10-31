@@ -109,6 +109,16 @@
                                                     </Run.Style>
                                                 </Run>
                                             </TextBlock>
+                                            <Expander Header="Para que serve?" Margin="0,6,0,0" FontSize="12"
+                                                      Visibility="{Binding HasPurpose, Converter={StaticResource BoolToVis}}">
+                                                <StackPanel Margin="12,4,0,0">
+                                                    <TextBlock Text="{Binding Purpose}" TextWrapping="Wrap" />
+                                                    <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Foreground="#555"
+                                                               Visibility="{Binding HasCost, Converter={StaticResource BoolToVis}}">
+                                                        <Run Text="Custo: " FontWeight="SemiBold" /><Run Text="{Binding Cost, Mode=OneWay}" />
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Expander>
                                             <TextBlock Text="{Binding Notes}" Foreground="#8A6D00" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
                                                        Visibility="{Binding HasNotes, Converter={StaticResource BoolToVis}}" />
                                         </StackPanel>

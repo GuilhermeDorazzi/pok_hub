@@ -2,17 +2,30 @@
   "id": "pokeheartgold",
   "name": "pokeheartgold (decomp)",
   "description": "Decompilação de Pokémon HeartGold/SoulSilver pela pret. Clonada dentro do projeto em decomp/pokeheartgold. O build baixa sozinho o compilador (metroskrew) e o meson.",
+  "purpose": "Decompilação: o código-fonte do HeartGold/SoulSilver reconstruído pela comunidade pret. Serve para alterar o CÓDIGO do jogo, o que nenhum editor binário faz. Para usuário avançado; quem só quer editar dados não precisa disto.",
+  "cost": "Clone de ~1 GB. O primeiro build leva de 20 a 50 minutos no Windows; os seguintes, segundos.",
+  "confirmInstall": true,
   "homepage": "https://github.com/pret/pokeheartgold",
   "license": "sem licença",
-  "contexts": ["decomp"],
-  "generations": [4],
+  "contexts": [
+    "decomp"
+  ],
+  "generations": [
+    4
+  ],
   "scope": "project",
   "source": {
     "type": "gitClone",
     "repo": "pret/pokeheartgold",
     "recursive": true
   },
-  "build": { "command": "make rom", "output": "build/pokeheartgold.us.nds" },
-  "requires": ["unix-shell"],
+  "build": {
+    "command": "make rom",
+    "output": "build/pokeheartgold.us.nds",
+    "firstBuildNotice": "Este é o primeiro build desta decomp. Ele reconstrói o jogo inteiro a partir do código-fonte: milhares de passos, de 20 a 50 minutos no Windows dependendo da máquina. Os builds seguintes refazem só o que mudou e levam segundos.\n\nA decomp serve para alterar o código do jogo (mecânicas, itens novos, IA). Se você só quer editar dados, use o DSPRE e os editores do hub e não precisa disto.\n\nO hub continua usável durante o build; acompanhe pelo log."
+  },
+  "requires": [
+    "unix-shell"
+  ],
   "notes": "Exige MSYS2 ou WSL2 com as dependências do INSTALL.md. O primeiro build demora."
 }

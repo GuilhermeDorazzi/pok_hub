@@ -2,16 +2,24 @@
   "id": "nitropaint",
   "name": "NitroPaint",
   "description": "Editor de gráficos DS: paletas, tiles, backgrounds, sprites (OBJ), animações, fontes e texturas.",
+  "purpose": "Editor de gráficos do DS: sprites, tiles, paletas, fundos e texturas. Use quando quiser trocar a aparência de algo, não os dados.",
+  "cost": "Menos de 1 MB, instantâneo.",
   "homepage": "https://github.com/Garhoogin/NitroPaint",
   "license": "BSD-2-Clause",
-  "contexts": ["graphics"],
-  "generations": [4],
+  "contexts": [
+    "graphics"
+  ],
+  "generations": [
+    4
+  ],
   "scope": "hub",
   "source": {
     "type": "gitHubRelease",
     "repo": "Garhoogin/NitroPaint",
     "assetPattern": "^NitroPaint\\.exe$"
   },
-  "launch": { "args": [] },
+  "launch": {
+    "args": []
+  },
   "notes": "Código BSD-2: candidato a ser absorvido pelo hub. GEN5: formatos iguais, adicionar 5 em generations."
 }

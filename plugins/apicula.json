@@ -2,6 +2,8 @@
   "id": "apicula",
   "name": "apicula",
   "description": "Converte modelos NSBMD (mapas, personagens) para glTF/COLLADA para editar no Blender.",
+  "purpose": "Converte modelos 3D do DS (NSBMD: mapas, personagens) para glTF ou COLLADA, para editar no Blender. Só para quem vai mexer em modelos 3D.",
+  "cost": "Menos de 1 MB, instantâneo. Pode exigir o Visual C++ Redistributable.",
   "homepage": "https://github.com/scurest/apicula",
   "license": "0BSD",
   "contexts": [

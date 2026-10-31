@@ -2,10 +2,16 @@
   "id": "melonds",
   "name": "melonDS",
   "description": "Emulador de Nintendo DS. Abre a última build do projeto (ou a ROM base).",
+  "purpose": "Emulador para testar a ROM gerada pelo hub sem sair do computador. 'Empacotar e rodar' abre a build mais recente nele.",
+  "cost": "18 MB de download, menos de 1 minuto.",
   "homepage": "https://melonds.kuribo64.net/",
   "license": "GPL-3.0",
-  "contexts": ["emulator"],
-  "generations": [4],
+  "contexts": [
+    "emulator"
+  ],
+  "generations": [
+    4
+  ],
   "scope": "hub",
   "source": {
     "type": "gitHubRelease",
@@ -13,6 +19,10 @@
     "assetPattern": "^melonDS-.*-windows-x86_64\\.zip$",
     "executable": "melonDS.exe"
   },
-  "launch": { "args": ["${rom}"] },
+  "launch": {
+    "args": [
+      "${rom}"
+    ]
+  },
   "notes": "CLI: melonDS.exe <rom.nds> [-f] [-b auto|always|never]. GEN5: adicionar 5 em generations."
 }

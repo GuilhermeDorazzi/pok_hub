@@ -2,10 +2,21 @@
   "id": "dspre",
   "name": "DSPRE Reloaded",
   "description": "Editor completo de Gen 4: mapas, eventos, scripts, treinadores, encontros, texto e dados de Pokémon.",
+  "purpose": "Editor principal de Gen 4. Serve para mexer nos dados do jogo: mapas, eventos, scripts, treinadores, encontros, textos e Pokémon. É a ferramenta que a maior parte dos hacks usa; se você vai editar o jogo, comece por ela.",
+  "cost": "33 MB de download, uns 150 MB em disco, 1 minuto.",
   "homepage": "https://github.com/DS-Pokemon-Rom-Editor/DSPRE",
   "license": "AGPL-3.0",
-  "contexts": ["maps", "events", "scripts", "trainers", "text", "pokemon"],
-  "generations": [4],
+  "contexts": [
+    "maps",
+    "events",
+    "scripts",
+    "trainers",
+    "text",
+    "pokemon"
+  ],
+  "generations": [
+    4
+  ],
   "scope": "hub",
   "source": {
     "type": "gitHubRelease",
@@ -13,7 +24,12 @@
     "assetPattern": "^DSPRE-win-Portable\\.zip$",
     "executable": "DSPRE.exe"
   },
-  "launch": { "args": [], "hook": "dspre-open-workspace" },
-  "requires": ["dotnet-framework-4.8"],
+  "launch": {
+    "args": [],
+    "hook": "dspre-open-workspace"
+  },
+  "requires": [
+    "dotnet-framework-4.8"
+  ],
   "notes": "Ao abrir, o hub aponta o DSPRE para o workspace/ do projeto (formato ds-rom); confirme a reabertura na janela do DSPRE. Salve no DSPRE antes de empacotar."
 }
