@@ -30,20 +30,20 @@ public sealed class WorkspaceService(RuntimeManager runtimes)
     public async Task<bool> ExtractAsync(Project p, IProgress<string> log, bool overwrite = false, CancellationToken ct = default)
     {
         if (IsExtracted(p) && !overwrite)
-            throw new InvalidOperationException("workspace/ já contém uma ROM extraída. Use sobrescrever para extrair de novo.");
+            throw new InvalidOperationException(Loc.T("core.ws.alreadyExtracted"));
 
         var dsrom = await EnsureDsRomAsync(log, ct);
         if (dsrom is not null)
         {
-            log.Report("Extraindo com ds-rom (formato nativo do DSPRE)...");
+            log.Report(Loc.T("core.ws.extractingDsrom"));
             var meta = await DsRomTool.ExtractAsync(dsrom, p.Paths.BaseRom, p.Paths.Workspace, log, ct);
-            log.Report($"Extração concluída em {p.Paths.Workspace} ({meta.GameCode}, ds-rom)");
+            log.Report(Loc.T("core.ws.extractedDsrom", p.Paths.Workspace, meta.GameCode));
         }
         else
         {
-            log.Report("ds-rom indisponível: extraindo no layout ndstool (o DSPRE vai oferecer converter).");
+            log.Report(Loc.T("core.ws.dsromUnavailable"));
             await Task.Run(() => NdsExtractor.Extract(p.Paths.BaseRom, p.Paths.Workspace, log, overwrite: true), ct);
-            log.Report($"Extração concluída em {p.Paths.Workspace} (ndstool)");
+            log.Report(Loc.T("core.ws.extractedNdstool", p.Paths.Workspace));
         }
         return true;
     }
@@ -56,15 +56,15 @@ public sealed class WorkspaceService(RuntimeManager runtimes)
         switch (FormatOf(p))
         {
             case WorkspaceFormat.DsRom:
-                var dsrom = await EnsureDsRomAsync(log, ct) ?? throw new InvalidOperationException("ds-rom não instalado e não foi possível baixar.");
+                var dsrom = await EnsureDsRomAsync(log, ct) ?? throw new InvalidOperationException(Loc.T("core.ws.dsromInstallFailed"));
                 await DsRomTool.BuildAsync(dsrom, p.Paths.Workspace, output, log, ct);
-                log.Report($"ROM gerada: {output} ({new FileInfo(output).Length / 1024 / 1024} MB)");
+                log.Report(Loc.T("core.ws.romGenerated", output, new FileInfo(output).Length / 1024 / 1024));
                 break;
             case WorkspaceFormat.Ndstool:
                 await Task.Run(() => NdsPacker.Pack(p.Paths.Workspace, output, log), ct);
                 break;
             default:
-                throw new InvalidOperationException("workspace/ não contém uma ROM extraída.");
+                throw new InvalidOperationException(Loc.T("core.ws.notExtracted"));
         }
         return output;
     }
@@ -78,7 +78,7 @@ public sealed class WorkspaceService(RuntimeManager runtimes)
         }
         catch (Exception ex)
         {
-            log.Report($"Não foi possível instalar o ds-rom: {ex.Message}");
+            log.Report(Loc.T("core.ws.dsromInstallError", ex.Message));
             return null;
         }
     }

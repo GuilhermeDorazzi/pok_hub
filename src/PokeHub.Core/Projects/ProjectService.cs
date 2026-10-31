@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using PokeHub.Core.Hub;
 using PokeHub.Core.Rom;
 
@@ -31,13 +32,13 @@ public sealed class ProjectService(HubPaths hub)
     public Project Create(string name, string romPath)
     {
         if (string.IsNullOrWhiteSpace(name) || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
-            throw new ArgumentException("Nome de projeto inválido.", nameof(name));
+            throw new ArgumentException(Loc.T("core.project.invalidName"), nameof(name));
         var paths = new ProjectPaths(hub.ProjectDir(name));
-        if (Directory.Exists(paths.Dir)) throw new InvalidOperationException($"Já existe um projeto chamado '{name}'.");
+        if (Directory.Exists(paths.Dir)) throw new InvalidOperationException(Loc.T("core.project.exists", name));
 
         var header = NdsRomHeader.Read(romPath);
         if (header.Game == BaseGame.Unknown)
-            throw new InvalidDataException($"ROM não reconhecida (game code '{header.GameCode}'). Suportado: Gen 4."); // GEN5: ajustar mensagem
+            throw new InvalidDataException(Loc.T("core.project.unknownRom", header.GameCode)); // GEN5: ajustar mensagem
 
         Directory.CreateDirectory(paths.Dir);
         Directory.CreateDirectory(paths.Workspace);

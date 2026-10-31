@@ -1,3 +1,5 @@
+using PokeHub.Core.Localization;
+
 namespace PokeHub.Core.Rom;
 
 /// <summary>
@@ -13,11 +15,11 @@ public static class NdsPacker
     public static void Pack(string workspaceDir, string outputRom, IProgress<string>? log = null)
     {
         var layout = new WorkspaceLayout(workspaceDir);
-        if (!layout.IsExtracted) throw new InvalidOperationException("workspace/ não contém uma ROM extraída.");
+        if (!layout.IsExtracted) throw new InvalidOperationException(Loc.T("core.ws.notExtracted"));
         var manifest = WorkspaceManifest.Load(layout.ManifestFile);
 
         var headerFile = File.ReadAllBytes(layout.HeaderBin);
-        if (headerFile.Length < NdsHeader.Size) throw new InvalidDataException("header.bin inválido.");
+        if (headerFile.Length < NdsHeader.Size) throw new InvalidDataException(Loc.T("core.nds.headerInvalid"));
         // região 0..0x4000 inteira (header + reservado), zeros se o header.bin só tem os 0x200 bytes do ndstool
         var headerFull = new byte[NdsHeader.FullHeaderSize];
         headerFile.AsSpan(0, Math.Min(headerFile.Length, NdsHeader.FullHeaderSize)).CopyTo(headerFull);
@@ -39,12 +41,12 @@ public static class NdsPacker
         if (manifest is not null && File.Exists(layout.FntBin) && FntEntry.TreeEquals(tree, manifest.Tree))
         {
             fnt = File.ReadAllBytes(layout.FntBin);
-            log?.Report("Árvore de data/ inalterada: FNT original reaproveitada.");
+            log?.Report(Loc.T("core.nds.fntReused"));
         }
         else
         {
             fnt = NdsFileSystem.Build(tree, firstFileId);
-            log?.Report("Árvore de data/ alterada: FNT reconstruída (ids de arquivos novos no fim de cada pasta).");
+            log?.Report(Loc.T("core.nds.fntRebuilt"));
         }
         var (_, files, _) = NdsFileSystem.Parse(fnt);
 
@@ -109,7 +111,7 @@ public static class NdsPacker
             var data = File.ReadAllBytes(path);
             uint start = Place(data);
             fat[f.FileId] = (start, start + (uint)data.Length);
-            if (++n % 500 == 0) log?.Report($"  {n}/{files.Count} arquivos");
+            if (++n % 500 == 0) log?.Report(Loc.T("core.nds.progress", n, files.Count));
         }
 
         uint total = (uint)rom.Position;
@@ -133,7 +135,7 @@ public static class NdsPacker
         {
             secureCrc = hasSecureArea ? Crc16.Compute(buffer.AsSpan(NdsHeader.SecureAreaStart, NdsHeader.SecureAreaLength)) : (ushort)0xFFFF;
             if (hasSecureArea && manifest?.SecureAreaSha1 is not null)
-                log?.Report("Aviso: a área segura do arm9 (primeiros 0x4000 bytes) foi alterada; CRC recalculado.");
+                log?.Report(Loc.T("core.nds.secureChanged"));
         }
         BitConverter.GetBytes(secureCrc).CopyTo(header, NdsHeader.SecureAreaCrc);
         BitConverter.GetBytes(Crc16.Compute(header.AsSpan(0, NdsHeader.HeaderCrc))).CopyTo(header, NdsHeader.HeaderCrc);
@@ -152,7 +154,7 @@ public static class NdsPacker
             long remaining = chipSize - total;
             while (remaining > 0) { int chunk = (int)Math.Min(remaining, fill.Length); fs.Write(fill, 0, chunk); remaining -= chunk; }
         }
-        log?.Report($"ROM gerada: {outputRom} ({total / 1024 / 1024} MB usados de {chipSize / 1024 / 1024} MB, {files.Count} arquivos, {overlayEntries.Count} overlays)");
+        log?.Report(Loc.T("core.nds.romGenerated", outputRom, total / 1024 / 1024, chipSize / 1024 / 1024, files.Count, overlayEntries.Count));
 
         void WriteOverlays(byte[] table)
         {
@@ -161,7 +163,7 @@ public static class NdsPacker
                 uint overlayId = BitConverter.ToUInt32(table, i);
                 uint fileId = BitConverter.ToUInt32(table, i + NdsHeader.OverlayFileIdField);
                 var file = layout.OverlayFile(overlayId);
-                if (!File.Exists(file)) throw new FileNotFoundException($"Overlay {overlayId} referenciado na tabela mas ausente.", file);
+                if (!File.Exists(file)) throw new FileNotFoundException(Loc.T("core.nds.overlayMissing", overlayId), file);
                 var data = File.ReadAllBytes(file);
                 uint start = Place(data);
                 fat[fileId] = (start, start + (uint)data.Length);

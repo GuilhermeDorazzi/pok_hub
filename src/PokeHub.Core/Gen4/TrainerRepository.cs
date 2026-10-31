@@ -48,7 +48,7 @@ public sealed class TrainerRepository
     {
         var game = Gen4Game.For(project);
         foreach (var f in new[] { game.TrainerDataPath, game.TrainerPartyPath, game.TextArchivePath })
-            if (!File.Exists(f)) throw new FileNotFoundException("Arquivo do jogo não encontrado no workspace.", f);
+            if (!File.Exists(f)) throw new FileNotFoundException(Loc.T("core.trainer.fileMissing"), f);
         return new TrainerRepository(game,
             Narc.Read(File.ReadAllBytes(game.TrainerDataPath)),
             Narc.Read(File.ReadAllBytes(game.TrainerPartyPath)),

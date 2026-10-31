@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using System.Text.Json;
 using PokeHub.Core.Hub;
 using PokeHub.Core.Processes;
@@ -33,8 +34,8 @@ public static class DsRomTool
         Directory.CreateDirectory(Path.GetDirectoryName(workspace)!);
 
         var code = await ProcessRunner.RunAsync(dsrom, ["extract", "-r", romPath, "-o", workspace], null, new Progress<string>(l => log.Report(TrimLog(l))), ct);
-        if (code != 0) throw new InvalidOperationException($"dsrom extract falhou (código {code}). Veja o log.");
-        if (!IsDsRomWorkspace(workspace)) throw new InvalidDataException("dsrom extract terminou sem gerar config.yaml.");
+        if (code != 0) throw new InvalidOperationException(Loc.T("core.dsrom.extractFailed", code));
+        if (!IsDsRomWorkspace(workspace)) throw new InvalidDataException(Loc.T("core.dsrom.noConfig"));
 
         var header = NdsRomHeader.Read(romPath);
         var rom = File.ReadAllBytes(romPath);
@@ -53,11 +54,11 @@ public static class DsRomTool
     public static async Task BuildAsync(string dsrom, string workspace, string outputRom, IProgress<string> log, CancellationToken ct = default)
     {
         var config = Path.Combine(workspace, ConfigFileName);
-        if (!File.Exists(config)) throw new FileNotFoundException("config.yaml não encontrado: o workspace não está no formato ds-rom.", config);
+        if (!File.Exists(config)) throw new FileNotFoundException(Loc.T("core.dsrom.configMissing"), config);
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputRom))!);
 
         var code = await ProcessRunner.RunAsync(dsrom, ["build", "-c", config, "-o", outputRom], null, new Progress<string>(l => log.Report(TrimLog(l))), ct);
-        if (code != 0 || !File.Exists(outputRom)) throw new InvalidOperationException($"dsrom build falhou (código {code}). Veja o log.");
+        if (code != 0 || !File.Exists(outputRom)) throw new InvalidOperationException(Loc.T("core.dsrom.buildFailed", code));
 
         RestoreSecureAreaCrc(outputRom, LoadMeta(workspace), log);
     }
@@ -77,7 +78,7 @@ public static class DsRomTool
         fs.ReadExactly(secure);
         if (NdsExtractor.Sha1Hex(secure) != meta.SecureAreaSha1)
         {
-            log?.Report("Aviso: a área segura do arm9 mudou; CRC da área segura ficou como o ds-rom gerou.");
+            log?.Report(Loc.T("core.dsrom.secureChanged"));
             return;
         }
 

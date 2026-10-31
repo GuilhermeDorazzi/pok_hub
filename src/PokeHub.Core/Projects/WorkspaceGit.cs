@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using PokeHub.Core.Processes;
 using PokeHub.Core.Runtimes;
 
@@ -24,9 +25,9 @@ public sealed class WorkspaceGit(RuntimeManager runtimes)
         {
             await Run(git, ["init", "-q", "-b", "main"], p, log, ct);
             await File.WriteAllTextAsync(Path.Combine(p.Paths.Workspace, ".gitattributes"), "* binary\n", ct);
-            log.Report("Repositório git criado em workspace/");
+            log.Report(Loc.T("core.git.repoCreated"));
         }
-        await SnapshotAsync(p, "Extração da ROM base", log, ct);
+        await SnapshotAsync(p, Loc.T("core.git.initialSnapshot"), log, ct);
     }
 
     /// <summary>Commita tudo o que mudou. Devolve false se não havia mudanças.</summary>
@@ -36,10 +37,10 @@ public sealed class WorkspaceGit(RuntimeManager runtimes)
         if (!IsRepo(p)) return false;
         await Run(git, ["add", "-A"], p, null, ct);
         var (code, _) = await ProcessRunner.CaptureAsync(git, [.. Identity, "-C", p.Paths.Workspace, "diff", "--cached", "--quiet"], timeoutMs: 120000);
-        if (code == 0) { log.Report("Nenhuma alteração no workspace desde a última versão."); return false; }
+        if (code == 0) { log.Report(Loc.T("core.git.noChanges")); return false; }
         var rc = await Run(git, ["commit", "-q", "-m", $"{message} ({DateTime.Now:yyyy-MM-dd HH:mm})"], p, null, ct);
-        if (rc != 0) throw new InvalidOperationException("git commit falhou. Veja o log.");
-        log.Report($"Versão salva: {message}");
+        if (rc != 0) throw new InvalidOperationException(Loc.T("core.git.commitFailed"));
+        log.Report(Loc.T("core.git.saved", message));
         return true;
     }
 
@@ -61,15 +62,15 @@ public sealed class WorkspaceGit(RuntimeManager runtimes)
     public async Task RestoreAsync(Project p, string hash, IProgress<string> log, CancellationToken ct = default)
     {
         var git = RequireGit();
-        await SnapshotAsync(p, "Antes de restaurar " + hash, log, ct);
+        await SnapshotAsync(p, Loc.T("core.git.beforeRestore", hash), log, ct);
         var rc = await Run(git, ["restore", "--source", hash, "--worktree", "--staged", "--", "."], p, log, ct);
-        if (rc != 0) throw new InvalidOperationException("git restore falhou.");
+        if (rc != 0) throw new InvalidOperationException(Loc.T("core.git.restoreFailed"));
         await Run(git, ["clean", "-fdq"], p, null, ct);
-        await SnapshotAsync(p, "Restaurado de " + hash, log, ct);
+        await SnapshotAsync(p, Loc.T("core.git.restoredFrom", hash), log, ct);
     }
 
     private string RequireGit() => runtimes.ResolveGit()
-        ?? throw new InvalidOperationException("Git não encontrado. Instale pelo hub (Instalar Git) ou pelo Git for Windows.");
+        ?? throw new InvalidOperationException(Loc.T("core.git.missing"));
 
     private static Task<int> Run(string git, string[] args, Project p, IProgress<string>? log, CancellationToken ct) =>
         ProcessRunner.RunAsync(git, [.. Identity, "-C", p.Paths.Workspace, .. args], p.Paths.Workspace, log, ct);

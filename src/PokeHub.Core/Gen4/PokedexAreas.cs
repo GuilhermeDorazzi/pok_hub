@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using PokeHub.Core.Projects;
 using PokeHub.Core.Rom;
 
@@ -43,11 +44,11 @@ public sealed class PokedexAreaRepository
     public static PokedexAreaRepository Load(Project project)
     {
         var game = Gen4Game.For(project);
-        if (!Supports(game)) throw new NotSupportedException("O editor de áreas da Pokédex só cobre HeartGold/SoulSilver por enquanto.");
+        if (!Supports(game)) throw new NotSupportedException(Loc.T("core.dex.hgssOnly"));
         var narcPath = Path.Combine(game.FilesRoot, HgssNarcRelativePath);
-        if (!File.Exists(narcPath)) throw new FileNotFoundException("NARC das áreas da Pokédex não encontrado.", narcPath);
+        if (!File.Exists(narcPath)) throw new FileNotFoundException(Loc.T("core.dex.narcMissing"), narcPath);
         var narc = Narc.Read(File.ReadAllBytes(narcPath));
-        if (narc.Files.Count < 3467 + SpeciesCount) throw new InvalidDataException($"a/1/3/3 tem {narc.Files.Count} arquivos; esperado ao menos {3467 + SpeciesCount}.");
+        if (narc.Files.Count < 3467 + SpeciesCount) throw new InvalidDataException(Loc.T("core.dex.narcShort", narc.Files.Count, 3467 + SpeciesCount));
 
         var text = Narc.Read(File.ReadAllBytes(game.TextArchivePath));
         var species = Gen4TextArchive.Read(text.Files[game.SpeciesBank]).Messages.Select(m => Gen4TextArchive.Decode(m)).ToList();

@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using PokeHub.Core.Hub;
 using PokeHub.Core.Plugins;
 using PokeHub.Core.Processes;
@@ -25,7 +26,7 @@ public sealed class DecompBuildService(HubConfig config, HubPaths hub)
     /// </summary>
     public async Task PrepareMsys2ToolchainAsync(UnixShell shell, IReadOnlyList<string> packages, IProgress<string> log, CancellationToken ct = default, string? libpngVersion = null)
     {
-        if (shell.Kind != UnixShellKind.Msys2) throw new InvalidOperationException("Só o MSYS2 é preparado pelo hub.");
+        if (shell.Kind != UnixShellKind.Msys2) throw new InvalidOperationException(Loc.T("core.msys.onlyMsys"));
         var home = shell.Location;
         async Task<int> Run(string command, bool tolerate = false, bool firstStart = false)
         {
@@ -33,28 +34,28 @@ public sealed class DecompBuildService(HubConfig config, HubPaths hub)
             // o /etc/profile só executa /etc/post-install/*.post (devices, home, chaveiro do pacman) com esta variável, como o msys2_shell.cmd faz
             if (firstStart) env["MAYBE_FIRST_START"] = "true";
             var code = await ProcessRunner.RunAsync(file, args, home, log, ct, env);
-            if (code != 0 && !tolerate) throw new InvalidOperationException($"Comando no MSYS2 falhou (código {code}): {command}");
+            if (code != 0 && !tolerate) throw new InvalidOperationException(Loc.T("core.msys.cmdFailed", code, command));
             return code;
         }
-        log.Report("MSYS2: inicializando o ambiente (primeira execução)...");
+        log.Report(Loc.T("core.msys.init"));
         await Run("true", tolerate: true, firstStart: true);
         // o profile só roda os scripts de /etc/post-install em shell interativo; sem eles o chaveiro do pacman não existe
-        log.Report("MSYS2: inicializando o chaveiro do pacman...");
+        log.Report(Loc.T("core.msys.keyring"));
         await Run("[ -d /etc/pacman.d/gnupg ] || { export GNUPGHOME=\"$(pacman-conf.exe gpgdir)\"; pacman-key --init && pacman-key --populate msys2; gpgconf --kill all || true; }");
-        log.Report("MSYS2: atualizando pacotes base (1/2)...");
+        log.Report(Loc.T("core.msys.update1"));
         await Run("pacman --noconfirm -Syuu", tolerate: true);
-        log.Report("MSYS2: atualizando pacotes (2/2)...");
+        log.Report(Loc.T("core.msys.update2"));
         await Run("pacman --noconfirm -Syuu");
         if (packages.Count > 0)
         {
-            log.Report($"MSYS2: instalando {packages.Count} pacotes da toolchain (pode levar vários minutos)...");
+            log.Report(Loc.T("core.msys.packages", packages.Count));
             await Run("pacman --noconfirm -S --needed " + string.Join(' ', packages));
         }
         if (libpngVersion is not null)
         {
             // O repositório msys não tem libpng, e a do mingw64 não é compatível com programas do runtime msys
             // (nitrogfx usa png_init_io com FILE* do msys e cai). Compila-se uma libpng estática em /usr/local.
-            log.Report($"MSYS2: compilando libpng {libpngVersion} estática para o runtime msys (só na primeira vez)...");
+            log.Report(Loc.T("core.msys.libpng", libpngVersion));
             await Run(
                 $"[ -f /usr/local/lib/libpng16.a ] && echo 'libpng já compilada' || {{ " +
                 $"cd /tmp && rm -rf pokehub-libpng && mkdir pokehub-libpng && cd pokehub-libpng && " +
@@ -67,7 +68,7 @@ public sealed class DecompBuildService(HubConfig config, HubPaths hub)
             await Run("PKG_CONFIG_PATH=/usr/local/lib/pkgconfig pkg-config --modversion --libs libpng");
         }
         await Run("arm-none-eabi-gcc --version | head -1 && make --version | head -1 && ninja --version", tolerate: true);
-        log.Report("MSYS2: toolchain pronta.");
+        log.Report(Loc.T("core.msys.ready"));
         _shells = null; // redetectar
     }
 
@@ -92,28 +93,28 @@ public sealed class DecompBuildService(HubConfig config, HubPaths hub)
 
     public async Task<string> BuildAsync(PluginManifest m, InstalledTool installed, Project project, IProgress<string> log, CancellationToken ct = default)
     {
-        var build = m.Build ?? throw new InvalidOperationException($"{m.Name} não declara como compilar.");
+        var build = m.Build ?? throw new InvalidOperationException(Loc.T("core.build.noSpec", m.Name));
         var repo = installed.ExecutablePath;
-        if (!Directory.Exists(repo)) throw new DirectoryNotFoundException($"Repositório não encontrado: {repo}");
+        if (!Directory.Exists(repo)) throw new DirectoryNotFoundException(Loc.T("core.build.repoMissing", repo));
 
         var shell = await ResolveShellAsync()
             ?? throw new InvalidOperationException("Nenhum shell Unix encontrado. Instale o MSYS2 (https://www.msys2.org) ou o WSL2 e as dependências listadas no INSTALL.md da decomp.");
-        log.Report($"Usando {shell.Description}");
+        log.Report(Loc.T("core.build.using", shell.Description));
         if (shell.Kind == UnixShellKind.Wsl)
-            log.Report("Aviso: o repositório fica no disco do Windows (/mnt). Pelo WSL o build é bem mais lento; MSYS2 é mais rápido aqui.");
+            log.Report(Loc.T("core.build.wslSlow"));
 
         var (file, args, env) = shell.Compose(build.Command, repo);
         var started = DateTime.Now;
         var code = await ProcessRunner.RunAsync(file, args, repo, log, ct, env);
-        if (code != 0) throw new InvalidOperationException($"Build falhou (código {code}). Veja o log; na primeira vez confira as dependências do INSTALL.md.");
+        if (code != 0) throw new InvalidOperationException(Loc.T("core.build.failed", code));
 
         var output = Path.Combine(repo, build.Output.Replace('/', Path.DirectorySeparatorChar));
-        if (!File.Exists(output)) throw new FileNotFoundException("Build terminou mas a ROM não apareceu onde o manifesto indica.", output);
+        if (!File.Exists(output)) throw new FileNotFoundException(Loc.T("core.build.noOutput"), output);
 
         Directory.CreateDirectory(project.Paths.Builds);
         var dest = Path.Combine(project.Paths.Builds, $"{project.Name}_{m.Id}_{DateTime.Now:yyyyMMdd-HHmmss}.nds");
         File.Copy(output, dest, overwrite: true);
-        log.Report($"Build concluído em {(DateTime.Now - started).TotalMinutes:F1} min: {dest}");
+        log.Report(Loc.T("core.build.done", (DateTime.Now - started).TotalMinutes, dest));
         return dest;
     }
 }

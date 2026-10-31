@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using PokeHub.Core.Projects;
 using PokeHub.Core.Rom;
 
@@ -29,11 +30,11 @@ public sealed class Gen4Game
 
     public static Gen4Game For(Project p)
     {
-        if (p.Config.Generation != 4) throw new NotSupportedException("Só Gen 4 por enquanto."); // GEN5
+        if (p.Config.Generation != 4) throw new NotSupportedException(Loc.T("core.gen4.notGen4")); // GEN5
         var ws = p.Paths.Workspace;
         var filesRoot = Directory.Exists(Path.Combine(ws, "files")) ? Path.Combine(ws, "files")
                       : Directory.Exists(Path.Combine(ws, "data")) ? Path.Combine(ws, "data")
-                      : throw new DirectoryNotFoundException("workspace/ não tem files/ nem data/: extraia a ROM primeiro.");
+                      : throw new DirectoryNotFoundException(Loc.T("core.gen4.noFiles"));
         return new Gen4Game
         {
             Game = p.Config.BaseGame,

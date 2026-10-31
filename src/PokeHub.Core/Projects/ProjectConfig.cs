@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using System.Text.Json;
 using PokeHub.Core.Hub;
 using PokeHub.Core.Rom;
@@ -19,7 +20,7 @@ public sealed class ProjectConfig
     public static ProjectConfig Load(string file)
     {
         var cfg = JsonSerializer.Deserialize<ProjectConfig>(File.ReadAllText(file), HubConfig.JsonOptions)
-            ?? throw new InvalidDataException($"project.json inválido: {file}");
+            ?? throw new InvalidDataException(Loc.T("core.project.invalidConfig", file));
         cfg.ProjectTools = new Dictionary<string, InstalledTool>(cfg.ProjectTools, StringComparer.OrdinalIgnoreCase);
         return cfg;
     }

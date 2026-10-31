@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using System.Diagnostics;
 using System.Text;
 
@@ -43,7 +44,7 @@ public static class ProcessRunner
         var psi = new ProcessStartInfo(fileName) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
         foreach (var a in args) psi.ArgumentList.Add(a);
         psi.StandardOutputEncoding = outputEncoding ?? Encoding.UTF8;
-        using var p = Process.Start(psi) ?? throw new InvalidOperationException($"Não foi possível iniciar {fileName}");
+        using var p = Process.Start(psi) ?? throw new InvalidOperationException(Loc.T("core.process.startFailed", fileName));
         using var cts = new CancellationTokenSource(timeoutMs);
         var output = await p.StandardOutput.ReadToEndAsync(cts.Token);
         await p.WaitForExitAsync(cts.Token);

@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using System.Text;
 
 namespace PokeHub.Core.Rom;
@@ -13,7 +14,7 @@ public sealed record NdsRomHeader(string Title, string GameCode, string MakerCod
     {
         using var fs = File.OpenRead(romPath);
         var h = new byte[0x200];
-        if (fs.Read(h, 0, h.Length) < h.Length) throw new InvalidDataException("Arquivo menor que um header NDS.");
+        if (fs.Read(h, 0, h.Length) < h.Length) throw new InvalidDataException(Loc.T("core.nds.tooSmall"));
         static string Ascii(ReadOnlySpan<byte> s) => Encoding.ASCII.GetString(s).TrimEnd('\0', ' ');
         return new NdsRomHeader(
             Title: Ascii(h.AsSpan(0, 12)),

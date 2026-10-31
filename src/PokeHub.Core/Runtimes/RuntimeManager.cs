@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using System.IO.Compression;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -29,12 +30,12 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
     {
         ["java21"] = new("java21", "Eclipse Temurin JRE 21", RuntimeSource.Adoptium, "java.exe", JavaFeatureVersion: 21),
         ["java17"] = new("java17", "Eclipse Temurin JRE 17", RuntimeSource.Adoptium, "java.exe", JavaFeatureVersion: 17),
-        [GitId] = new(GitId, "Git for Windows (MinGit portátil)", RuntimeSource.GitHubRelease, "git.exe",
+        [GitId] = new(GitId, Loc.T("core.rt.gitName"), RuntimeSource.GitHubRelease, "git.exe",
             Repo: "git-for-windows/git", AssetPattern: @"^MinGit-[\d.]+-64-bit\.zip$", ExecutableRelativePath: @"cmd\git.exe"),
-        [DsRomId] = new(DsRomId, "ds-rom (extrai e monta ROMs, formato do DSPRE)", RuntimeSource.GitHubRelease, "dsrom.exe",
+        [DsRomId] = new(DsRomId, Loc.T("core.rt.dsromName"), RuntimeSource.GitHubRelease, "dsrom.exe",
             Repo: "AetiasHax/ds-rom", AssetPattern: @"^dsrom-windows-x86_64\.exe$"),
         // pacote auto-extraível (7-Zip SFX): descompacta msys64/ sem instalador nem administrador
-        [Msys2Id] = new(Msys2Id, "MSYS2 (shell Unix para compilar as decomps)", RuntimeSource.GitHubRelease, "bash.exe",
+        [Msys2Id] = new(Msys2Id, Loc.T("core.rt.msysName"), RuntimeSource.GitHubRelease, "bash.exe",
             Repo: "msys2/msys2-installer", AssetPattern: @"^msys2-base-x86_64-latest\.sfx\.exe$",
             ExecutableRelativePath: @"msys64\usr\bin\bash.exe", SfxExtract: true),
     };
@@ -52,14 +53,14 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
     {
         foreach (var r in requirements.Where(IsManaged))
         {
-            if (GetInstalled(r) is { } t) { log.Report($"Runtime {r} já instalado ({t.Version})"); continue; }
+            if (GetInstalled(r) is { } t) { log.Report(Loc.T("core.rt.alreadyInstalled", r, t.Version)); continue; }
             await InstallAsync(r, log, ct);
         }
     }
 
     public async Task<InstalledTool> InstallAsync(string id, IProgress<string> log, CancellationToken ct = default)
     {
-        var spec = Known.GetValueOrDefault(id) ?? throw new NotSupportedException($"Runtime desconhecido: {id}");
+        var spec = Known.GetValueOrDefault(id) ?? throw new NotSupportedException(Loc.T("core.rt.unknown", id));
         var (version, url, size) = spec.Source switch
         {
             RuntimeSource.Adoptium => await QueryAdoptiumAsync(spec, log, ct),
@@ -70,10 +71,10 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
         var cacheFile = Path.Combine(hub.Cache, "runtimes", id, Path.GetFileName(new Uri(url).LocalPath));
         if (!File.Exists(cacheFile))
         {
-            log.Report($"Baixando {Path.GetFileName(cacheFile)} ({size / 1024 / 1024} MB)...");
+            log.Report(Loc.T("core.install.downloading", Path.GetFileName(cacheFile), size / 1024 / 1024));
             await new GitHubReleaseClient().DownloadAsync(url, cacheFile, log, ct);
         }
-        else log.Report("Usando cache do runtime.");
+        else log.Report(Loc.T("core.rt.cache"));
 
         var target = Path.Combine(hub.Runtimes, id);
         if (Directory.Exists(target)) Directory.Delete(target, recursive: true);
@@ -82,11 +83,11 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
         string exe;
         if (spec.SfxExtract)
         {
-            log.Report($"Extraindo pacote auto-extraível para {target} (pode levar um minuto)...");
+            log.Report(Loc.T("core.rt.sfxExtract", target));
             var code = await ProcessRunner.RunAsync(cacheFile, ["-y", "-o" + target], target, log, ct);
-            if (code != 0) throw new InvalidOperationException($"A extração do {spec.Name} falhou (código {code}).");
+            if (code != 0) throw new InvalidOperationException(Loc.T("core.rt.sfxFailed", spec.Name, code));
             exe = Path.Combine(target, spec.ExecutableRelativePath!);
-            if (!File.Exists(exe)) throw new FileNotFoundException($"{spec.ExecutableName} não encontrado após extrair o {spec.Name}.", exe);
+            if (!File.Exists(exe)) throw new FileNotFoundException(Loc.T("core.rt.exeMissingAfterSfx", spec.ExecutableName, spec.Name), exe);
         }
         else if (!cacheFile.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
         {
@@ -99,18 +100,18 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
         else
             exe = Directory.EnumerateFiles(target, spec.ExecutableName, SearchOption.AllDirectories)
                 .OrderBy(p => p.Length).FirstOrDefault()
-                ?? throw new FileNotFoundException($"{spec.ExecutableName} não encontrado dentro do pacote do {spec.Name}.");
+                ?? throw new FileNotFoundException(Loc.T("core.rt.exeMissingInPackage", spec.ExecutableName, spec.Name));
 
         var tool = new InstalledTool { Version = version, ExecutablePath = exe, Source = spec.Source.ToString().ToLowerInvariant() };
         config.InstalledRuntimes[id] = tool;
         config.Save(hub.ConfigFile);
-        log.Report($"{spec.Name} instalado: {version}");
+        log.Report(Loc.T("core.install.done", spec.Name, version));
         return tool;
     }
 
     private static bool ZipExtract(string zip, string target, IProgress<string> log)
     {
-        log.Report($"Extraindo para {target}...");
+        log.Report(Loc.T("core.install.extracting", target));
         ZipFile.ExtractToDirectory(zip, target, overwriteFiles: true);
         return true;
     }
@@ -137,7 +138,7 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
 
     private static async Task<(string Version, string Url, long Size)> QueryAdoptiumAsync(RuntimeSpec spec, IProgress<string> log, CancellationToken ct)
     {
-        log.Report($"Consultando Adoptium para {spec.Name}...");
+        log.Report(Loc.T("core.rt.adoptiumQuery", spec.Name));
         using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(2) };
         http.DefaultRequestHeaders.UserAgent.ParseAdd("PokeHub/0.1");
         var url = $"https://api.adoptium.net/v3/assets/latest/{spec.JavaFeatureVersion}/hotspot?architecture=x64&image_type=jre&os=windows&vendor=eclipse";
@@ -151,16 +152,16 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
                     pkg.GetProperty("link").GetString()!,
                     pkg.GetProperty("size").GetInt64());
         }
-        throw new InvalidOperationException($"Adoptium não devolveu um JRE {spec.JavaFeatureVersion} para Windows x64.");
+        throw new InvalidOperationException(Loc.T("core.rt.adoptiumNone", spec.JavaFeatureVersion));
     }
 
     private static async Task<(string Version, string Url, long Size)> QueryGitHubAsync(RuntimeSpec spec, IProgress<string> log, CancellationToken ct)
     {
-        log.Report($"Consultando última release de {spec.Repo}...");
+        log.Report(Loc.T("core.install.queryRelease", spec.Repo));
         var release = await new GitHubReleaseClient().GetLatestAsync(spec.Repo!, ct);
         var re = new Regex(spec.AssetPattern!, RegexOptions.IgnoreCase);
         var asset = release.Assets.FirstOrDefault(a => re.IsMatch(a.Name))
-            ?? throw new InvalidOperationException($"Nenhum asset de {spec.Repo} {release.Tag} bate com '{spec.AssetPattern}'.");
+            ?? throw new InvalidOperationException(Loc.T("core.rt.noAsset", spec.Repo, release.Tag, spec.AssetPattern));
         return (release.Tag, asset.DownloadUrl, asset.Size);
     }
 }

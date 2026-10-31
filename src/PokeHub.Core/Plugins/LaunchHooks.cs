@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using System.Text.Json.Nodes;
 using PokeHub.Core.Projects;
 
@@ -19,7 +20,7 @@ public static class LaunchHooks
     public static void Run(string? hookId, PluginManifest manifest, Project? project, IProgress<string> log)
     {
         if (hookId is null) return;
-        if (!All.TryGetValue(hookId, out var hook)) { log.Report($"Hook desconhecido no manifesto: {hookId}"); return; }
+        if (!All.TryGetValue(hookId, out var hook)) { log.Report(Loc.T("core.hook.unknown", hookId)); return; }
         hook(manifest, project, log);
     }
 
@@ -34,7 +35,7 @@ public static class LaunchHooks
     {
         if (project is null || !WorkspaceService.IsExtracted(project)) return;
         SetDspreOpenDefaultRom(DspreSettingsFile, project.Paths.Workspace);
-        log.Report($"DSPRE configurado para abrir {project.Paths.Workspace}");
+        log.Report(Loc.T("core.hook.dspre", project.Paths.Workspace));
     }
 
     public static void SetDspreOpenDefaultRom(string settingsFile, string workspace)

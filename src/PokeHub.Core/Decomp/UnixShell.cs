@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using System.Text;
 using PokeHub.Core.Processes;
 
@@ -47,7 +48,7 @@ public sealed record UnixShell(UnixShellKind Kind, string Location, string Descr
         };
         foreach (var root in candidates.Where(c => !string.IsNullOrEmpty(c)).Distinct(StringComparer.OrdinalIgnoreCase))
             if (File.Exists(Path.Combine(root!, "usr", "bin", "bash.exe")))
-                found.Add(new UnixShell(UnixShellKind.Msys2, root!, hubRuntimesDir is not null && root!.StartsWith(hubRuntimesDir, StringComparison.OrdinalIgnoreCase) ? "MSYS2 do hub" : $"MSYS2 em {root}"));
+                found.Add(new UnixShell(UnixShellKind.Msys2, root!, hubRuntimesDir is not null && root!.StartsWith(hubRuntimesDir, StringComparison.OrdinalIgnoreCase) ? Loc.T("core.shell.hub") : Loc.T("core.shell.msysAt", root)));
 
         try
         {

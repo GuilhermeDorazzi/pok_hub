@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
 using PokeHub.Core.Hub;
@@ -25,7 +26,7 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
 
     public string TargetDir(PluginManifest m, Project? project) =>
         m.Scope == PluginScope.Project
-            ? (project ?? throw new InvalidOperationException("Este plugin é instalado por projeto; abra um projeto.")).Paths.ToolDir(m.Id)
+            ? (project ?? throw new InvalidOperationException(Loc.T("core.install.projectScope"))).Paths.ToolDir(m.Id)
             : hub.ToolDir(m.Id);
 
     public async Task<InstalledTool> InstallAsync(PluginManifest m, Project? project, IProgress<string> log, CancellationToken ct = default)
@@ -35,12 +36,12 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
         {
             SourceType.GitHubRelease => await InstallFromReleaseAsync(m, project, log, ct),
             SourceType.GitClone => await InstallFromGitAsync(m, project, log, ct),
-            SourceType.System => throw new InvalidOperationException("Ferramenta de sistema: use RegisterSystemTool com o caminho do executável."),
+            SourceType.System => throw new InvalidOperationException(Loc.T("core.install.systemSource")),
             SourceType.Runtime => await InstallRuntimeAsync(m, log, ct),
             _ => throw new NotSupportedException(m.Source.Type.ToString()),
         };
         if (m.Source.Type != SourceType.Runtime) Record(m, project, tool); // runtimes se registram sozinhos em installedRuntimes
-        log.Report($"{m.Name} instalado: {tool.Version}");
+        log.Report(Loc.T("core.install.done", m.Name, tool.Version));
         return tool;
     }
 
@@ -52,7 +53,7 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
 
     public InstalledTool RegisterSystemTool(PluginManifest m, Project? project, string executablePath)
     {
-        if (!File.Exists(executablePath)) throw new FileNotFoundException("Executável não encontrado.", executablePath);
+        if (!File.Exists(executablePath)) throw new FileNotFoundException(Loc.T("core.install.exeMissing"), executablePath);
         var tool = new InstalledTool { Version = "system", ExecutablePath = executablePath, Source = "system" };
         Record(m, project, tool);
         return tool;
@@ -74,21 +75,21 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
 
     private async Task<InstalledTool> InstallFromReleaseAsync(PluginManifest m, Project? project, IProgress<string> log, CancellationToken ct)
     {
-        var repo = m.Source.Repo ?? throw new InvalidDataException($"{m.Id}: source.repo ausente");
-        log.Report($"Consultando última release de {repo}...");
+        var repo = m.Source.Repo ?? throw new InvalidDataException(Loc.T("core.install.noRepo", m.Id));
+        log.Report(Loc.T("core.install.queryRelease", repo));
         var release = await _github.GetLatestAsync(repo, ct);
 
         var pattern = new Regex(m.Source.AssetPattern ?? ".*", RegexOptions.IgnoreCase);
         var asset = release.Assets.FirstOrDefault(a => pattern.IsMatch(a.Name))
-            ?? throw new InvalidOperationException($"Nenhum asset da release {release.Tag} bate com '{m.Source.AssetPattern}'. Assets: {string.Join(", ", release.Assets.Select(a => a.Name))}");
+            ?? throw new InvalidOperationException(Loc.T("core.install.noAsset", release.Tag, m.Source.AssetPattern, string.Join(", ", release.Assets.Select(a => a.Name))));
 
         var cacheFile = Path.Combine(hub.Cache, m.Id, release.Tag, asset.Name);
         if (!File.Exists(cacheFile))
         {
-            log.Report($"Baixando {asset.Name} ({asset.Size / 1024 / 1024} MB)...");
+            log.Report(Loc.T("core.install.downloading", asset.Name, asset.Size / 1024 / 1024));
             await _github.DownloadAsync(asset.DownloadUrl, cacheFile, log, ct);
         }
-        else log.Report($"Usando cache: {asset.Name}");
+        else log.Report(Loc.T("core.install.cache", asset.Name));
 
         var target = TargetDir(m, project);
         if (Directory.Exists(target)) Directory.Delete(target, recursive: true);
@@ -97,11 +98,11 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
         string exePath;
         if (asset.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
         {
-            log.Report($"Extraindo para {target}...");
+            log.Report(Loc.T("core.install.extracting", target));
             ZipFile.ExtractToDirectory(cacheFile, target, overwriteFiles: true);
-            var exeName = m.Source.Executable ?? throw new InvalidDataException($"{m.Id}: source.executable é obrigatório para assets zip");
+            var exeName = m.Source.Executable ?? throw new InvalidDataException(Loc.T("core.install.zipNeedsExe", m.Id));
             exePath = Directory.EnumerateFiles(target, exeName, SearchOption.AllDirectories).FirstOrDefault()
-                ?? throw new FileNotFoundException($"'{exeName}' não encontrado dentro de {asset.Name}");
+                ?? throw new FileNotFoundException(Loc.T("core.install.exeNotInZip", exeName, asset.Name));
         }
         else
         {
@@ -114,16 +115,16 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
 
     private async Task<InstalledTool> InstallFromGitAsync(PluginManifest m, Project? project, IProgress<string> log, CancellationToken ct)
     {
-        var git = Runtimes.ResolveGit() ?? throw new InvalidOperationException("Git não encontrado. Use 'Instalar Git' no hub ou instale o Git for Windows.");
-        var repo = m.Source.Repo ?? throw new InvalidDataException($"{m.Id}: source.repo ausente");
+        var git = Runtimes.ResolveGit() ?? throw new InvalidOperationException(Loc.T("core.install.gitMissing"));
+        var repo = m.Source.Repo ?? throw new InvalidDataException(Loc.T("core.install.noRepo", m.Id));
         var url = repo.Contains("://") ? repo : $"https://github.com/{repo}.git";
         var target = TargetDir(m, project);
 
         if (Directory.Exists(Path.Combine(target, ".git")))
         {
-            log.Report($"Repositório já existe, atualizando ({target})...");
+            log.Report(Loc.T("core.install.repoExists", target));
             var pull = await ProcessRunner.RunAsync(git, ["pull", "--ff-only"], target, log, ct);
-            if (pull != 0) throw new InvalidOperationException("git pull falhou. Veja o log.");
+            if (pull != 0) throw new InvalidOperationException(Loc.T("core.install.pullFailed"));
         }
         else
         {
@@ -134,7 +135,7 @@ public sealed class PluginInstaller(HubPaths hub, HubConfig config)
             if (m.Source.Branch is { } b) { args.Add("--branch"); args.Add(b); }
             args.Add(url); args.Add(target);
             var code = await ProcessRunner.RunAsync(git, args, null, log, ct);
-            if (code != 0) throw new InvalidOperationException("git clone falhou. Veja o log.");
+            if (code != 0) throw new InvalidOperationException(Loc.T("core.install.cloneFailed"));
         }
 
         var head = Path.Combine(target, ".git", "HEAD");

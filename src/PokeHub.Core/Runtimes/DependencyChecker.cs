@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using Microsoft.Win32;
 using PokeHub.Core.Decomp;
 
@@ -25,7 +26,7 @@ public sealed class DependencyChecker(RuntimeManager runtimes, DecompBuildServic
         {
             var spec = RuntimeManager.Known[requirement];
             var t = runtimes.GetInstalled(requirement);
-            return new(requirement, spec.Name, t is not null, t is not null ? $"instalado: {t.Version}" : "o hub instala junto", null);
+            return new(requirement, spec.Name, t is not null, t is not null ? Loc.T("core.dep.installed", t.Version) : Loc.T("core.dep.hubInstalls"), null);
         }
 
         return requirement.ToLowerInvariant() switch
@@ -43,24 +44,24 @@ public sealed class DependencyChecker(RuntimeManager runtimes, DecompBuildServic
     private DependencyStatus CheckDotNet(string id, string name, int minRelease)
     {
         var release = ReadDotNetRelease();
-        if (release is null) return new(id, name, false, "não encontrado", DotNetUrl);
+        if (release is null) return new(id, name, false, Loc.T("core.dep.notFound"), DotNetUrl);
         bool ok = release.Value >= minRelease;
-        return new(id, name, ok, ok ? "presente" : $"versão antiga (release {release})", ok ? null : DotNetUrl);
+        return new(id, name, ok, ok ? Loc.T("core.dep.present") : Loc.T("core.dep.oldVersion", release), ok ? null : DotNetUrl);
     }
 
     private DependencyStatus CheckVcRedist(string id)
     {
         bool ok = ReadRegistryDword(@"SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64", "Installed") == 1;
-        return new(id, "Visual C++ Redistributable x64", ok, ok ? "presente" : "não encontrado", ok ? null : VcRedistUrl);
+        return new(id, Loc.T("core.dep.vcredist"), ok, ok ? Loc.T("core.dep.present") : Loc.T("core.dep.notFound"), ok ? null : VcRedistUrl);
     }
 
     private DependencyStatus CheckUnixShell(string id)
     {
         var shells = builds.CachedShells;
-        if (shells is null) return new(id, "MSYS2 ou WSL2", null, "verificando...", null);
+        if (shells is null) return new(id, Loc.T("core.dep.shellName"), null, Loc.T("core.dep.checking"), null);
         bool ok = shells.Count > 0;
-        return new(id, "MSYS2 ou WSL2", ok,
-            ok ? $"encontrado: {string.Join(", ", shells.Select(s => s.Description))}" : "nenhum encontrado: instale pelo card 'MSYS2 + toolchain' nesta aba",
+        return new(id, Loc.T("core.dep.shellName"), ok,
+            ok ? Loc.T("core.dep.shellFound", string.Join(", ", shells.Select(s => s.Description))) : Loc.T("core.dep.shellMissing"),
             null);
     }
 

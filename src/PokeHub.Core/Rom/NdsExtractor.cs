@@ -1,3 +1,4 @@
+using PokeHub.Core.Localization;
 using System.Security.Cryptography;
 
 namespace PokeHub.Core.Rom;
@@ -13,11 +14,11 @@ public static class NdsExtractor
     {
         var layout = new WorkspaceLayout(workspaceDir);
         if (layout.IsExtracted && !overwrite)
-            throw new InvalidOperationException("workspace/ já contém uma ROM extraída. Use sobrescrever para extrair de novo.");
+            throw new InvalidOperationException(Loc.T("core.ws.alreadyExtracted"));
 
-        log?.Report($"Lendo {Path.GetFileName(romPath)}...");
+        log?.Report(Loc.T("core.nds.reading", Path.GetFileName(romPath)));
         var rom = File.ReadAllBytes(romPath);
-        if (rom.Length < NdsHeader.Size) throw new InvalidDataException("Arquivo menor que um header NDS.");
+        if (rom.Length < NdsHeader.Size) throw new InvalidDataException(Loc.T("core.nds.tooSmall"));
         var h = rom[..NdsHeader.Size];
         uint U32(int off) => BitConverter.ToUInt32(h, off);
 
@@ -34,7 +35,7 @@ public static class NdsExtractor
                       && BitConverter.ToUInt32(rom, (int)(arm9Off + arm9Size)) == NdsHeader.NitroFooterMagic;
         File.WriteAllBytes(layout.Arm9Bin, Slice(rom, arm9Off, arm9Size + (footer ? 12u : 0u), "arm9"));
         File.WriteAllBytes(layout.Arm7Bin, Slice(rom, U32(NdsHeader.Arm7Offset), U32(NdsHeader.Arm7Size), "arm7"));
-        log?.Report($"arm9: {arm9Size} bytes{(footer ? " + footer" : "")}, arm7: {U32(NdsHeader.Arm7Size)} bytes");
+        log?.Report(Loc.T("core.nds.arm", arm9Size, footer ? " + footer" : "", U32(NdsHeader.Arm7Size)));
 
         // Tabelas de overlay
         var y9 = Slice(rom, U32(NdsHeader.Arm9OvtOffset), U32(NdsHeader.Arm9OvtSize), "y9");
@@ -55,7 +56,7 @@ public static class NdsExtractor
                 File.WriteAllBytes(layout.OverlayFile(overlayId), Slice(rom, start, end - start, $"overlay {overlayId}"));
                 overlays++;
             }
-        log?.Report($"{overlays} overlays");
+        log?.Report(Loc.T("core.nds.overlays", overlays));
 
         // Banner (tamanho depende da versão)
         var bannerOff = U32(NdsHeader.BannerOffset);
@@ -78,9 +79,9 @@ public static class NdsExtractor
             var dest = Path.Combine(layout.DataDir, f.Path.Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
             File.WriteAllBytes(dest, Slice(rom, start, end - start, f.Path));
-            if (++n % 500 == 0) log?.Report($"  {n}/{files.Count} arquivos");
+            if (++n % 500 == 0) log?.Report(Loc.T("core.nds.progress", n, files.Count));
         }
-        log?.Report($"{files.Count} arquivos em data/");
+        log?.Report(Loc.T("core.nds.filesInData", files.Count));
 
         bool hasSecureArea = rom.Length >= NdsHeader.SecureAreaStart + NdsHeader.SecureAreaLength;
         var manifest = new WorkspaceManifest

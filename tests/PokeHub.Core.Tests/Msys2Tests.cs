@@ -1,5 +1,6 @@
 using PokeHub.Core.Decomp;
 using PokeHub.Core.Hub;
+using PokeHub.Core.Localization;
 using PokeHub.Core.Plugins;
 using PokeHub.Core.Runtimes;
 using Xunit;
@@ -40,7 +41,7 @@ public class Msys2Tests
             File.WriteAllBytes(bash, []);
             var shells = await UnixShell.DetectAsync(Path.Combine(root, "runtimes"));
             Assert.Equal(UnixShellKind.Msys2, shells[0].Kind);
-            Assert.Equal("MSYS2 do hub", shells[0].Description);
+            Assert.Equal(Loc.T("core.shell.hub"), shells[0].Description);
         }
         finally { Directory.Delete(root, true); }
     }
@@ -64,7 +65,7 @@ public class Msys2Tests
         Assert.True(File.Exists(tool.ExecutablePath));
 
         var shells = await builds.GetShellsAsync(refresh: true);
-        var shell = Assert.Single(shells, s => s.Description == "MSYS2 do hub");
+        var shell = Assert.Single(shells, s => s.Description == Loc.T("core.shell.hub"));
 
         var catalog = PluginCatalog.LoadFromDirectory(Path.Combine(AppContext.BaseDirectory, "plugins"));
         var setup = catalog.Get("msys2")!.Setup!;
