@@ -1,0 +1,22 @@
+{
+  "id": "text-editor",
+  "name": "Editor de texto (PokeHub)",
+  "description": {
+    "pt-BR": "Editor embutido dos bancos de texto do jogo (msg.narc): diálogos, nomes de Pokémon, itens, golpes, locais e treinadores, com busca em todos os bancos.",
+    "en-US": "Built-in editor for the game's text banks (msg.narc): dialogue, Pokémon, item, move, location and trainer names, with search across every bank."
+  },
+  "purpose": {
+    "pt-BR": "Editor do próprio hub para todo texto do jogo. Os bancos conhecidos vêm rotulados (espécies, itens, golpes, locais, treinadores). Comandos do jogo aparecem como {NOME} e os nomes de treinador são regravados comprimidos como o original. Não instala nada e grava direto no workspace.",
+    "en-US": "The hub's own editor for every text in the game. Known banks come labelled (species, items, moves, locations, trainers). Game commands show as {NAME} and trainer names are rewritten compressed like the original. Installs nothing and writes straight to the workspace."
+  },
+  "license": "GPL-3.0",
+  "contexts": ["text"],
+  "generations": [4],
+  "scope": "hub",
+  "source": { "type": "builtin" },
+  "launch": { "args": [] },
+  "notes": {
+    "pt-BR": "Mensagens não alteradas são regravadas byte a byte. Caracteres fora da tabela do jogo são recusados ao aplicar. Grava uma versão no git a cada salvamento.",
+    "en-US": "Unchanged messages are rewritten byte for byte. Characters outside the game's table are rejected on apply. Saves a git version on every save."
+  }
+}

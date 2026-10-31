@@ -99,7 +99,9 @@ Fase 2 concluída em 2026-10-30.
 
 9. **Editor de encontros selvagens** (`Core/Gen4/Encounters.cs`, `EncounterRepository.cs`, `MapHeaders.cs`, `Rom/Blz.cs`, `App/Views/EncounterEditorWindow`, manifesto `encounter-editor.json`). Formatos conforme o DSPRE: HGSS 196 bytes (taxas, 12 níveis da grama com espécies por manhã/dia/noite, sons de Hoenn/Sinnoh, surf, rock smash, três varas, enxame); DP/Pt 424 bytes com campos de 32 bits (grama, dia/noite, enxame, radar, formas, dual-slot GBA, surf e varas). NARCs: HG `a/0/3/7`, SS `a/1/3/6`, DP `fielddata/encountdata/{d,p}_enc_data.narc`, Pt `pl_enc_data.narc`. Cada arquivo é rotulado pelos mapas que o usam: `MapHeaders` lê a tabela de cabeçalhos de 24 bytes no arm9 (offsets por jogo e idioma do DSPRE; HGSS: byte 0 = arquivo de encontros, byte 0x12 = nome do local; DP/Pt: u16 em 0x0E e nome em 0x12), os nomes internos de `fielddata/maptable/mapname.bin` e os nomes de local do banco de texto (HGSS 279, Pt 433, DP 382). Para isso o arm9 comprimido do layout ndstool é descomprimido por `Blz` (algoritmo do blz.c de CUE, com `compressed_static_end` zerado como o ds-rom faz; validado byte a byte contra o arm9 do ds-rom). Validado com SoulSilver: Rota 29 → Pidgey/Sentret/Rattata de manhã, Hoothoot à noite, Plusle/Minun no som de Hoenn. DP/Pt sem validação com ROM.
 
-Próximos: mais plugins (Nitro Studio 2, DeSmuME), editor de texto, publicar no GitHub.
+10. **Editor de texto** (`Core/Gen4/TextRepository.cs`, `App/Views/TextEditorWindow`, manifesto `text-editor.json`). Lista os 829 bancos do msg.narc (HGSS) com rótulos para os conhecidos (espécies, itens, golpes, habilidades, treinadores, classes, locais), decodifica sob demanda, busca em todos os bancos, edita com validação imediata (caracteres fora do charmap e comandos em nomes comprimidos são recusados) e grava só os bancos alterados, com as mensagens intactas regravadas byte a byte. Validação no SoulSilver: todas as mais de 10 mil mensagens decodificam e recodificam para os mesmos códigos.
+
+Próximos: mais plugins (Nitro Studio 2, DeSmuME), publicar no GitHub.
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)
 

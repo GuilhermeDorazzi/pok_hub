@@ -1,0 +1,80 @@
+<Window x:Class="PokeHub.App.Views.TextEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:PokeHub.App.ViewModels"
+        xmlns:loc="clr-namespace:PokeHub.App"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DataContext="{d:DesignInstance vm:TextEditorViewModel}"
+        Title="{loc:T txt.title}" Width="1200" Height="760" MinWidth="900" MinHeight="520"
+        WindowStartupLocation="CenterOwner" FontSize="13" Closing="Window_Closing">
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- busca -->
+        <DockPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,8">
+            <TextBlock Text="{Binding GameLabel}" Foreground="Gray" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0" />
+            <Button DockPanel.Dock="Right" Content="{loc:T txt.search}" Command="{Binding SearchCommand}" IsDefault="True" />
+            <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}" ToolTip="{loc:T txt.searchTip}" />
+        </DockPanel>
+
+        <!-- bancos -->
+        <DockPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
+            <TextBlock DockPanel.Dock="Top" Text="{loc:T txt.banks}" FontWeight="Bold" Margin="0,0,0,4" />
+            <ListBox ItemsSource="{Binding Banks}" SelectedItem="{Binding SelectedBank}" DisplayMemberPath="Display" FontFamily="Consolas"
+                     VirtualizingPanel.IsVirtualizing="True" />
+        </DockPanel>
+
+        <!-- mensagens + edição -->
+        <Grid Grid.Row="1" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="160" />
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ListBox Grid.Column="0" ItemsSource="{Binding Messages}" SelectedItem="{Binding SelectedMessage}" DisplayMemberPath="Preview"
+                         FontFamily="Consolas" VirtualizingPanel.IsVirtualizing="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" />
+                <DockPanel Grid.Column="1" Width="300" Margin="8,0,0,0">
+                    <TextBlock DockPanel.Dock="Top" Text="{loc:T txt.hits}" FontWeight="Bold" Margin="0,0,0,4" />
+                    <ListBox ItemsSource="{Binding SearchHits}" SelectedItem="{Binding SelectedHit}" FontFamily="Consolas" VirtualizingPanel.IsVirtualizing="True">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock TextTrimming="CharacterEllipsis">
+                                    <Run Text="{Binding Bank, Mode=OneWay, StringFormat={}{0:D4}}" Foreground="Gray" /><Run Text=":" Foreground="Gray" /><Run Text="{Binding Index, Mode=OneWay, StringFormat={}{0:D4}}" Foreground="Gray" /><Run Text="  " /><Run Text="{Binding Text, Mode=OneWay}" />
+                                </TextBlock>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Grid>
+            <DockPanel Grid.Row="1" Margin="0,8,0,4">
+                <TextBlock Text="{Binding CompressedNote}" Foreground="#8A6D00" DockPanel.Dock="Right" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Hint}" Foreground="Gray" FontSize="11" TextWrapping="Wrap" />
+            </DockPanel>
+            <TextBox Grid.Row="2" Text="{Binding EditText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"
+                     FontFamily="Consolas" VerticalScrollBarVisibility="Auto" LostFocus="Editor_LostFocus" />
+        </Grid>
+
+        <DockPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,8,0,0">
+            <TextBlock Text="{Binding Status}" Foreground="Gray" VerticalAlignment="Center" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="{loc:T txt.apply}" Command="{Binding ApplyCommand}" Padding="16,6" />
+                <Button Content="{loc:T common.save}" Command="{Binding SaveCommand}" FontWeight="Bold" Padding="16,6" />
+                <Button Content="{loc:T common.close}" IsCancel="True" Padding="16,6" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

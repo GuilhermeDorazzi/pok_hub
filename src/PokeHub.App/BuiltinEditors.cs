@@ -35,6 +35,13 @@ public static class BuiltinEditors
             var vm = new EncounterEditorViewModel(repo, log, snapshot);
             new EncounterEditorWindow(vm) { Owner = Application.Current.MainWindow }.Show();
         },
+        ["text-editor"] = (project, log, snapshot) =>
+        {
+            var repo = TextRepository.Load(project);
+            log(Loc.T("be.txt", repo.BankCount));
+            var vm = new TextEditorViewModel(repo, log, snapshot);
+            new TextEditorWindow(vm) { Owner = Application.Current.MainWindow }.Show();
+        },
         // GEN5: editores de Gen 5 entram aqui com o mesmo mecanismo
     };
 
