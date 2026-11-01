@@ -496,6 +496,8 @@ Treinadores variados pelo tipo da classe: todo time tem pelo menos um Pokémon d
 
 Líderes de área: quem não chama de longe e o jogador vai procurar tem time cheio e com tema, IVs no máximo, frutas, Leftovers e 3 curas. São 22: em Johto, nas Rotas 27, 30, 32, 33, 35, 36, 37, 38, 42, 43, 44 e 45; em Kanto, nas Rotas 3, 4, 5, 7, 9, 11, 13, 15, 22 e 25. Em Kanto, sobem como líderes pelas insígnias, sem a redução das rotas (`AreaLeaders` em `pokehub-post-elite.json`). Os executivos usam agora o sprite deles, e, com Silver e Oak, ficaram mais fortes.
 
+Surfe e pesca pelo ambiente (mar, água doce e caverna), com níveis da área: a média foi de 4,5 para 11,8 espécies por área somando surfe e varas. A primeira vaga fica, a última é a rara, e cada vara é melhor que a anterior. Lake of Rage, Dragon's Den, Safari e o lago de Celadon mantêm as espécies, e só as áreas com taxa de encontro mudaram. Chances: surfe 60, 30, 5, 4 e 1; varas 40, 30, 15, 10 e 5.
+
 Falta: paletas e música da cara nova e evolução paga (parada por decisão). Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
 ### Mais conteúdo pedido (01/11/2026)
