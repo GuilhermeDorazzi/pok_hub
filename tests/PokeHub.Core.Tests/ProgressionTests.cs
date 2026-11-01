@@ -115,6 +115,10 @@ public class ProgressionTests
         var route = encounters.Entries.First(e => e.Maps.Any(m => m.InternalName == "R01")).Hgss!;
         Assert.Equal(2, route.WalkingLevels[0]);
         Assert.Equal(45, route.WalkingLevels[11]);
+        var surfBefore = route.Surf.Select(s => s.MaxLevel).ToList();
+        BatchEditor.ApplyEncounters(encounters, new EncounterBatchOptions { PlaceFilter = "R01", RarityFloor = 30, RarityCeiling = 40, GrassOnly = true });
+        Assert.Equal(30, route.WalkingLevels[0]);
+        Assert.Equal(surfBefore, route.Surf.Select(s => s.MaxLevel));
         // nada foi gravado: os repositórios ficam só na memória
     }
 

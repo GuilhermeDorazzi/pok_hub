@@ -56,6 +56,8 @@ public sealed class EncounterBatchOptions
     /// <summary>Faixa por raridade: o espaço mais comum fica no piso, o mais raro no teto. Com ela, porcentagem e soma não valem.</summary>
     public int? RarityFloor { get; set; }
     public int? RarityCeiling { get; set; }
+    /// <summary>Mexe só na grama. Surf, Rock Smash e varas ficam como estão: em Johto, chegam bem mais tarde que a rota.</summary>
+    public bool GrassOnly { get; set; }
 
     public bool HasRarityRange => RarityFloor is not null && RarityCeiling is not null;
     public bool ChangesLevel => HasRarityRange || Math.Abs(LevelPercent - 100) > 0.001 || LevelOffset != 0;
@@ -271,12 +273,14 @@ public static class BatchEditor
                             if (apply) h.WalkingLevels[i] = (byte)nl;
                         }
                     }
+                if (o.GrassOnly) continue;
                 Slots(h.Surf, where, Loc.T("report.enc.kind.surf")); Slots(h.RockSmash, where, Loc.T("report.enc.kind.rockSmash"));
                 Slots(h.OldRod, where, Loc.T("report.enc.kind.oldRod")); Slots(h.GoodRod, where, Loc.T("report.enc.kind.goodRod")); Slots(h.SuperRod, where, Loc.T("report.enc.kind.superRod"));
             }
             else if (e.Dppt is { } d)
             {
                 Slots(d.Walking, where, Loc.T("report.enc.kind.walking"));
+                if (o.GrassOnly) continue;
                 Species(d.Swarm, where, Loc.T("report.enc.kind.swarm")); Species(d.Day, where, Loc.T("report.enc.kind.day")); Species(d.Night, where, Loc.T("report.enc.kind.night"));
                 Species(d.Radar, where, Loc.T("report.enc.kind.radar"));
                 Species(d.Ruby, where, "Ruby"); Species(d.Sapphire, where, "Sapphire"); Species(d.Emerald, where, "Emerald"); Species(d.FireRed, where, "FireRed"); Species(d.LeafGreen, where, "LeafGreen");

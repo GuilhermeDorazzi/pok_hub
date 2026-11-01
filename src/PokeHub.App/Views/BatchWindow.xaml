@@ -105,6 +105,7 @@
                             <TextBlock Grid.Column="1" Text="→" Margin="8,0" VerticalAlignment="Center" />
                             <views:SpeciesPicker Grid.Column="2" Catalog="{Binding Catalog}" SelectedSpecies="{Binding EncounterTo}" HideEmpty="True" />
                         </Grid>
+                        <CheckBox Content="{loc:T batch.grassOnly}" ToolTip="{loc:T batch.grassOnlyTip}" IsChecked="{Binding GrassOnly}" Margin="0,8,0,0" />
                         <CheckBox Content="{loc:T batch.rarity}" ToolTip="{loc:T batch.rarityTip}" IsChecked="{Binding UseRarityRange}" Margin="0,10,0,4" />
                         <WrapPanel IsEnabled="{Binding UseRarityRange}" Margin="16,0,0,0">
                             <TextBlock Text="{loc:T batch.rarityFloor}" Style="{StaticResource Lbl}" />

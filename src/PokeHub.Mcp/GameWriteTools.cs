@@ -93,14 +93,14 @@ public static class GameWriteTools
     }
 
     [McpServerTool(Name = "batch_wild_levels"), Description("Encontros selvagens em lote. Filtra por region (all, johto, kanto) e places (nomes separados por vírgula). floor e ceiling distribuem o nível por raridade: o espaço mais comum no piso, o mais raro no teto. evolve troca pela espécie evoluída para o nível; pedra, amizade e troca entram em otherAt. Com apply=false (padrão), só mostra a prévia.")]
-    public static Task<object> BatchWildLevels(HubContext hub, string project, string region = "all", string places = "", int? floor = null, int? ceiling = null, bool evolve = false, int otherAt = 40, bool apply = false)
+    public static Task<object> BatchWildLevels(HubContext hub, string project, string region = "all", string places = "", int? floor = null, int? ceiling = null, bool evolve = false, int otherAt = 40, bool grassOnly = false, bool apply = false)
     {
         var p = Open(hub, project);
         var repo = EncounterRepository.Load(p);
         var options = new EncounterBatchOptions
         {
             Region = region.ToLowerInvariant() switch { "johto" => EncounterRegion.First, "kanto" => EncounterRegion.Second, "all" => EncounterRegion.All, _ => throw new ArgumentException("region: all, johto ou kanto.") },
-            PlaceFilter = places, RarityFloor = floor, RarityCeiling = ceiling, Evolutions = evolve ? EvolutionChart.Load(p) : null, EvolveOtherAt = otherAt,
+            PlaceFilter = places, GrassOnly = grassOnly, RarityFloor = floor, RarityCeiling = ceiling, Evolutions = evolve ? EvolutionChart.Load(p) : null, EvolveOtherAt = otherAt,
         };
         return RunBatch(hub, p, "mudar encontros", apply, BatchEditor.PreviewEncounters(repo, options), () => { BatchEditor.ApplyEncounters(repo, options); repo.Save(); });
     }

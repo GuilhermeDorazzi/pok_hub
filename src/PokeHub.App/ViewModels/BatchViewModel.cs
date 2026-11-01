@@ -92,6 +92,7 @@ public sealed partial class BatchViewModel : ObservableObject
     [ObservableProperty] private NamedIndex? _selectedRegion;
     [ObservableProperty] private string _placeFilter = "";
     [ObservableProperty] private bool _useRarityRange;
+    [ObservableProperty] private bool _grassOnly;
     [ObservableProperty] private int _rarityFloor = 2;
     [ObservableProperty] private int _rarityCeiling = 45;
     [ObservableProperty] private bool _encounterEvolve;
@@ -142,6 +143,7 @@ public sealed partial class BatchViewModel : ObservableObject
         LevelPercent = EncounterLevelPercent, LevelOffset = EncounterLevelOffset, MinLevel = EncounterMinLevel, MaxLevel = EncounterMaxLevel,
         Region = (EncounterRegion)(SelectedRegion?.Index ?? 0),
         PlaceFilter = PlaceFilter,
+        GrassOnly = GrassOnly,
         RarityFloor = UseRarityRange ? Math.Clamp(RarityFloor, 1, 100) : null,
         RarityCeiling = UseRarityRange ? Math.Clamp(RarityCeiling, 1, 100) : null,
         Evolutions = EncounterEvolve ? Chart : null,

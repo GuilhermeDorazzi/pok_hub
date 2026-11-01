@@ -1273,6 +1273,8 @@
  "core.newev.trainerTextsGame": "Trainer lines exist only on non-Japanese HeartGold and SoulSilver.",
  "core.newev.trainerTextsMismatch": "The trainer line table does not match text bank 728.",
  "core.newev.trainerTextsFull": "The trainer line table has reached the game's limit.",
+ "batch.grassOnly": "Grass only",
+ "batch.grassOnlyTip": "Surf, Rock Smash and rods stay as they are.",
  "feature.newmaps": "New maps",
  "feature.newmaps.text": "Draw maps from scratch with tiles, with no 3D modeling. Exporting needs g3dcvtr, which is not included.",
  "ev.layout.npc": "NPC",

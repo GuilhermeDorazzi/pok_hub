@@ -1273,6 +1273,8 @@
  "core.newev.trainerTextsGame": "Falas de treinador existem só em HeartGold e SoulSilver fora do Japão.",
  "core.newev.trainerTextsMismatch": "A tabela de falas de treinador não bate com o banco de textos 728.",
  "core.newev.trainerTextsFull": "A tabela de falas de treinador chegou ao limite do jogo.",
+ "batch.grassOnly": "Só a grama",
+ "batch.grassOnlyTip": "Surf, Rock Smash e varas ficam como estão.",
  "feature.newmaps": "Mapas novos",
  "feature.newmaps.text": "Desenhe mapas do zero com tiles, sem modelar em 3D. Para exportar, precisa do g3dcvtr, que não vem junto.",
  "ev.layout.npc": "NPC",
