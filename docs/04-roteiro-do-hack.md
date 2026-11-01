@@ -475,9 +475,11 @@ Registradas em 01/11/2026. **Valem para o jogo oficial, que ainda não será fei
 
 ### Jogo oficial: onde está
 
-Fica em `pokemon_ss_from_pokhub`, um commit por contexto. Já aplicado em Johto, sem ser jogado: selvagens de grama, líderes, Elite, Lance, treinadores de rota e cavernas, e experiência em 70%.
+Fica em `pokemon_ss_from_pokhub`, um commit por contexto. O usuário pediu tudo de uma vez, para testar jogando. Aplicado e ainda sem jogar: curva de Johto inteira, experiência em 70%, selvagens de Kanto, Depois da Elite com alvos de 54 a 70, treinadores novos, trocas, fósseis, distribuição das capturas, arco pós-Elite com míticos, Rocket e Snorlax.
 
-Falta decidir ou aplicar: treinadores de ginásio, Rival e Equipe Rocket; treinadores novos nos locais vazios; alvos de Kanto, com a sugestão de 54 a 70 por causa do Lance no 56; Depois da Elite no projeto. Times de rebatalha por telefone não mudaram e podem ficar abaixo da primeira luta.
+Escolhas feitas sem aprovação, para rever jogando: posições dos NPCs, sorteadas pela planta em áreas abertas; piso 40 no × 1,3; falas e times dos treinadores novos; pedidos da cadeia de missões. Bancos de texto cheios deixam alguns lendários sem fala, só com o grito.
+
+Falta: cara nova, evolução paga (parada por decisão), Snorlax que realmente bloqueiem caminho, e novas histórias com cena, que pedem o editor de scripts. Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
 ### Mais conteúdo pedido (01/11/2026)
 
