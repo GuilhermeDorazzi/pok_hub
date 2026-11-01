@@ -492,6 +492,8 @@ Terceira história, depois do Red: a vitória no Mt. Silver passou a gravar uma 
 
 Gramas de Johto com mais espécies: as 6 vagas comuns ficam iguais, e nas 6 raras entram espécies do ambiente, com diferença de manhã e à noite nas rotas. A média foi de 4,6 para 9,1 espécies por área. A Pokédex agora segue os encontros, com o botão Seguir os encontros do editor de áreas. Rode de novo sempre que mudar os encontros. As cabeçadas agora têm grupos por região e nível da área, e o Rock Smash vale em todo mapa com pedra e tabela de encontros (`T03` e `D45R0102` têm pedras, mas não têm tabela). A Safari fica como está, e os Pokémon parados no mapa não aparecem na Pokédex.
 
+Treinadores comuns mais variados: a segunda cópia de uma espécie virou outra da mesma classe, 40% dos times com 2 ou mais levaram um Pokémon pouco visto ou um fóssil, e Ace Trainer ganhou dragão. Quantidade de Pokémon e níveis não mudaram, e a história ficou de fora. Itens de cura vão pelo nível do time: Potion até 14, Super até 29, Hyper até 44, Max até 59 e Full Restore acima. Dragon Rage até o nível 40 e Sonic Boom até o nível 20 saíram de todos os treinadores.
+
 Falta: paletas e música da cara nova e evolução paga (parada por decisão). Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
 ### Mais conteúdo pedido (01/11/2026)
