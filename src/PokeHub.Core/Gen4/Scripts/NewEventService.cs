@@ -164,7 +164,10 @@ public static class NewEventService
             if (slot / originalSlots % 2 == 0) yield return slot;
     }
 
-    /// <summary>Vagas de troca que nenhum script carrega: primeiro as originais sem uso, depois as novas. Usar uma delas não afeta nenhum NPC do jogo.</summary>
+    /// <summary>Shuckie e Kenya: não passam por LoadNPCTrade, e sim por GiveLoanMon e por números fixos no código do jogo (NPC_TRADE_SHUCKIE_SHUCKLE, NPC_TRADE_KENYA_SPEAROW).</summary>
+    private static readonly long[] HgssLoanedTradeSlots = [6, 7];
+
+    /// <summary>Vagas de troca que o jogo não usa: primeiro as originais sem uso, depois as novas. Usar uma delas não afeta nenhum NPC do jogo.</summary>
     public static List<int> FreeTradeSlots(Gen4Game game)
     {
         var used = new HashSet<long>();
@@ -178,6 +181,7 @@ public static class NewEventService
                     if (i.Name == load) used.Add(i.Args[0].Value);
         }
         int original = game.IsPlatinum ? PlatinumTradeSlots : TradeSlots;
+        if (!game.IsPlatinum) used.UnionWith(HgssLoanedTradeSlots);
         return Enumerable.Range(0, original).Concat(ExtraTradeSlots(original)).Where(slot => !used.Contains(slot)).ToList();
     }
 

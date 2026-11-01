@@ -66,7 +66,30 @@ public sealed class WorkspaceService(RuntimeManager runtimes)
             default:
                 throw new InvalidOperationException(Loc.T("core.ws.notExtracted"));
         }
+        CarrySave(output, log);
         return output;
+    }
+
+    /// <summary>
+    /// Cada ROM tem nome próprio, e o emulador procura o save com o nome da ROM: sem isto, o jogo abriria como novo a cada empacotamento.
+    /// Copia o save mais recente da pasta, sem substituir nada. Se não der para copiar, a ROM vale do mesmo jeito e o log avisa.
+    /// </summary>
+    public static void CarrySave(string rom, IProgress<string> log)
+    {
+        var folder = Path.GetDirectoryName(rom)!;
+        var target = Path.ChangeExtension(rom, ".sav");
+        if (File.Exists(target)) return;
+        var latest = new DirectoryInfo(folder).GetFiles("*.sav").Where(f => f.Length > 0).OrderByDescending(f => f.LastWriteTimeUtc).ThenByDescending(f => f.Name, StringComparer.Ordinal).FirstOrDefault();
+        if (latest is null) return;
+        try
+        {
+            File.Copy(latest.FullName, target);
+            log.Report(Loc.T("core.ws.saveCarried", latest.Name));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            log.Report(Loc.T("core.ws.saveCarryFailed", latest.Name, ex.Message));
+        }
     }
 
     private async Task<string?> EnsureDsRomAsync(IProgress<string> log, CancellationToken ct)

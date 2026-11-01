@@ -1081,6 +1081,8 @@
  "newev.realMap.tip": "Mostra o mapa como ele é no jogo, visto de cima, em vez da planta. Clicar escolhe o tile do mesmo jeito.",
  "newev.realMap.failed": "Não foi possível desenhar este mapa; a planta continua valendo.",
  "ev.realMap.tip": "Mostra o mapa como ele é no jogo, visto de cima, em vez da planta. Clique nos marcadores do mesmo jeito.",
+ "core.ws.saveCarried": "Save levado para a ROM nova, a partir de {0}.",
+ "core.ws.saveCarryFailed": "Não foi possível levar o save {0} para a ROM nova: {1}. O jogo pode abrir sem ele; o arquivo original continua na pasta builds.",
  "feature.newmaps": "Mapas novos",
  "feature.newmaps.text": "Desenhe mapas do zero com tiles, sem modelar em 3D. Para exportar, precisa do g3dcvtr, que não vem junto.",
  "ev.layout.npc": "NPC",

@@ -160,6 +160,8 @@ Fase 2 concluída em 2026-10-30.
 
 31. **Ícones dos cards.** `AppIcons` lê o ícone do .exe instalado da ferramenta vinculada. Sem programa instalado, sem ícone ou em .jar, entra o desenho do hub em `Views/CardIcons.xaml`, feito em vetor com formas simples e sem nada dos arquivos dos jogos.
 
+32. **Save entre ROMs.** Cada empacotamento gera uma ROM com nome novo, e o melonDS procura o `.sav` com esse nome. `WorkspaceService.CarrySave` copia o `.sav` mais recente da pasta builds para a ROM nova, sem substituir nada. O DeSmuME guarda saves em outra pasta e não é coberto.
+
 Publicado em github.com/GuilhermeDorazzi/pok_hub (privado por enquanto).
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)

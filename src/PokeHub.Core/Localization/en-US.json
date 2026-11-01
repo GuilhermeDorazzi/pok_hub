@@ -1081,6 +1081,8 @@
  "newev.realMap.tip": "Shows the map as it is in the game, seen from above, instead of the plan. Clicking picks a tile the same way.",
  "newev.realMap.failed": "This map could not be drawn; the plan still works.",
  "ev.realMap.tip": "Shows the map as it is in the game, seen from above, instead of the plan. Click the markers the same way.",
+ "core.ws.saveCarried": "Save carried to the new ROM, from {0}.",
+ "core.ws.saveCarryFailed": "Could not carry save {0} to the new ROM: {1}. The game may open without it; the original file is still in the builds folder.",
  "feature.newmaps": "New maps",
  "feature.newmaps.text": "Draw maps from scratch with tiles, with no 3D modeling. Exporting needs g3dcvtr, which is not included.",
  "ev.layout.npc": "NPC",
