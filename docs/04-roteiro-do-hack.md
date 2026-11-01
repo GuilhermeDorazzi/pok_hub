@@ -494,6 +494,8 @@ Gramas de Johto com mais espécies: as 6 vagas comuns ficam iguais, e nas 6 rara
 
 Treinadores variados pelo tipo da classe: todo time tem pelo menos um Pokémon do tipo principal (pedra para Hiker, dragão para Dragon Tamer), e o resto varia em tipos próximos, por exemplo solo e lutador para Hiker. Fósseis e raros entram só onde o tipo combina. Ace Trainer e Veteran não têm tipo e levam dragão ou inicial. Líderes e Elite mantêm o mais forte e trocam os repetidos e mais um do meio por outros do mesmo tipo. Red, Blue, Silver e o resto da história ficam como estão. Quantidade de Pokémon e níveis não mudaram. Itens de cura vão pelo nível do time: Potion até 14, Super até 29, Hyper até 44, Max até 59 e Full Restore acima. Dragon Rage até o nível 40 e Sonic Boom até o nível 20 saíram de todos os treinadores.
 
+Líderes de área: quem não chama de longe e o jogador vai procurar tem time cheio e com tema, IVs no máximo, frutas, Leftovers e 3 curas. São Leo na Rota 36 (fogo), Koji na Rota 4 (lutador) e Sera na Rota 7 (dragão). Em Kanto, sobem como líderes pelas insígnias, sem a redução das rotas (`AreaLeaders` em `pokehub-post-elite.json`). Os executivos usam agora o sprite deles, e, com Silver e Oak, ficaram mais fortes.
+
 Falta: paletas e música da cara nova e evolução paga (parada por decisão). Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
 ### Mais conteúdo pedido (01/11/2026)

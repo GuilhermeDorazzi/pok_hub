@@ -30,6 +30,8 @@ public sealed class PostEliteSettings
     public bool KantoBadges { get; set; }
     public List<int> KantoTargets { get; set; } = [.. PostEliteService.DefaultKantoTargets];
     public int KantoRouteGap { get; set; } = PostEliteService.DefaultRouteGap;
+    /// <summary>Treinadores que sobem como líderes em Kanto, sem a redução das rotas: chefes de uma área, que o jogador vai procurar.</summary>
+    public List<int> AreaLeaders { get; set; } = [];
 
     public static PostEliteSettings Load(Project p)
     {
@@ -191,6 +193,8 @@ public sealed class PostEliteService(HubPaths hub)
         var kinds = new byte[repo.Trainers.Count];
         foreach (var id in found.Where(id => id > 0 && id < kinds.Length).Except(RematchTeams).Where(id => !LeagueClasses.Any(repo.ClassOf(repo.Trainers[id]).Contains)))
             kinds[id] = repo.ClassOf(repo.Trainers[id]).Contains("Leader", StringComparison.OrdinalIgnoreCase) ? KantoLeader : KantoRoute;
+        foreach (var id in PostEliteSettings.Load(p).AreaLeaders)
+            if (id > 0 && id < kinds.Length && kinds[id] != 0) kinds[id] = KantoLeader;
         return kinds;
     }
 
