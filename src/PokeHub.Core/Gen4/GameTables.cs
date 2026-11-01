@@ -543,10 +543,10 @@ internal sealed class HeadbuttTable : GameTable
     public override void Save() => _store.Save();
 }
 
-/// <summary>Safari do HG/SS: dez vagas por período para grama, surfe e as três varas. Os bônus por objeto vêm depois e não mudam.</summary>
+/// <summary>Safari do HG/SS: dez vagas por período para grama, surfe e as três varas, cada grupo seguido dos bônus liberados pelos objetos. A quantidade de bônus e o que os libera não mudam.</summary>
 internal sealed class SafariTable : GameTable
 {
-    private const int Header = 8, SlotSize = 4, Slots = 10;
+    private const int Header = 8, SlotSize = 4, Slots = 10, UnlockSize = 4;
     private static readonly string[] Methods = ["land", "surf", "oldRod", "goodRod", "superRod"];
     private static readonly string[] Times = ["morning", "day", "night"];
     private readonly NarcStore _store;
@@ -568,13 +568,25 @@ internal sealed class SafariTable : GameTable
     {
         var file = _store.Narc.Files[owner];
         var rows = new List<TableRow>();
+        int start = Header;
         for (int m = 0; m < Methods.Length; m++)
+        {
+            int bonus = file[m];
             for (int t = 0; t < Times.Length; t++)
                 for (int i = 0; i < Slots; i++)
                 {
-                    int at = Header + (m * Times.Length * Slots + t * Slots + i) * SlotSize;
+                    int at = start + (t * Slots + i) * SlotSize;
                     rows.Add(new TableRow($"{Loc.T("tables.safari." + Methods[m])} · {Loc.T("tables.safari." + Times[t])} {i + 1}", [file], [at]));
                 }
+            for (int t = 0; t < Times.Length; t++)
+                for (int i = 0; i < bonus; i++)
+                {
+                    int bonusAt = start + (Times.Length * Slots + t * bonus + i) * SlotSize;
+                    rows.Add(new TableRow($"{Loc.T("tables.safari." + Methods[m])} · {Loc.T("tables.safari." + Times[t])} · {Loc.T("tables.safari.bonus")} {i + 1}", [file], [bonusAt]));
+                }
+            // grupo: base, bônus e as condições, de 4 bytes cada
+            start += (Times.Length * Slots + Times.Length * bonus) * SlotSize + bonus * UnlockSize;
+        }
         return rows;
     }
 

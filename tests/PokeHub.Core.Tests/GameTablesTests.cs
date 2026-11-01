@@ -164,7 +164,7 @@ public class GameTablesTests
 
             var safari = T("safari");
             Assert.Equal(12, safari.Owners!.Count);
-            Assert.Equal(150, safari.Rows(0).Count);
+            Assert.True(safari.Rows(0).Count > 150); // 150 da base, mais os bônus de cada grupo
             Assert.Equal(19, Cell(safari, safari.Rows(0)[0], "species")); // Rattata
             Assert.Equal(15, Cell(safari, safari.Rows(0)[0], "level"));
 

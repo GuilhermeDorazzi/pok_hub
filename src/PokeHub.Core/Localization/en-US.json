@@ -1324,6 +1324,7 @@
  "dx.follow.tip": "Rebuilds the areas of every species: morning, day and night from grass, surfing, rods and Rock Smash, and the All block from Headbutt. Places without encounters, such as the Safari, stay as they are. HG/SS only.",
  "dx.beforeFollow": "Before the Pokédex follows the encounters",
  "dx.followDone": "Pokédex updated: {0} new places, {1} removed, across {2} species.",
+ "tables.safari.bonus": "bonus",
  "feature.newmaps": "New maps",
  "feature.newmaps.text": "Draw maps from scratch with tiles, with no 3D modeling. Exporting needs g3dcvtr, which is not included.",
  "ev.layout.npc": "NPC",

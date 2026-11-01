@@ -1324,6 +1324,7 @@
  "dx.follow.tip": "Refaz as áreas de todas as espécies: manhã, dia e noite a partir da grama, do surfe, das varas e do Rock Smash, e o bloco Todos a partir das cabeçadas. Locais sem encontros, como a Safari, ficam como estão. Só no HG/SS.",
  "dx.beforeFollow": "Antes de a Pokédex seguir os encontros",
  "dx.followDone": "Pokédex atualizada: {0} locais novos, {1} removidos, em {2} espécies.",
+ "tables.safari.bonus": "bônus",
  "feature.newmaps": "Mapas novos",
  "feature.newmaps.text": "Desenhe mapas do zero com tiles, sem modelar em 3D. Para exportar, precisa do g3dcvtr, que não vem junto.",
  "ev.layout.npc": "NPC",
