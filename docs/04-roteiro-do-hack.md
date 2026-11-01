@@ -488,7 +488,9 @@ Primeira história com cena, feita com o tipo Cena do Novo evento: os quatro exe
 
 Segunda história: Silver na Rota 22, onde a cena dele com o Giovanni acontece. Ele só luta depois do evento em Tohjo Falls, pela `FLAG_UNK_178`. No original, ela só era gravada quando o jogador perdia para o Giovanni e nada mais a lê, então o script do evento (`D45R0102`) passou a gravá-la também na vitória. Ele tem o inicial que vence o do jogador, como nas batalhas do jogo: a ação de batalha da Cena aceita um treinador por inicial. Níveis fixos, de 66 a 70.
 
-Falta: paletas e música da cara nova, evolução paga (parada por decisão) e o fim depois do Red. Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
+Terceira história, depois do Red: a vitória no Mt. Silver passou a gravar uma flag própria. Em Pallet, uma ajudante do Oak conta que ele voltou para casa e entrega uma Master Ball com 50000. No laboratório, o Oak do próprio jogo pede uma batalha, uma vez, de nível 80 a 86, e depois volta ao que fazia. Ele usa a classe Scientist, porque o jogo não tem classe de professor com time. Com isso, o esqueleto do arco pós-Elite está completo; falta jogar.
+
+Falta: paletas e música da cara nova e evolução paga (parada por decisão). Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
 ### Mais conteúdo pedido (01/11/2026)
 
