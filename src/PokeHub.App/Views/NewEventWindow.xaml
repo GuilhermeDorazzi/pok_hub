@@ -157,6 +157,7 @@
                     <CheckBox Content="{loc:T newev.quest.take}" IsChecked="{Binding QuestTakeItem}" Margin="0,0,0,6" Visibility="{Binding QuestAsksItem, Converter={StaticResource BoolToVis}}" />
                     <RadioButton Content="{loc:T newev.quest.askMon}" IsChecked="{Binding QuestAsksPokemon, Mode=OneWay}" GroupName="QuestAsk" Click="QuestAskMon_Click" Margin="0,0,0,4" />
                     <ComboBox ItemTemplate="{StaticResource ChoiceWithIcon}" ItemsPanel="{StaticResource LongListPanel}" TextSearch.TextPath="Label" ItemsSource="{Binding AllSpecies}" SelectedItem="{Binding QuestAskSpecies}" Margin="0,0,0,8" Visibility="{Binding QuestAsksPokemon, Converter={StaticResource BoolToVis}}" />
+                    <RadioButton Content="{loc:T newev.quest.askNothing}" IsChecked="{Binding QuestAsksNothing}" GroupName="QuestAsk" Margin="0,0,0,8" />
                     <TextBlock Text="{loc:T newev.quest.reward}" FontWeight="SemiBold" Margin="0,4,0,4" />
                     <RadioButton Content="{loc:T newev.quest.rewardItem}" IsChecked="{Binding RewardIsItem}" GroupName="QuestReward" Margin="0,0,0,4" />
                     <DockPanel Margin="0,0,0,6" Visibility="{Binding RewardIsItem, Converter={StaticResource BoolToVis}}">
@@ -172,8 +173,8 @@
                     <TextBox Text="{Binding RewardMoney}" Width="90" HorizontalAlignment="Left" Margin="0,0,0,8" Visibility="{Binding RewardIsMoney, Converter={StaticResource BoolToVis}}" />
                     <TextBlock Text="{loc:T newev.quest.askText}" Margin="0,0,0,4" />
                     <TextBox Text="{Binding QuestAskText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
-                    <TextBlock Text="{loc:T newev.quest.notYetText}" Margin="0,0,0,4" />
-                    <TextBox Text="{Binding QuestNotYetText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.quest.notYetText}" Margin="0,0,0,4" Visibility="{Binding QuestAsksSomething, Converter={StaticResource BoolToVis}}" />
+                    <TextBox Text="{Binding QuestNotYetText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" Visibility="{Binding QuestAsksSomething, Converter={StaticResource BoolToVis}}" />
                     <TextBlock Text="{loc:T newev.quest.rewardText}" Margin="0,0,0,4" />
                     <TextBox Text="{Binding QuestRewardText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
                     <TextBlock Text="{loc:T newev.quest.doneText}" Margin="0,0,0,4" />
@@ -248,6 +249,10 @@
                         <DockPanel Margin="0,0,0,6">
                             <TextBlock Text="{loc:T newev.cond.minBadges}" VerticalAlignment="Center" Margin="0,0,8,0" />
                             <TextBox Text="{Binding CondMinBadges}" Width="44" HorizontalAlignment="Left" />
+                        </DockPanel>
+                        <DockPanel Margin="0,0,0,6">
+                            <TextBlock Text="{loc:T newev.cond.maxLevel}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBox Text="{Binding CondMaxLevel}" Width="44" HorizontalAlignment="Left" ToolTip="{loc:T newev.cond.maxLevelTip}" />
                         </DockPanel>
                         <DockPanel Margin="0,0,0,6">
                             <TextBlock Text="{loc:T newev.cond.badge}" VerticalAlignment="Center" Margin="0,0,8,0" />

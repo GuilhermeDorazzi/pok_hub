@@ -38,6 +38,21 @@
         </GroupBox>
 
         <GroupBox Padding="8" Margin="0,0,0,10">
+            <GroupBox.Header><CheckBox Content="{loc:T postElite.kanto}" IsChecked="{Binding KantoBadges}" IsEnabled="{Binding CanScaleLevels}" FontWeight="Bold" /></GroupBox.Header>
+            <StackPanel IsEnabled="{Binding KantoBadges}">
+                <TextBlock Text="{loc:T postElite.kanto.hint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,6" />
+                <DockPanel Margin="0,0,0,6">
+                    <TextBlock Text="{loc:T postElite.kanto.targets}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBox Text="{Binding KantoTargets, UpdateSourceTrigger=PropertyChanged}" ToolTip="{loc:T postElite.kanto.targetsTip}" />
+                </DockPanel>
+                <WrapPanel>
+                    <TextBlock Text="{loc:T postElite.kanto.gap}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBox Width="50" Text="{Binding KantoRouteGap}" />
+                </WrapPanel>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Padding="8" Margin="0,0,0,10">
             <GroupBox.Header><CheckBox Content="{loc:T postElite.ilex}" IsChecked="{Binding OpenIlexShrine}" FontWeight="Bold" /></GroupBox.Header>
             <TextBlock Text="{loc:T postElite.ilex.hint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" />
         </GroupBox>

@@ -37,7 +37,7 @@ public sealed record TrainerBehavior(int Trainer, string ChallengeText, string B
     TrainerRematch Rematch = TrainerRematch.None, int? RematchTrainer = null, string? RematchText = null) : NpcBehavior;
 
 /// <summary>O que precisa ser verdade para o NPC fazer o que faz. Sem isso, ele só diz o Text. Vale tudo o que estiver preenchido, ao mesmo tempo.</summary>
-public sealed record NpcCondition(string Text, bool AfterElite = false, int MinBadges = 0, int? Badge = null, int? AfterFlag = null);
+public sealed record NpcCondition(string Text, bool AfterElite = false, int MinBadges = 0, int? Badge = null, int? AfterFlag = null, int MaxPartyLevel = 0);
 
 /// <summary>Como o NPC se move. Os códigos são MOVEMENT_TYPE nas decomps; andar usa um alcance em tiles a partir da posição dele.</summary>
 public enum NpcMovement { Fixed, LookAround, Wander, UpDown, LeftRight }
@@ -261,6 +261,9 @@ public static class NewEventService
         if (c.AfterElite) s.Emit("CheckFlag", GameClearFlag).Emit("GoToIf", ConditionLess, "locked");
         if (c.AfterFlag is { } after) s.Emit("CheckFlag", after).Emit("GoToIf", ConditionLess, "locked");
         if (c.Badge is { } badge) s.Emit("CheckBadge", badge, ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "locked");
+        if (c.MaxPartyLevel > 0)
+            s.Emit("PartyCountNotEgg", SpecialVar1).Emit("PartyCountMonsAtOrBelowLevel", ResultVar, c.MaxPartyLevel)
+                .Emit("CompareVarToVar", ResultVar, SpecialVar1).Emit("GoToIf", ConditionLess, "locked");
         if (c.MinBadges > 0) s.Emit("CountBadges", ResultVar).Emit("CompareVarToValue", ResultVar, c.MinBadges).Emit("GoToIf", ConditionLess, "locked");
     }
 
@@ -278,9 +281,10 @@ public static class NewEventService
     private static void BuildQuest(ScriptBuilder s, QuestBehavior q, IReadOnlyList<int> m, int flag)
     {
         s.Emit("CheckFlag", flag).Emit("GoToIf", ConditionEqual, "done");
+        // sem pedido, é um presente: não há o que conferir antes da fala
         if (q.AskItem is { } item) s.Emit("HasItem", item, q.AskQuantity, ResultVar);
-        else s.Emit("PlayerHasSpecies", ResultVar, q.AskSpecies!.Value);
-        s.Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "notYet");
+        else if (q.AskSpecies is { } asked) s.Emit("PlayerHasSpecies", ResultVar, asked);
+        if (q.AskItem is not null || q.AskSpecies is not null) s.Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "notYet");
         s.Emit("NPCMsg", m[0]);
         if (q.RewardItem is { } reward)
             s.Emit("SetVar", SpecialVar0, reward).Emit("SetVar", SpecialVar1, q.RewardQuantity)
@@ -743,7 +747,7 @@ public static class NewEventService
         switch (npc.Behavior)
         {
             case QuestBehavior q:
-                if ((q.AskItem is null) == (q.AskSpecies is null)) throw new ArgumentException(Loc.T("core.newev.questAsk"));
+                if (q.AskItem is not null && q.AskSpecies is not null) throw new ArgumentException(Loc.T("core.newev.questAsk"));
                 if (q.AskItem is not null && q.AskQuantity is < 1 or > 99) throw new ArgumentException(Loc.T("core.newev.badQuantity"));
                 if (q.AskSpecies is not null && !Species(q.AskSpecies)) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
                 if (q.RewardItem is null && q.RewardSpecies is null && q.RewardMoney <= 0) throw new ArgumentException(Loc.T("core.newev.questReward"));
@@ -830,6 +834,7 @@ public sealed class CreatedNpc
     public int ConditionMinBadges { get; set; }
     public int? ConditionBadge { get; set; }
     public int? ConditionAfterFlag { get; set; }
+    public int ConditionMaxPartyLevel { get; set; }
     public string? ConditionText { get; set; }
 
     public NpcBehavior ToBehavior() => Kind switch
@@ -845,7 +850,7 @@ public sealed class CreatedNpc
         _ => new TalkBehavior(Texts[0]),
     };
 
-    public NpcCondition? ToCondition() => ConditionText is { Length: > 0 } text ? new NpcCondition(text, ConditionAfterElite, ConditionMinBadges, ConditionBadge, ConditionAfterFlag) : null;
+    public NpcCondition? ToCondition() => ConditionText is { Length: > 0 } text ? new NpcCondition(text, ConditionAfterElite, ConditionMinBadges, ConditionBadge, ConditionAfterFlag, ConditionMaxPartyLevel) : null;
 
     public NewNpc ToNewNpc() => new(MapId, X, Z, SpriteId, Facing, ToBehavior(), Movement, Range, ToCondition());
 
@@ -879,7 +884,7 @@ public sealed class CreatedNpc
         if (npc.Condition is { } condition)
         {
             c.ConditionText = condition.Text; c.ConditionAfterElite = condition.AfterElite; c.ConditionMinBadges = condition.MinBadges;
-            c.ConditionBadge = condition.Badge; c.ConditionAfterFlag = condition.AfterFlag;
+            c.ConditionBadge = condition.Badge; c.ConditionAfterFlag = condition.AfterFlag; c.ConditionMaxPartyLevel = condition.MaxPartyLevel;
         }
         return c;
     }

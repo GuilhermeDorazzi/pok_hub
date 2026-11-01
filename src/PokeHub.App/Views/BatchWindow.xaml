@@ -59,6 +59,10 @@
                                 <DataTemplate><CheckBox Content="{Binding Name}" IsChecked="{Binding IsOn}" Width="160" Margin="0,0,0,2" /></DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <DockPanel Margin="0,4,0,4">
+                            <TextBox DockPanel.Dock="Right" Width="52" Text="{Binding TrainerDifficulty}" IsEnabled="{Binding SetDifficulty}" />
+                            <CheckBox Content="{loc:T batch.difficulty}" ToolTip="{loc:T batch.difficultyTip}" IsChecked="{Binding SetDifficulty}" VerticalAlignment="Center" />
+                        </DockPanel>
                         <CheckBox Content="{loc:T batch.battleItems}" IsChecked="{Binding SetBattleItems}" Margin="0,4,0,4" ToolTip="{loc:T batch.battleItemsTip}" />
                         <UniformGrid Columns="2" IsEnabled="{Binding SetBattleItems}" Margin="16,0,0,4">
                             <ComboBox ItemsSource="{Binding Items}" SelectedItem="{Binding BattleItem1}" DisplayMemberPath="Name" Margin="0,0,4,4" />
@@ -101,6 +105,13 @@
                             <TextBlock Grid.Column="1" Text="→" Margin="8,0" VerticalAlignment="Center" />
                             <views:SpeciesPicker Grid.Column="2" Catalog="{Binding Catalog}" SelectedSpecies="{Binding EncounterTo}" HideEmpty="True" />
                         </Grid>
+                        <CheckBox Content="{loc:T batch.rarity}" ToolTip="{loc:T batch.rarityTip}" IsChecked="{Binding UseRarityRange}" Margin="0,10,0,4" />
+                        <WrapPanel IsEnabled="{Binding UseRarityRange}" Margin="16,0,0,0">
+                            <TextBlock Text="{loc:T batch.rarityFloor}" Style="{StaticResource Lbl}" />
+                            <TextBox Width="44" Text="{Binding RarityFloor}" Margin="0,0,12,4" />
+                            <TextBlock Text="{loc:T batch.rarityCeiling}" Style="{StaticResource Lbl}" />
+                            <TextBox Width="44" Text="{Binding RarityCeiling}" Margin="0,0,0,4" />
+                        </WrapPanel>
                         <TextBlock Text="{loc:T batch.levels}" FontWeight="SemiBold" Margin="0,10,0,4" />
                         <WrapPanel>
                             <TextBlock Text="{loc:T batch.percent}" Style="{StaticResource Lbl}" />
@@ -118,6 +129,14 @@
                             <TextBlock Text="{loc:T batch.evolveOtherAt}" Style="{StaticResource Lbl}" />
                         </DockPanel>
                     </StackPanel>
+                </GroupBox>
+
+                <GroupBox Padding="8" Margin="0,10,0,0">
+                    <GroupBox.Header><CheckBox Content="{loc:T batch.species}" IsChecked="{Binding SpeciesEnabled}" FontWeight="Bold" /></GroupBox.Header>
+                    <DockPanel IsEnabled="{Binding SpeciesEnabled}">
+                        <TextBox DockPanel.Dock="Right" Width="60" Text="{Binding ExpPercent}" />
+                        <TextBlock Text="{loc:T batch.expPercent}" ToolTip="{loc:T batch.expPercentTip}" Style="{StaticResource Lbl}" />
+                    </DockPanel>
                 </GroupBox>
             </StackPanel>
         </ScrollViewer>

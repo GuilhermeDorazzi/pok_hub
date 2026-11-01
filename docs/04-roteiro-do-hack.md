@@ -417,7 +417,6 @@ Registradas em 01/11/2026. **Valem para o jogo oficial, que ainda não será fei
 **Ainda em aberto:**
 
 - **Evolução paga:** parada por decisão do usuário, inclusive o plano B e o preço.
-- **Curva de Kanto:** a pensar depois.
 
 **Interpretações a confirmar quando o jogo oficial começar:**
 
@@ -430,9 +429,9 @@ Registradas em 01/11/2026. **Valem para o jogo oficial, que ainda não será fei
 |---|---|---|
 | Filtro por área no lote de encontros | Pronta | Região e lugares, nas Operações em lote. Serve para Johto e, depois, Kanto |
 | Trocar espécie por evoluída ao subir nível | Pronta | Treinadores e encontros. Pedra, amizade e troca entram num nível à escolha |
-| Gatilho pós-Elite: liberar treinadores | Falta | Decomp: `ClearTrainerFlag` aceita variável, então um laço de script parece possível. Não testado. Falta localizar o ponto certo do fim da Elite: as seis primeiras ocorrências de `FLAG_GAME_CLEAR` que consultei só conferem a flag |
-| Gatilho pós-Elite: níveis × 1,3 | Falta | Os times são dados fixos, e nenhum comando de script conhecido os muda em jogo. O caminho provável é injeção em `CreateNPCTrainerParty` (`trainer_data.c`), o que pede ds-rom. Um projeto novo em ds-rom atende |
-| Destrancar o evento do Giovanni | Falta como ferramenta | O editor de scripts já permite a edição à mão. A troca da checagem não foi testada |
+| Gatilho pós-Elite: liberar treinadores | Pronta | Card Depois da Elite: script chamado antes de `HOFCredits 0` em `T10R0701`. Testado com o fim da Elite simulado; falta o comando real no Hall da Fama |
+| Gatilho pós-Elite: níveis × 1,3 | Pronta | Card Depois da Elite: gancho na leitura do time, só SoulSilver US em ds-rom. Testado no jogo com o fim da Elite simulado |
+| Destrancar o evento do Giovanni | Pronta | Card Depois da Elite: o santuário confere só a espécie. Testado no jogo |
 | Fala de pista no NPC com condição | Pode já bastar | O modelo tem fala de condição não atendida. Falta só o texto |
 | Vendedor de oferta única ou repetida | Pronta | `SellBehavior.Once` |
 
@@ -443,6 +442,36 @@ Registradas em 01/11/2026. **Valem para o jogo oficial, que ainda não será fei
 - Treinadores do início de Johto continuam fracos: nível 15 vira 20, com o jogador perto de 50. Um piso de nível pode ser necessário para o "crescimento" valer em todo lugar.
 
 **Testes:** como o jogo oficial nasce em projeto novo, que o hub cria em ds-rom quando o ds-rom está disponível, as ferramentas precisam ser validadas também em ds-rom (`Teste SS`), e não só no `Pokemon SS`.
+
+### Plano de progressão (decidido em 01/11/2026)
+
+**Direção:** Johto muito difícil, experiência mais lenta e Kanto como recomeço por escolha do jogador. O jogo não obriga nada: os desafios opcionais dão prêmios. Voltar o nível dos Pokémon e travar a evolução final em Kanto ficaram de fora.
+
+**Johto:**
+
+- Líderes com IA competitiva, itens de batalha e times mais fortes.
+- Treinadores de rota mais fortes, com IVs altos, e selvagens subindo junto. Vale o que já foi decidido para os selvagens de Johto.
+
+**Kanto:**
+
+- Selvagens com faixa variada, de 2 a 60: comuns fracos, raros fortes. O teto sobe de lugar para lugar, de cerca de 45 no começo até 60 ou mais no fim. O nível de 60 no começo da região fica nos espaços de 1%.
+- Todos os treinadores de Kanto escalam pelas insígnias de Kanto, com um nível-alvo por insígnia e mantendo a diferença interna de cada time. Treinadores de rota ficam cerca de 5 níveis abaixo do líder. Times de rebatalha ficam de fora.
+- Nível-alvo inicial do Pokémon mais forte do líder, com 0 a 7 insígnias: 45, 48, 50, 53, 55, 57, 59 e 62. São um ponto de partida para ajustar jogando.
+- Incentivos ao time novo: inicial de Kanto oferecido na chegada, capturas de nível útil, espécies que não existem em Johto, missões da região e um ginásio opcional com limite de nível e prêmio.
+
+**Experiência:** começar com a experiência base das espécies perto de 70%. Se treinar um time novo em Kanto ficar lento demais, fazer os Pokémon abaixo do nível do adversário ganharem mais, o que pede injeção e pesquisa nova.
+
+**Riscos a medir jogando:** experiência lenta contra time novo; Johto muito difícil obrigar a treinar demais; captura de nível 60 facilitar a chegada a Kanto.
+
+| Ferramenta | Situação | O que se sabe |
+|---|---|---|
+| Faixa de nível por raridade, por lugar | Pronta e testada no jogo | Operações em lote: piso e teto, junto com região e lugares |
+| Experiência base em lote | Pronta e testada no jogo | Operações em lote, grupo Espécies |
+| IVs em lote nos treinadores | Pronta, só com testes automáticos | Operações em lote: dificuldade de 0 a 255. O jogo não mostra os IVs do adversário |
+| Dar Pokémon sem pedir nada, no Novo evento | Pronta e testada no jogo | Missão com "Nada: é um presente" |
+| Condição de nível máximo do time | Pronta e testada no jogo | Condições do Novo evento, com `PartyCountMonsAtOrBelowLevel` |
+| Níveis por insígnia em Kanto | Pronta e testada no jogo | Card Depois da Elite. A lista de quem é de Kanto sai dos mapas de região 1: 192 de rota e 8 líderes na base, incluindo Giovanni como rota. Esses treinadores ficam fora do × 1,3, porque Kanto só se alcança depois da Elite. Com 8 insígnias, o alvo é 65 |
+| Experiência maior para quem está atrás | Não feita | Só se precisar. Pesquisa nova |
 
 ### O que foi confirmado
 

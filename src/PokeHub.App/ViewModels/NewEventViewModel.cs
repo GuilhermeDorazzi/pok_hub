@@ -80,6 +80,8 @@ public sealed partial class NewEventViewModel : ObservableObject
     [ObservableProperty] private bool _isTrainer;
     // missão
     [ObservableProperty] private bool _questAsksItem = true;
+    [ObservableProperty] private bool _questAsksNothing;
+    [ObservableProperty] private string _condMaxLevel = "0";
     [ObservableProperty] private NewEventChoice? _questAskItem;
     [ObservableProperty] private string _questAskQuantity = "1";
     [ObservableProperty] private bool _questTakeItem = true;
@@ -166,7 +168,8 @@ public sealed partial class NewEventViewModel : ObservableObject
     public ObservableCollection<NewEventChoice> FinishedNpcs { get; } = [];
     public bool UsesScriptTexts => !(IsTrainer && TrainerSighted);
     public bool UsesRematchText => RematchMode?.Value is (int)TrainerRematch.Always or (int)TrainerRematch.AfterElite;
-    public bool QuestAsksPokemon => !QuestAsksItem;
+    public bool QuestAsksPokemon => !QuestAsksItem && !QuestAsksNothing;
+    public bool QuestAsksSomething => !QuestAsksNothing;
     public IReadOnlyList<NewEventChoice> Species { get; }
     public IReadOnlyList<NewEventChoice> AllSpecies { get; }
     public bool UsesSpriteList => !IsPokemon;
@@ -227,6 +230,11 @@ public sealed partial class NewEventViewModel : ObservableObject
     partial void OnTrainerSightedChanged(bool value) => OnPropertyChanged(nameof(UsesScriptTexts));
     partial void OnRematchModeChanged(NewEventChoice? value) => OnPropertyChanged(nameof(UsesRematchText));
     partial void OnQuestAsksItemChanged(bool value) => OnPropertyChanged(nameof(QuestAsksPokemon));
+    partial void OnQuestAsksNothingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(QuestAsksPokemon));
+        OnPropertyChanged(nameof(QuestAsksSomething));
+    }
     partial void OnSelectedMovementChanged(NewEventChoice? value)
     {
         OnPropertyChanged(nameof(UsesFacing));
@@ -321,6 +329,7 @@ public sealed partial class NewEventViewModel : ObservableObject
         IsTrainer = npc.Kind == "trainer";
         CondAfterElite = npc.ConditionAfterElite;
         CondMinBadges = npc.ConditionMinBadges.ToString();
+        CondMaxLevel = npc.ConditionMaxPartyLevel.ToString();
         CondBadge = Badges.FirstOrDefault(b => b.Value == (npc.ConditionBadge ?? -1)) ?? Badges[0];
         CondAfterNpc = FinishedNpcs.FirstOrDefault(f => f.Value == (npc.ConditionAfterFlag ?? 0)) ?? FinishedNpcs[0];
         CondText = Unwrap(npc.ConditionText ?? "");
@@ -352,6 +361,7 @@ public sealed partial class NewEventViewModel : ObservableObject
                 break;
             case QuestBehavior q:
                 QuestAsksItem = q.AskItem is not null;
+                QuestAsksNothing = q.AskItem is null && q.AskSpecies is null;
                 if (q.AskItem is { } askItem) QuestAskItem = Items.FirstOrDefault(c => c.Value == askItem) ?? QuestAskItem;
                 if (q.AskSpecies is { } askSpecies) QuestAskSpecies = AllSpecies.FirstOrDefault(c => c.Value == askSpecies) ?? QuestAskSpecies;
                 QuestAskQuantity = Math.Max(1, q.AskQuantity).ToString();
@@ -435,6 +445,7 @@ public sealed partial class NewEventViewModel : ObservableObject
         CondText = "";
         CondAfterElite = false;
         CondMinBadges = "0";
+        CondMaxLevel = "0";
         CondBadge = Badges[0];
         CondAfterNpc = FinishedNpcs.FirstOrDefault();
     }
@@ -445,13 +456,14 @@ public sealed partial class NewEventViewModel : ObservableObject
         int badges = int.TryParse(CondMinBadges, out var n) ? n : 0;
         int? badge = CondBadge is { Value: >= 0 } b ? b.Value : null;
         int? flag = CondAfterNpc is { Value: > 0 } f ? f.Value : null;
-        return !CondAfterElite && badges == 0 && badge is null && flag is null ? null : new NpcCondition(Prepare(CondText), CondAfterElite, badges, badge, flag);
+        int maxLevel = int.TryParse(CondMaxLevel, out var m) ? m : 0;
+        return !CondAfterElite && badges == 0 && badge is null && flag is null && maxLevel == 0 ? null : new NpcCondition(Prepare(CondText), CondAfterElite, badges, badge, flag, maxLevel);
     }
 
     private static bool Filled(params string[] texts) => texts.All(t => !string.IsNullOrWhiteSpace(t));
 
     private NpcBehavior BuildQuest() => new QuestBehavior(
-        QuestAsksItem ? QuestAskItem?.Value : null, int.Parse(QuestAskQuantity), QuestTakeItem, QuestAsksItem ? null : QuestAskSpecies?.Value,
+        QuestAsksItem ? QuestAskItem?.Value : null, int.Parse(QuestAskQuantity), QuestTakeItem, QuestAsksPokemon ? QuestAskSpecies?.Value : null,
         RewardIsItem ? RewardItem?.Value : null, int.Parse(RewardQuantity), RewardIsPokemon ? RewardSpecies?.Value : null, int.Parse(RewardLevel), RewardIsMoney ? int.Parse(RewardMoney) : 0,
         Prepare(QuestAskText), Prepare(QuestNotYetText), Prepare(QuestRewardText), Prepare(QuestDoneText), Prepare(QuestFullText));
 
@@ -494,7 +506,7 @@ public sealed partial class NewEventViewModel : ObservableObject
         if (IsPokemon && (SelectedSpecies is null || !int.TryParse(Level, out _))) { Status = Loc.T("core.newev.badLevel"); return; }
         if (IsTrade && (AskSpecies is null || GiveSpecies is null)) { Status = Loc.T("core.newev.badSpecies"); return; }
         if (IsTrade && (string.IsNullOrWhiteSpace(AskText) || string.IsNullOrWhiteSpace(ThanksText) || string.IsNullOrWhiteSpace(WrongText) || string.IsNullOrWhiteSpace(DeclineText))) { Status = Loc.T("newev.needText"); return; }
-        if (IsQuest && !Filled(QuestAskText, QuestNotYetText, QuestRewardText, QuestDoneText, QuestFullText)) { Status = Loc.T("newev.needText"); return; }
+        if (IsQuest && (!Filled(QuestAskText, QuestRewardText, QuestDoneText, QuestFullText) || (QuestAsksSomething && !Filled(QuestNotYetText)))) { Status = Loc.T("newev.needText"); return; }
         if (IsQuest && !(int.TryParse(QuestAskQuantity, out _) && int.TryParse(RewardQuantity, out _))) { Status = Loc.T("core.newev.badQuantity"); return; }
         if (IsQuest && !int.TryParse(RewardLevel, out _)) { Status = Loc.T("core.newev.badLevel"); return; }
         if (IsQuest && !int.TryParse(RewardMoney, out _)) { Status = Loc.T("core.newev.badMoney", 999999); return; }
@@ -505,6 +517,7 @@ public sealed partial class NewEventViewModel : ObservableObject
         if (IsTrainer && TrainerSighted && !int.TryParse(TrainerSight, out _)) { Status = Loc.T("core.newev.badSight", 15); return; }
         if (IsTrainer && !TrainerSighted && !Filled(TrainerChallengeText, TrainerBeatenText, TrainerAfterText)) { Status = Loc.T("newev.needText"); return; }
         if (!int.TryParse(CondMinBadges, out _)) { Status = Loc.T("core.newev.badBadges", 16); return; }
+        if (!int.TryParse(CondMaxLevel, out var condLevel) || condLevel is < 0 or > 100) { Status = Loc.T("core.newev.badLevel"); return; }
         int range = 1;
         if (UsesRange && !int.TryParse(Range, out range)) { Status = Loc.T("core.newev.badRange", 8); return; }
 

@@ -27,6 +27,9 @@ public sealed class PostEliteSettings
     public int LevelPercent { get; set; } = 130;
     public int LevelFloor { get; set; }
     public List<int> LevelSkip { get; set; } = [];
+    public bool KantoBadges { get; set; }
+    public List<int> KantoTargets { get; set; } = [.. PostEliteService.DefaultKantoTargets];
+    public int KantoRouteGap { get; set; } = PostEliteService.DefaultRouteGap;
 
     public static PostEliteSettings Load(Project p)
     {
@@ -44,7 +47,13 @@ public sealed class PostEliteSettings
 public sealed class PostEliteService(HubPaths hub)
 {
     public const string PatchName = "post-elite-levels";
-    public const int MinPercent = 100, MaxPercent = 300;
+    public const int MinPercent = 100, MaxPercent = 300, DefaultRouteGap = 5, KantoBadgeSteps = 9;
+    /// <summary>Nível do Pokémon mais forte do líder, com 0 a 8 insígnias de Kanto. Ponto de partida, para ajustar jogando.</summary>
+    public static readonly IReadOnlyList<int> DefaultKantoTargets = [45, 48, 50, 53, 55, 57, 59, 62, 65];
+    // times de rebatalha do jogo: já têm o nível próprio
+    private static readonly int[] RematchTeams = [.. Enumerable.Range(489, 3), .. Enumerable.Range(672, 3), .. Enumerable.Range(701, 5), .. Enumerable.Range(712, 16)];
+    private const byte KantoRoute = 1, KantoLeader = 2;
+    private const int VarBase = 0x4000, StandardTrainer = 3000, DoubleTrainer = 5000, LastSightScript = 7000;
     private const string EliteMap = "T10R0701", SupportedGame = "IPGE";
     private const int EliteCredits = 0;
     private const string IlexMap = "D36R0101";
@@ -150,10 +159,47 @@ public sealed class PostEliteService(HubPaths hub)
         settings.Save(p);
     }
 
-    /// <summary>O código do gancho. Sem biblioteca C, a divisão por 100 é uma multiplicação: 5243 / 2^19.</summary>
-    public static string BuildLevelSource(int percent, int floor, IReadOnlyCollection<int> skip)
+    /// <summary>
+    /// Quem luta em Kanto, pelos mapas de região 1: treinadores com visão nos objetos e batalhas nos scripts. Líder é quem tem classe de líder.
+    /// Devolve um valor por treinador: 0 fora de Kanto, 1 rota, 2 líder.
+    /// </summary>
+    public static byte[] KantoTrainers(Project p)
+    {
+        var game = Gen4Game.For(p);
+        var repo = TrainerRepository.Load(p);
+        var events = Narc.Read(File.ReadAllBytes(game.EventsPath));
+        var archive = ScriptArchive.Load(p);
+        var found = new HashSet<int>();
+        var files = new HashSet<int>();
+        foreach (var header in MapHeaders.Load(game).Where(h => h.Region == 1))
+        {
+            if (header.EventsBank >= 0 && header.EventsBank < events.Files.Count)
+                foreach (var o in new EventFile(events.Files[header.EventsBank]).Objects)
+                {
+                    if (o.ScriptId >= DoubleTrainer) found.Add(o.ScriptId - DoubleTrainer + 1);
+                    else if (o.ScriptId >= StandardTrainer && o.ScriptId < LastSightScript) found.Add(o.ScriptId - StandardTrainer + 1);
+                }
+            if (header.ScriptsBank >= 0) files.Add(header.ScriptsBank);
+        }
+        foreach (var file in files)
+            foreach (var i in archive.Open(file).Instructions())
+                if (i.Name == "TrainerBattle" && i.Args[0].Value is > 0 and < VarBase) found.Add((int)i.Args[0].Value);
+
+        var kinds = new byte[repo.Trainers.Count];
+        foreach (var id in found.Where(id => id > 0 && id < kinds.Length).Except(RematchTeams))
+            kinds[id] = repo.ClassOf(repo.Trainers[id]).Contains("Leader", StringComparison.OrdinalIgnoreCase) ? KantoLeader : KantoRoute;
+        return kinds;
+    }
+
+    /// <summary>
+    /// O código do gancho. Treinador de Kanto recebe o nível pelas insígnias, mantendo a diferença interna do time; os outros, o multiplicador
+    /// depois do fim do jogo. Kanto só se alcança depois da Elite, então os dois juntos acumulariam. Sem biblioteca C, a divisão por 100 é uma multiplicação: 5243 / 2^19.
+    /// </summary>
+    public static string BuildLevelSource(int percent, int floor, IReadOnlyCollection<int> skip, byte[]? kanto = null, IReadOnlyList<int>? targets = null, int routeGap = DefaultRouteGap)
     {
         var list = string.Join(", ", skip.Order().Append(0xFFFF));
+        var kinds = kanto is { Length: > 0 } ? string.Join(",", kanto) : "0";
+        var levels = string.Join(", ", targets ?? DefaultKantoTargets);
         return new StringBuilder()
             .AppendLine("// Gerado pelo hub (Depois da Elite). Depois do fim do jogo, os times saem da leitura com outro nível.")
             .AppendLine("#define NARC_TRAINER_PARTY 56")
@@ -161,25 +207,53 @@ public sealed class PostEliteService(HubPaths hub)
             .AppendLine($"#define PERCENT {percent}u")
             .AppendLine($"#define FLOOR {floor}u")
             .AppendLine("#define MAX_LEVEL 100u")
+            .AppendLine($"#define ROUTE_GAP {routeGap}")
+            .AppendLine($"#define KANTO_COUNT {(kanto is { Length: > 0 } ? kanto.Length : 0)}u")
+            .AppendLine("#define PROFILE_KANTO_BADGES 31")
             .AppendLine()
             .AppendLine("extern void ReadWholeNarcMemberByIdPair(void *dest, int narc, int member);")
             .AppendLine("extern void TrainerData_ReadTrData(unsigned id, void *dest);")
             .AppendLine("extern void *SaveData_Get(void);")
             .AppendLine("extern void *Save_VarsFlags_Get(void *save);")
             .AppendLine("extern int CheckGameClearFlag(void *flags);")
+            .AppendLine("extern unsigned char *Save_PlayerData_GetProfile(void *save);")
             .AppendLine()
             .AppendLine($"static const unsigned short skip[] = {{ {list} }};")
+            .AppendLine($"static const unsigned char kanto[] = {{ {kinds} }};")
+            .AppendLine($"static const unsigned char targets[] = {{ {levels} }};")
             .AppendLine()
             .AppendLine("void PostElite_ReadParty(unsigned id, unsigned char *party)")
             .AppendLine("{")
             .AppendLine("    ReadWholeNarcMemberByIdPair(party, NARC_TRAINER_PARTY, id);")
-            .AppendLine("    if (!CheckGameClearFlag(Save_VarsFlags_Get(SaveData_Get()))) return;")
             .AppendLine("    for (int i = 0; skip[i] != 0xFFFF; i++)")
             .AppendLine("        if (skip[i] == id) return;")
+            .AppendLine("    void *save = SaveData_Get();")
             .AppendLine("    unsigned char data[TRAINER_DATA_SIZE];")
             .AppendLine("    TrainerData_ReadTrData(id, data);")
             .AppendLine("    // nível, espécie e o resto: 8 bytes, mais golpes e item se o tipo do treinador tiver")
             .AppendLine("    unsigned size = 8u + ((data[0] & 1) ? 8u : 0u) + ((data[0] & 2) ? 2u : 0u);")
+            .AppendLine("    if (id < KANTO_COUNT && kanto[id])")
+            .AppendLine("    {")
+            .AppendLine("        unsigned bits = Save_PlayerData_GetProfile(save)[PROFILE_KANTO_BADGES], badges = 0, top = 0;")
+            .AppendLine("        for (; bits; bits >>= 1) badges += bits & 1u;")
+            .AppendLine("        for (unsigned k = 0; k < data[3]; k++)")
+            .AppendLine("        {")
+            .AppendLine("            unsigned level = party[k * size + 2];")
+            .AppendLine("            if (level > top) top = level;")
+            .AppendLine("        }")
+            .AppendLine("        int target = targets[badges] - (kanto[id] == 1 ? ROUTE_GAP : 0);")
+            .AppendLine("        for (unsigned k = 0; k < data[3]; k++)")
+            .AppendLine("        {")
+            .AppendLine("            int level = (int)party[k * size + 2] + target - (int)top;")
+            .AppendLine("            if (level < 1) level = 1;")
+            .AppendLine("            if (level > (int)MAX_LEVEL) level = MAX_LEVEL;")
+            .AppendLine("            party[k * size + 2] = (unsigned char)level;")
+            .AppendLine("            party[k * size + 3] = 0;")
+            .AppendLine("        }")
+            .AppendLine("        return;")
+            .AppendLine("    }")
+            .AppendLine("    if (PERCENT == 100u && FLOOR == 0u) return;")
+            .AppendLine("    if (!CheckGameClearFlag(Save_VarsFlags_Get(save))) return;")
             .AppendLine("    for (unsigned k = 0; k < data[3]; k++)")
             .AppendLine("    {")
             .AppendLine("        unsigned char *mon = party + k * size;")
@@ -206,23 +280,28 @@ public sealed class PostEliteService(HubPaths hub)
             ["SaveData_Get"] = "0x020272B1",
             ["Save_VarsFlags_Get"] = "0x020503D1",
             ["CheckGameClearFlag"] = "0x02066615",
+            ["Save_PlayerData_GetProfile"] = "0x02028E9D",
         },
         Hooks = [new PatchHook { Target = "arm9", Address = ReadPartyCall, Type = "call", Symbol = "PostElite_ReadParty", Expect = ReadPartyCallBytes }],
     };
 
     /// <summary>Grava o patch e compila. Desligar mantém a pasta inativa e tira o gancho do jogo.</summary>
-    public async Task<PostEliteSettings> ApplyLevelsAsync(Project p, bool on, int percent, int floor, IReadOnlyCollection<int> skip, IProgress<string> log, CancellationToken ct = default)
+    public async Task<PostEliteSettings> ApplyLevelsAsync(Project p, bool on, int percent, int floor, IReadOnlyCollection<int> skip, IProgress<string> log, CancellationToken ct = default, bool kantoBadges = false, IReadOnlyList<int>? targets = null, int routeGap = DefaultRouteGap)
     {
         RequireHgss(p);
         var settings = PostEliteSettings.Load(p);
         var dir = Path.Combine(CodePatchService.PatchesDir(p), PatchName);
+        bool scale = on;
+        on = on || kantoBadges;
         if (on)
         {
             if (!CanScaleLevels(p)) throw new NotSupportedException(Loc.T("core.postElite.levelsNeed"));
             if (percent is < MinPercent or > MaxPercent) throw new ArgumentException(Loc.T("core.postElite.badPercent", MinPercent, MaxPercent));
             if (floor is < 0 or > 100) throw new ArgumentException(Loc.T("core.postElite.badFloor"));
+            var levels = targets ?? DefaultKantoTargets;
+            if (levels.Count != KantoBadgeSteps || levels.Any(l => l is < 1 or > 100)) throw new ArgumentException(Loc.T("core.postElite.badTargets", KantoBadgeSteps));
             Directory.CreateDirectory(dir);
-            File.WriteAllText(Path.Combine(dir, "main.c"), BuildLevelSource(percent, floor, skip));
+            File.WriteAllText(Path.Combine(dir, "main.c"), BuildLevelSource(scale ? percent : 100, scale ? floor : 0, skip, kantoBadges ? KantoTrainers(p) : null, levels, routeGap));
             new CodePatch { Name = PatchName, Directory = dir, Manifest = BuildLevelManifest() }.Save();
         }
         else if (Directory.Exists(dir) && CodePatch.Load(dir) is { Manifest.Enabled: true } patch)
@@ -234,11 +313,15 @@ public sealed class PostEliteService(HubPaths hub)
         {
             // já está desligado: sem nada a compilar, não pode exigir o compilador
             settings.ScaleLevels = false;
+            settings.KantoBadges = false;
             settings.Save(p);
             return settings;
         }
         await new CodePatchService(hub).ApplyAsync(p, log, ct);
-        settings.ScaleLevels = on;
+        settings.ScaleLevels = scale;
+        settings.KantoBadges = kantoBadges;
+        settings.KantoTargets = [.. targets ?? DefaultKantoTargets];
+        settings.KantoRouteGap = routeGap;
         settings.LevelPercent = percent;
         settings.LevelFloor = floor;
         settings.LevelSkip = [.. skip.Order()];
@@ -258,5 +341,13 @@ public sealed class PostEliteService(HubPaths hub)
             else throw new ArgumentException(Loc.T("core.postElite.badIds", part));
         }
         return [.. ids];
+    }
+
+    /// <summary>Os níveis-alvo como vêm da tela, separados por vírgula ou espaço.</summary>
+    public static List<int> ParseTargets(string text)
+    {
+        var levels = text.Split([',', ' ', ';'], StringSplitOptions.RemoveEmptyEntries).Select(t => int.TryParse(t, out var n) ? n : -1).ToList();
+        if (levels.Count != KantoBadgeSteps || levels.Any(l => l is < 1 or > 100)) throw new ArgumentException(Loc.T("core.postElite.badTargets", KantoBadgeSteps));
+        return levels;
     }
 }

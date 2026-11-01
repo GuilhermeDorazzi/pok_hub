@@ -24,6 +24,8 @@ public sealed class TrainerBatchOptions
     public uint AiFlagsOff { get; set; }
     /// <summary>Os 4 itens que o treinador usa em batalha; null = não mexer. Zero deixa o espaço vazio.</summary>
     public ushort[]? BattleItems { get; set; }
+    /// <summary>Dificuldade de cada Pokémon do time, de 0 a 255, que define os IVs (cerca de valor × 31 / 255); null = não mexer.</summary>
+    public byte? Difficulty { get; set; }
     /// <summary>Com a tabela, cada Pokémon vira a espécie que já seria no nível final; null = não mexer.</summary>
     public EvolutionChart? Evolutions { get; set; }
     /// <summary>Nível em que entram as evoluções sem nível (pedra, amizade, troca). Zero deixa essas de fora.</summary>
@@ -51,8 +53,27 @@ public sealed class EncounterBatchOptions
     public int LevelOffset { get; set; }
     public int MinLevel { get; set; } = 1;
     public int MaxLevel { get; set; } = 100;
+    /// <summary>Faixa por raridade: o espaço mais comum fica no piso, o mais raro no teto. Com ela, porcentagem e soma não valem.</summary>
+    public int? RarityFloor { get; set; }
+    public int? RarityCeiling { get; set; }
 
-    public bool ChangesLevel => Math.Abs(LevelPercent - 100) > 0.001 || LevelOffset != 0;
+    public bool HasRarityRange => RarityFloor is not null && RarityCeiling is not null;
+    public bool ChangesLevel => HasRarityRange || Math.Abs(LevelPercent - 100) > 0.001 || LevelOffset != 0;
+
+    /// <summary>Nível final de um espaço. Os espaços vêm do jogo em ordem de chance, do mais comum para o mais raro.</summary>
+    public int LevelOf(int current, int slot, int slots)
+    {
+        if (HasRarityRange)
+            return (int)Math.Round(RarityFloor!.Value + (RarityCeiling!.Value - RarityFloor.Value) * (double)slot / Math.Max(1, slots - 1), MidpointRounding.AwayFromZero);
+        return ChangesLevel ? BatchEditor.ScaleLevel(current, LevelPercent, LevelOffset, MinLevel, MaxLevel) : current;
+    }
+}
+
+/// <summary>Regra de lote sobre as espécies: quanto de experiência cada uma dá ao ser vencida.</summary>
+public sealed class SpeciesBatchOptions
+{
+    public double ExpPercent { get; set; } = 100;
+    public const int MaxExp = 255;
 }
 
 /// <summary>
@@ -65,6 +86,23 @@ public static class BatchEditor
     public static List<string> ApplyTrainers(TrainerRepository repo, TrainerBatchOptions o) => RunTrainers(repo, o, apply: true);
     public static List<string> PreviewEncounters(EncounterRepository repo, EncounterBatchOptions o) => RunEncounters(repo, o, apply: false);
     public static List<string> ApplyEncounters(EncounterRepository repo, EncounterBatchOptions o) => RunEncounters(repo, o, apply: true);
+
+    public static List<string> PreviewSpecies(PersonalRepository repo, SpeciesBatchOptions o) => RunSpecies(repo, o, apply: false);
+    public static List<string> ApplySpecies(PersonalRepository repo, SpeciesBatchOptions o) => RunSpecies(repo, o, apply: true);
+
+    private static List<string> RunSpecies(PersonalRepository repo, SpeciesBatchOptions o, bool apply)
+    {
+        var lines = new List<string>();
+        for (int s = 1; s < repo.Count; s++)
+        {
+            if (repo.Get(s) is not { ExpYield: > 0 } d) continue;
+            int exp = Math.Clamp((int)Math.Round(d.ExpYield * o.ExpPercent / 100.0, MidpointRounding.AwayFromZero), 1, SpeciesBatchOptions.MaxExp);
+            if (exp == d.ExpYield) continue;
+            lines.Add(Loc.T("batch.sp.exp", s < repo.Species.Count ? repo.Species[s] : $"#{s}", d.ExpYield, exp));
+            if (apply) d.ExpYield = (byte)exp;
+        }
+        return lines;
+    }
 
     public static int ScaleLevel(int level, double percent, int offset, int min, int max)
     {
@@ -121,6 +159,11 @@ public static class BatchEditor
                         if (apply) m.Species = (ushort)evolved;
                     }
                 }
+                if (o.Difficulty is { } difficulty && m.Difficulty != difficulty)
+                {
+                    lines.Add(Loc.T("batch.tr.difficulty", who, Sp(repo.Species, m.Species), m.Difficulty, difficulty));
+                    if (apply) m.Difficulty = difficulty;
+                }
                 if (o.HeldItem is { } item && m.Item != item)
                 {
                     if (!t.HasItems)
@@ -164,7 +207,7 @@ public static class BatchEditor
                 }
                 if (o.Evolutions is { } chart && s.Species != 0)
                 {
-                    int level = o.ChangesLevel ? ScaleLevel(s.MaxLevel, o.LevelPercent, o.LevelOffset, o.MinLevel, o.MaxLevel) : s.MaxLevel;
+                    int level = o.LevelOf(s.MaxLevel, i, slots.Length);
                     int species = !apply && replace && s.Species == o.ReplaceSpeciesFrom ? o.ReplaceSpeciesTo!.Value : s.Species;
                     int evolved = chart.Evolve(species, level, o.EvolveOtherAt);
                     if (evolved != species)
@@ -175,8 +218,8 @@ public static class BatchEditor
                 }
                 if (o.ChangesLevel && s.Species != 0)
                 {
-                    int lo = ScaleLevel(s.MinLevel, o.LevelPercent, o.LevelOffset, o.MinLevel, o.MaxLevel);
-                    int hi = ScaleLevel(s.MaxLevel, o.LevelPercent, o.LevelOffset, o.MinLevel, o.MaxLevel);
+                    int lo = o.HasRarityRange ? o.LevelOf(s.MinLevel, i, slots.Length) : o.LevelOf(s.MinLevel, 0, 1);
+                    int hi = o.HasRarityRange ? lo : o.LevelOf(s.MaxLevel, 0, 1);
                     if (lo != s.MinLevel || hi != s.MaxLevel)
                     {
                         lines.Add(Loc.T("batch.enc.level", where, $"{what} {i + 1}", $"{s.MinLevel}-{s.MaxLevel}", $"{lo}-{hi}"));
@@ -206,7 +249,7 @@ public static class BatchEditor
                 if (o.Evolutions is { } grass)
                     for (int i = 0; i < 12; i++)
                     {
-                        int level = o.ChangesLevel ? ScaleLevel(h.WalkingLevels[i], o.LevelPercent, o.LevelOffset, o.MinLevel, o.MaxLevel) : h.WalkingLevels[i];
+                        int level = o.LevelOf(h.WalkingLevels[i], i, 12);
                         foreach (var (period, kind) in new[] { (h.Morning, "report.enc.kind.morning"), (h.Day, "report.enc.kind.day"), (h.Night, "report.enc.kind.night") })
                         {
                             if (period[i] == 0) continue;
@@ -221,7 +264,7 @@ public static class BatchEditor
                     for (int i = 0; i < 12; i++)
                     {
                         if (h.Morning[i] == 0 && h.Day[i] == 0 && h.Night[i] == 0) continue;
-                        int nl = ScaleLevel(h.WalkingLevels[i], o.LevelPercent, o.LevelOffset, o.MinLevel, o.MaxLevel);
+                        int nl = o.LevelOf(h.WalkingLevels[i], i, 12);
                         if (nl != h.WalkingLevels[i])
                         {
                             lines.Add(Loc.T("batch.enc.level", where, $"{Loc.T("report.enc.kind.walking")} {i + 1}", h.WalkingLevels[i], nl));

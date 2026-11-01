@@ -57,7 +57,11 @@ public partial class NewEventWindow : Window
         _vm.PickTile((int)(p.X / Scale), (int)(p.Y / Scale));
     }
 
-    private void QuestAskMon_Click(object sender, RoutedEventArgs e) => _vm.QuestAsksItem = false;
+    private void QuestAskMon_Click(object sender, RoutedEventArgs e)
+    {
+        _vm.QuestAsksItem = false;
+        _vm.QuestAsksNothing = false;
+    }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }

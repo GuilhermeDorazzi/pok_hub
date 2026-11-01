@@ -81,9 +81,9 @@ public static class NewEventTools
         return new { result.ObjectIndex, result.ScriptId, result.Flag, result.Warnings };
     }
 
-    private static NpcCondition? Condition(Gen4Game game, string? text, bool afterElite, int minBadges, int? badge, int? afterFlag) =>
-        !afterElite && minBadges == 0 && badge is null && afterFlag is null ? null
-        : new NpcCondition(Wrap(game, text ?? throw new ArgumentException("Com condição, informe conditionText.")), afterElite, minBadges, badge, afterFlag);
+    private static NpcCondition? Condition(Gen4Game game, string? text, bool afterElite, int minBadges, int? badge, int? afterFlag, int maxPartyLevel = 0) =>
+        !afterElite && minBadges == 0 && badge is null && afterFlag is null && maxPartyLevel == 0 ? null
+        : new NpcCondition(Wrap(game, text ?? throw new ArgumentException("Com condição, informe conditionText.")), afterElite, minBadges, badge, afterFlag, maxPartyLevel);
 
     private static async Task<object> CreateAsync(HubContext hub, string project, string what, int mapId, Func<Gen4Game, NewNpc> request)
     {
@@ -96,8 +96,8 @@ public static class NewEventTools
         return new { result.ObjectIndex, result.ScriptId, result.Flag, result.Warnings };
     }
 
-    [McpServerTool(Name = "configure_post_elite"), Description("HG/SS: o que acontece ao vencer a Elite. resetTrainers libera os treinadores para lutarem de novo, com o mesmo time. scaleLevels multiplica o nível dos times em batalha depois do fim do jogo (só SoulSilver US em ds-rom; limite 100; floor é o nível mínimo). openIlexShrine faz o santuário de Ilex aceitar qualquer Celebi na frente do time, abrindo o evento do Giovanni. Listas de fora aceitam 1, 2, 701-705. Não gera ROM.")]
-    public static async Task<object> ConfigurePostElite(HubContext hub, string project, bool resetTrainers = false, string resetSkip = "", bool scaleLevels = false, int percent = 130, int floor = 0, string levelSkip = "", bool openIlexShrine = false)
+    [McpServerTool(Name = "configure_post_elite"), Description("HG/SS: o que acontece ao vencer a Elite. resetTrainers libera os treinadores para lutarem de novo, com o mesmo time. scaleLevels multiplica o nível dos times em batalha depois do fim do jogo (só SoulSilver US em ds-rom; limite 100; floor é o nível mínimo). openIlexShrine faz o santuário de Ilex aceitar qualquer Celebi na frente do time, abrindo o evento do Giovanni. kantoBadges dá aos treinadores de Kanto o nível pelas insígnias de Kanto, com 9 valores em kantoTargets (0 a 8 insígnias), o nível do mais forte do líder, e kantoRouteGap níveis a menos nos de rota; eles ficam fora do multiplicador. Listas de fora aceitam 1, 2, 701-705. Não gera ROM.")]
+    public static async Task<object> ConfigurePostElite(HubContext hub, string project, bool resetTrainers = false, string resetSkip = "", bool scaleLevels = false, int percent = 130, int floor = 0, string levelSkip = "", bool openIlexShrine = false, bool kantoBadges = false, string? kantoTargets = null, int kantoRouteGap = PostEliteService.DefaultRouteGap)
     {
         var p = hub.OpenProject(project);
         if (!WorkspaceService.IsExtracted(p)) throw new InvalidOperationException("Workspace vazio: extraia a ROM primeiro (extract_rom).");
@@ -107,8 +107,9 @@ public static class NewEventTools
         if (hub.Git.IsAvailable) await hub.Git.SnapshotAsync(p, "Antes de configurar o que vem depois da Elite", log);
         int count = PostEliteService.ApplyReset(p, resetTrainers, resetIds);
         PostEliteService.ApplyIlex(p, openIlexShrine);
-        if (scaleLevels || PostEliteService.CanScaleLevels(p))
-            await new PostEliteService(hub.Paths).ApplyLevelsAsync(p, scaleLevels, percent, floor, levelIds, new Progress<string>(_ => { }));
+        var targets = kantoTargets is null ? PostEliteService.DefaultKantoTargets : PostEliteService.ParseTargets(kantoTargets);
+        if (scaleLevels || kantoBadges || PostEliteService.CanScaleLevels(p))
+            await new PostEliteService(hub.Paths).ApplyLevelsAsync(p, scaleLevels, percent, floor, levelIds, new Progress<string>(_ => { }), default, kantoBadges, targets, kantoRouteGap);
         if (hub.Git.IsAvailable) await hub.Git.SnapshotAsync(p, "Depois da Elite configurado", log);
         return new { trainersReset = count, levelsScaled = scaleLevels, percent, floor };
     }
@@ -116,27 +117,27 @@ public static class NewEventTools
     [McpServerTool(Name = "create_quest_npc"), Description("Cria uma missão (HG/SS): pede um item (askItem) ou mostrar um Pokémon no time (askSpecies) e dá uma recompensa uma vez só (rewardItem, rewardSpecies ou rewardMoney). Aceita condições: depois da Elite, insígnias e flag de outra missão. Salva versão antes e depois.")]
     public static Task<object> CreateQuestNpc(HubContext hub, string project, int mapId, int x, int z, int sprite, string askText, string notYetText, string rewardText, string doneText, string fullText,
         int? askItem = null, int askQuantity = 1, bool takeItem = true, int? askSpecies = null, int? rewardItem = null, int rewardQuantity = 1, int? rewardSpecies = null, int rewardLevel = 10, int rewardMoney = 0, int facing = 1,
-        string? conditionText = null, bool afterElite = false, int minBadges = 0, int? badge = null, int? afterFlag = null) =>
+        string? conditionText = null, bool afterElite = false, int minBadges = 0, int? badge = null, int? afterFlag = null, int maxPartyLevel = 0) =>
         CreateAsync(hub, project, "missão", mapId, game => new NewNpc(mapId, x, z, sprite, facing,
             new QuestBehavior(askItem, askQuantity, takeItem, askSpecies, rewardItem, rewardQuantity, rewardSpecies, rewardLevel, rewardMoney, Wrap(game, askText), Wrap(game, notYetText), Wrap(game, rewardText), Wrap(game, doneText), Wrap(game, fullText)),
-            Condition: Condition(game, conditionText, afterElite, minBadges, badge, afterFlag)));
+            Condition: Condition(game, conditionText, afterElite, minBadges, badge, afterFlag, maxPartyLevel)));
 
     [McpServerTool(Name = "create_seller_npc"), Description("Cria um NPC que vende um Pokémon por dinheiro (HG/SS). Mostra o saldo, pergunta sim ou não e confere dinheiro e espaço no time antes de cobrar. Com once=true, vende uma vez só. Salva versão antes e depois.")]
     public static Task<object> CreateSellerNpc(HubContext hub, string project, int mapId, int x, int z, int sprite, int species, int level, int price, string offerText, string thanksText, string noMoneyText, string declineText, string fullText, string soldOutText,
-        bool once = true, int facing = 1, string? conditionText = null, bool afterElite = false, int minBadges = 0, int? badge = null, int? afterFlag = null) =>
+        bool once = true, int facing = 1, string? conditionText = null, bool afterElite = false, int minBadges = 0, int? badge = null, int? afterFlag = null, int maxPartyLevel = 0) =>
         CreateAsync(hub, project, "vendedor", mapId, game => new NewNpc(mapId, x, z, sprite, facing,
             new SellBehavior(species, level, price, once, Wrap(game, offerText), Wrap(game, thanksText), Wrap(game, noMoneyText), Wrap(game, declineText), Wrap(game, fullText), Wrap(game, soldOutText)),
-            Condition: Condition(game, conditionText, afterElite, minBadges, badge, afterFlag)));
+            Condition: Condition(game, conditionText, afterElite, minBadges, badge, afterFlag, maxPartyLevel)));
 
     [McpServerTool(Name = "create_trainer_npc"), Description("Coloca um treinador num mapa (HG/SS). Com sight=0 ele não chama: a batalha começa ao falar, com falas próprias, flag própria, opção de sumir e rebatalha (rematch: none, always, elite). Com sight de 1 a 15, chama de longe e usa as falas e a flag de vencido do registro. Salva versão antes e depois.")]
     public static Task<object> CreateTrainerNpc(HubContext hub, string project, int mapId, int x, int z, int sprite, int trainer, string challengeText = "", string beatenText = "", string afterText = "",
         int sight = 0, bool vanish = false, string rematch = "none", int? rematchTrainer = null, string? rematchText = null, int facing = 1,
-        string? conditionText = null, bool afterElite = false, int minBadges = 0, int? badge = null, int? afterFlag = null) =>
+        string? conditionText = null, bool afterElite = false, int minBadges = 0, int? badge = null, int? afterFlag = null, int maxPartyLevel = 0) =>
         CreateAsync(hub, project, "treinador", mapId, game => new NewNpc(mapId, x, z, sprite, facing,
             new TrainerBehavior(trainer, Wrap(game, challengeText), Wrap(game, beatenText), Wrap(game, afterText), sight, vanish,
                 rematch switch { "none" => TrainerRematch.None, "always" => TrainerRematch.Always, "elite" => TrainerRematch.AfterElite, _ => throw new ArgumentException("rematch: none, always ou elite.") },
                 rematchTrainer, string.IsNullOrWhiteSpace(rematchText) ? null : Wrap(game, rematchText)),
-            Condition: Condition(game, conditionText, afterElite, minBadges, badge, afterFlag)));
+            Condition: Condition(game, conditionText, afterElite, minBadges, badge, afterFlag, maxPartyLevel)));
 
     [McpServerTool(Name = "copy_trainer"), Description("Cria um treinador novo, copiado de outro, com outro nome, e devolve o número dele para usar em create_trainer_npc. Ele só serve em batalha iniciada por script (sight=0): as falas de quem chama de longe ficam noutra tabela. Salva versão antes e depois.")]
     public static async Task<object> CopyTrainer(HubContext hub, string project, int source, string name)

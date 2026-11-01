@@ -25,6 +25,7 @@ public sealed partial class BatchViewModel : ObservableObject
     private readonly Func<Project, string, Task> _snapshot;
     private TrainerRepository _trainers;
     private EncounterRepository _encounters;
+    private PersonalRepository _personal;
 
     public BatchViewModel(Project project, Action<string> log, Func<Project, string, Task> snapshot)
     {
@@ -33,6 +34,7 @@ public sealed partial class BatchViewModel : ObservableObject
         _snapshot = snapshot;
         _trainers = TrainerRepository.Load(project);
         _encounters = EncounterRepository.Load(project);
+        _personal = PersonalRepository.Load(project);
         Classes = [new(-1, Loc.T("batch.allClasses")), .. _trainers.Classes.Select((c, i) => new NamedIndex(i, c)).Where(c => c.Name.Length > 0)];
         Catalog = new SpeciesCatalog(_trainers.Species, PokemonSprites.Load(_trainers.Game));
         Items = [new(0, Loc.T("batch.noItem")), .. _trainers.Items.Select((s, i) => new NamedIndex(i, s)).Where(s => s.Index > 0 && s.Name.Length > 0 && s.Name != "-----").OrderBy(s => s.Name)];
@@ -71,6 +73,8 @@ public sealed partial class BatchViewModel : ObservableObject
     [ObservableProperty] private NamedIndex? _battleItem2;
     [ObservableProperty] private NamedIndex? _battleItem3;
     [ObservableProperty] private NamedIndex? _battleItem4;
+    [ObservableProperty] private bool _setDifficulty;
+    [ObservableProperty] private int _trainerDifficulty = 255;
     [ObservableProperty] private bool _trainerEvolve;
     [ObservableProperty] private int _trainerEvolveOtherAt = 40;
     /// <summary>Uma caixa por opção de IA. Marcada liga a opção, desmarcada desliga; as opções só valem com "Definir a IA" ligado.</summary>
@@ -87,12 +91,19 @@ public sealed partial class BatchViewModel : ObservableObject
     [ObservableProperty] private int _encounterMaxLevel = 100;
     [ObservableProperty] private NamedIndex? _selectedRegion;
     [ObservableProperty] private string _placeFilter = "";
+    [ObservableProperty] private bool _useRarityRange;
+    [ObservableProperty] private int _rarityFloor = 2;
+    [ObservableProperty] private int _rarityCeiling = 45;
     [ObservableProperty] private bool _encounterEvolve;
     [ObservableProperty] private int _encounterEvolveOtherAt = 40;
 
     private EvolutionChart? _chart;
     /// <summary>Lida uma vez e só se alguém pedir; a tabela não muda nesta janela.</summary>
     private EvolutionChart Chart => _chart ??= EvolutionChart.Load(_project);
+
+    // espécies
+    [ObservableProperty] private bool _speciesEnabled;
+    [ObservableProperty] private double _expPercent = 70;
 
     public ObservableCollection<string> Preview { get; } = [];
     [ObservableProperty] private string _status = "";
@@ -110,6 +121,7 @@ public sealed partial class BatchViewModel : ObservableObject
         AiFlagsOn = SetAi ? AiFlags.Where(f => f.IsOn).Aggregate(0u, (bits, f) => bits | 1u << f.Bit) : 0,
         AiFlagsOff = SetAi ? AiFlags.Where(f => !f.IsOn).Aggregate(0u, (bits, f) => bits | 1u << f.Bit) : 0,
         BattleItems = SetBattleItems ? [(ushort)(BattleItem1?.Index ?? 0), (ushort)(BattleItem2?.Index ?? 0), (ushort)(BattleItem3?.Index ?? 0), (ushort)(BattleItem4?.Index ?? 0)] : null,
+        Difficulty = SetDifficulty ? (byte)Math.Clamp(TrainerDifficulty, 0, 255) : null,
         Evolutions = TrainerEvolve ? Chart : null,
         EvolveOtherAt = TrainerEvolveOtherAt,
     };
@@ -130,6 +142,8 @@ public sealed partial class BatchViewModel : ObservableObject
         LevelPercent = EncounterLevelPercent, LevelOffset = EncounterLevelOffset, MinLevel = EncounterMinLevel, MaxLevel = EncounterMaxLevel,
         Region = (EncounterRegion)(SelectedRegion?.Index ?? 0),
         PlaceFilter = PlaceFilter,
+        RarityFloor = UseRarityRange ? Math.Clamp(RarityFloor, 1, 100) : null,
+        RarityCeiling = UseRarityRange ? Math.Clamp(RarityCeiling, 1, 100) : null,
         Evolutions = EncounterEvolve ? Chart : null,
         EvolveOtherAt = EncounterEvolveOtherAt,
     };
@@ -140,6 +154,7 @@ public sealed partial class BatchViewModel : ObservableObject
         var lines = new List<string>();
         if (TrainersEnabled) lines.AddRange(BatchEditor.PreviewTrainers(_trainers, TrainerOptions()));
         if (EncountersEnabled) lines.AddRange(BatchEditor.PreviewEncounters(_encounters, EncounterOptions()));
+        if (SpeciesEnabled) lines.AddRange(BatchEditor.PreviewSpecies(_personal, new SpeciesBatchOptions { ExpPercent = ExpPercent }));
         _allPreview = lines;
         ApplyPreviewFilter();
         Status = lines.Count == 0 ? Loc.T("batch.noChanges") : lines.Count > 2000 ? Loc.T("batch.previewMore", lines.Count) : Loc.T("batch.previewCount", lines.Count);
@@ -174,12 +189,14 @@ public sealed partial class BatchViewModel : ObservableObject
             int n = 0;
             if (TrainersEnabled) { n += BatchEditor.ApplyTrainers(_trainers, TrainerOptions()).Count; _trainers.Save(); }
             if (EncountersEnabled) { n += BatchEditor.ApplyEncounters(_encounters, EncounterOptions()).Count; _encounters.Save(); }
+            if (SpeciesEnabled) { n += BatchEditor.ApplySpecies(_personal, new SpeciesBatchOptions { ExpPercent = ExpPercent }).Count; _personal.Save(); }
             _log(Loc.T("batch.applied", n));
             await _snapshot(_project, Loc.T("batch.afterSnapshot", n));
             Applied = true;
             // recarrega para a próxima prévia partir do estado novo
             _trainers = TrainerRepository.Load(_project);
             _encounters = EncounterRepository.Load(_project);
+            _personal = PersonalRepository.Load(_project);
             Preview.Clear();
             Status = Loc.T("batch.applied", n);
         }

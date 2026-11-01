@@ -82,6 +82,48 @@ public static class GameWriteTools
         return new { applied = true, changes = preview.Count };
     }
 
+    private static async Task<object> RunBatch(HubContext hub, Project p, string what, bool apply, List<string> preview, Action write)
+    {
+        if (!apply) return new { applied = false, changes = preview.Count, preview = preview.Take(50).ToList() };
+        var log = new LogCollector();
+        await Snapshot(hub, p, $"Antes de {what}", log);
+        write();
+        await Snapshot(hub, p, $"Lote: {what} ({preview.Count} mudanças)", log);
+        return new { applied = true, changes = preview.Count };
+    }
+
+    [McpServerTool(Name = "batch_wild_levels"), Description("Encontros selvagens em lote. Filtra por region (all, johto, kanto) e places (nomes separados por vírgula). floor e ceiling distribuem o nível por raridade: o espaço mais comum no piso, o mais raro no teto. evolve troca pela espécie evoluída para o nível; pedra, amizade e troca entram em otherAt. Com apply=false (padrão), só mostra a prévia.")]
+    public static Task<object> BatchWildLevels(HubContext hub, string project, string region = "all", string places = "", int? floor = null, int? ceiling = null, bool evolve = false, int otherAt = 40, bool apply = false)
+    {
+        var p = Open(hub, project);
+        var repo = EncounterRepository.Load(p);
+        var options = new EncounterBatchOptions
+        {
+            Region = region.ToLowerInvariant() switch { "johto" => EncounterRegion.First, "kanto" => EncounterRegion.Second, "all" => EncounterRegion.All, _ => throw new ArgumentException("region: all, johto ou kanto.") },
+            PlaceFilter = places, RarityFloor = floor, RarityCeiling = ceiling, Evolutions = evolve ? EvolutionChart.Load(p) : null, EvolveOtherAt = otherAt,
+        };
+        return RunBatch(hub, p, "mudar encontros", apply, BatchEditor.PreviewEncounters(repo, options), () => { BatchEditor.ApplyEncounters(repo, options); repo.Save(); });
+    }
+
+    [McpServerTool(Name = "batch_species_exp"), Description("Multiplica a experiência que cada espécie dá ao ser vencida. percent 70 deixa o jogo mais lento. Com apply=false (padrão), só mostra a prévia.")]
+    public static Task<object> BatchSpeciesExp(HubContext hub, string project, double percent, bool apply = false)
+    {
+        var p = Open(hub, project);
+        var repo = PersonalRepository.Load(p);
+        var options = new SpeciesBatchOptions { ExpPercent = percent };
+        return RunBatch(hub, p, "mudar a experiência das espécies", apply, BatchEditor.PreviewSpecies(repo, options), () => { BatchEditor.ApplySpecies(repo, options); repo.Save(); });
+    }
+
+    [McpServerTool(Name = "batch_trainer_difficulty"), Description("Define a dificuldade (0 a 255, define os IVs) dos times, por texto no nome do treinador; vazio alcança todos. Com apply=false (padrão), só mostra a prévia.")]
+    public static Task<object> BatchTrainerDifficulty(HubContext hub, string project, int difficulty, string nameFilter = "", bool apply = false)
+    {
+        var p = Open(hub, project);
+        if (difficulty is < 0 or > 255) throw new ArgumentException("Dificuldade vai de 0 a 255.");
+        var repo = TrainerRepository.Load(p);
+        var options = new TrainerBatchOptions { NameFilter = nameFilter, Difficulty = (byte)difficulty };
+        return RunBatch(hub, p, "mudar a dificuldade dos times", apply, BatchEditor.PreviewTrainers(repo, options), () => { BatchEditor.ApplyTrainers(repo, options); repo.Save(); });
+    }
+
     [McpServerTool(Name = "get_pokemon_stats"), Description("Lê stats base, tipos, habilidades e outros dados de uma espécie.")]
     public static object GetPokemonStats(HubContext hub, string project, int species)
     {

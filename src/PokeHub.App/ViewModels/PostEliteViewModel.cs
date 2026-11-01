@@ -25,6 +25,9 @@ public sealed partial class PostEliteViewModel : ObservableObject
     [ObservableProperty] private int _levelPercent;
     [ObservableProperty] private int _levelFloor;
     [ObservableProperty] private string _levelSkip;
+    [ObservableProperty] private bool _kantoBadges;
+    [ObservableProperty] private string _kantoTargets;
+    [ObservableProperty] private int _kantoRouteGap;
     [ObservableProperty] private string _status = "";
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ApplyCommand))]
@@ -44,6 +47,9 @@ public sealed partial class PostEliteViewModel : ObservableObject
         _levelPercent = s.LevelPercent;
         _levelFloor = s.LevelFloor;
         _levelSkip = string.Join(", ", s.LevelSkip);
+        _kantoBadges = s.KantoBadges;
+        _kantoTargets = string.Join(", ", s.KantoTargets);
+        _kantoRouteGap = s.KantoRouteGap;
         CanScaleLevels = PostEliteService.CanScaleLevels(project);
         LevelsHint = Loc.T(CanScaleLevels ? "postElite.levels.hint" : "core.postElite.levelsNeed");
     }
@@ -61,8 +67,9 @@ public sealed partial class PostEliteViewModel : ObservableObject
             await _snapshot(Loc.T("postElite.before"));
             int count = PostEliteService.ApplyReset(_project, ResetTrainers, resetSkip);
             PostEliteService.ApplyIlex(_project, OpenIlexShrine);
-            if (CanScaleLevels || ScaleLevels)
-                await _service.ApplyLevelsAsync(_project, ScaleLevels, LevelPercent, LevelFloor, levelSkip, new Progress<string>(_log));
+            var targets = PostEliteService.ParseTargets(KantoTargets);
+            if (CanScaleLevels || ScaleLevels || KantoBadges)
+                await _service.ApplyLevelsAsync(_project, ScaleLevels, LevelPercent, LevelFloor, levelSkip, new Progress<string>(_log), default, KantoBadges, targets, KantoRouteGap);
             await _snapshot(Loc.T("postElite.after"));
             Status = Loc.T("postElite.done", count);
             _log(Status);

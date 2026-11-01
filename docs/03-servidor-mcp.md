@@ -35,6 +35,7 @@ Teste manual sem agente: mandar JSON-RPC por stdin, uma mensagem por linha (`ini
 | `create_quest_npc`, `create_seller_npc`, `create_trainer_npc` | NPC de missão, de venda de Pokémon ou treinador, com condições opcionais (só HG/SS) | versão antes e depois |
 | `copy_trainer` | treinador novo copiado de outro, para usar em `create_trainer_npc` | versão antes e depois |
 | `configure_post_elite` | ao vencer a Elite: libera os treinadores e multiplica níveis (níveis só em SoulSilver US, ds-rom) | versão antes e depois |
+| `batch_wild_levels`, `batch_species_exp`, `batch_trainer_difficulty` | lotes de encontros por região, lugar e raridade, de experiência e de dificuldade, com prévia | versão antes e depois |
 | `catch_report` | o que dá para obter no jogo e o que falta (só HG/SS) | leitura |
 | `list_code_patches`, `create_code_patch` | patches de código do projeto; criar gera a pasta com um modelo inativo | |
 | `apply_code_patches`, `revert_code_patches` | compila e grava os patches ativos, ou tira tudo do jogo (salva versão antes e depois) | erro de compilação ou checagem não grava nada e volta com a mensagem do compilador |
