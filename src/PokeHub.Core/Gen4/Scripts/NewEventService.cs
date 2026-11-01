@@ -50,8 +50,14 @@ public sealed record TrainerBehavior(int Trainer, string ChallengeText, string B
 
 public enum SceneAction { Say, Walk, Wait, Face, Battle, Hide }
 
-/// <summary>Um passo de uma cena. Value é o número do treinador, os quadros da espera ou os passos da caminhada; Direction vale para a caminhada: 0 cima, 1 baixo, 2 esquerda, 3 direita.</summary>
-public sealed record SceneStep(SceneAction Action, string? Text = null, int Value = 0, int Direction = 0);
+/// <summary>
+/// Um passo de uma cena. Value é o número do treinador, os quadros da espera ou os passos da caminhada; Direction vale para a caminhada: 0 cima, 1 baixo, 2 esquerda, 3 direita.
+/// Na batalha, Cyndaquil e Totodile, quando preenchidos, trocam o treinador conforme o inicial do jogador, como o rival do jogo: Value vale para quem escolheu Chikorita.
+/// </summary>
+public sealed record SceneStep(SceneAction Action, string? Text = null, int Value = 0, int Direction = 0, int Cyndaquil = 0, int Totodile = 0)
+{
+    public IEnumerable<int> Trainers() => Action != SceneAction.Battle ? [] : Cyndaquil > 0 ? [Value, Cyndaquil, Totodile] : [Value];
+}
 
 /// <summary>
 /// Cena com o próprio NPC: fala, anda, espera, luta e some, na ordem dada, uma vez só. Perder a batalha recomeça a cena.
@@ -426,6 +432,7 @@ public static class NewEventService
     private static bool IsNewKind(NpcBehavior b) => b is QuestBehavior or SellBehavior or TrainerBehavior or GroundItemBehavior or GuideBehavior or SceneBehavior;
 
     private const int FirstWalkMovement = 12, MovementEnd = 254, MaxSceneSteps = 32, MaxWalk = 32, MaxSceneWait = 600;
+    private const int StarterChikorita = 152, StarterCyndaquil = 155;
 
     private static void BuildScene(ScriptBuilder s, SceneBehavior scene, IReadOnlyList<int> m, int flag, int objectId)
     {
@@ -435,7 +442,7 @@ public static class NewEventService
         // sem Pokémon para lutar, a batalha não pode começar
         if (fights) s.Emit("PartyCountNotEgg", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "done");
         var walks = new List<SceneStep>();
-        int said = 0;
+        int said = 0, fight = 0;
         foreach (var step in scene.Steps)
             switch (step.Action)
             {
@@ -453,8 +460,18 @@ public static class NewEventService
                     s.Emit("FacePlayer");
                     break;
                 case SceneAction.Battle:
-                    s.Emit("TrainerBattle", step.Value, 0, 0, 0)
-                        .Emit("CheckBattleWon", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "lost");
+                    if (step.Cyndaquil > 0)
+                    {
+                        int n = fight++;
+                        s.Emit("GetStarterChoice", ResultVar).Emit("CompareVarToValue", ResultVar, StarterChikorita).Emit("GoToIf", ConditionNotEqual, $"notChikorita{n}")
+                            .Emit("TrainerBattle", step.Value, 0, 0, 0).Emit("GoTo", $"fought{n}")
+                            .Label($"notChikorita{n}").Emit("CompareVarToValue", ResultVar, StarterCyndaquil).Emit("GoToIf", ConditionNotEqual, $"totodile{n}")
+                            .Emit("TrainerBattle", step.Cyndaquil, 0, 0, 0).Emit("GoTo", $"fought{n}")
+                            .Label($"totodile{n}").Emit("TrainerBattle", step.Totodile, 0, 0, 0)
+                            .Label($"fought{n}");
+                    }
+                    else s.Emit("TrainerBattle", step.Value, 0, 0, 0);
+                    s.Emit("CheckBattleWon", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "lost");
                     break;
             }
         s.Emit("SetFlag", flag);
@@ -485,12 +502,20 @@ public static class NewEventService
                 "walk" => ParseWalk(rest, line),
                 "wait" when int.TryParse(rest, out int frames) => new SceneStep(SceneAction.Wait, Value: frames),
                 "face" => new SceneStep(SceneAction.Face),
-                "battle" when int.TryParse(rest, out int trainer) => new SceneStep(SceneAction.Battle, Value: trainer),
+                "battle" => ParseBattle(rest, line),
                 "hide" => new SceneStep(SceneAction.Hide),
                 _ => throw new ArgumentException(Loc.T("core.newev.badSceneLine", line)),
             });
         }
         return steps;
+    }
+
+    private static SceneStep ParseBattle(string rest, string line)
+    {
+        var parts = rest.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var ids = parts.Select(part => int.TryParse(part, out int id) ? id : -1).ToList();
+        if (ids.Count is not (1 or 3) || ids.Contains(-1)) throw new ArgumentException(Loc.T("core.newev.badSceneLine", line));
+        return ids.Count == 1 ? new SceneStep(SceneAction.Battle, Value: ids[0]) : new SceneStep(SceneAction.Battle, Value: ids[0], Cyndaquil: ids[1], Totodile: ids[2]);
     }
 
     private static SceneStep ParseWalk(string rest, string line)
@@ -508,7 +533,7 @@ public static class NewEventService
         SceneAction.Walk => $"walk: {new[] { "up", "down", "left", "right" }[step.Direction]} {step.Value}",
         SceneAction.Wait => $"wait: {step.Value}",
         SceneAction.Face => "face",
-        SceneAction.Battle => $"battle: {step.Value}",
+        SceneAction.Battle => $"battle: {string.Join(' ', step.Trainers())}",
         _ => "hide",
     }));
 
@@ -817,9 +842,9 @@ public static class NewEventService
             trainerMessages = TrainerMessages.Load(project);
             for (int i = 0; i < scenic.Steps.Count; i++)
             {
-                if (scenic.Steps[i].Action != SceneAction.Battle || trainerMessages.Has(scenic.Steps[i].Value, TrainerMessages.Lose)) continue;
                 var next = scenic.Steps.Skip(i + 1).FirstOrDefault(step => step.Action == SceneAction.Say)?.Text ?? scenic.Steps.Take(i).LastOrDefault(step => step.Action == SceneAction.Say)?.Text ?? "...";
-                trainerMessages.Set(texts, scenic.Steps[i].Value, new Dictionary<int, string> { [TrainerMessages.Lose] = next });
+                foreach (var id in scenic.Steps[i].Trainers())
+                    if (!trainerMessages.Has(id, TrainerMessages.Lose)) trainerMessages.Set(texts, id, new Dictionary<int, string> { [TrainerMessages.Lose] = next });
             }
         }
         if (npc.Behavior is TrainerBehavior spoken && game.IsHgss && !game.Japanese)
@@ -948,7 +973,7 @@ public static class NewEventService
     {
         if (b is SceneBehavior scene)
         {
-            foreach (var step in scene.Steps.Where(step => step.Action == SceneAction.Battle)) yield return step.Value;
+            foreach (var id in scene.Steps.SelectMany(step => step.Trainers())) yield return id;
             yield break;
         }
         if (b is not TrainerBehavior t) yield break;

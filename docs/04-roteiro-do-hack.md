@@ -486,7 +486,9 @@ Snorlax que fecham caminho, com a opção Bloquear o caminho: só saem se vencid
 
 Primeira história com cena, feita com o tipo Cena do Novo evento: os quatro executivos da Rocket, depois da Elite, nesta ordem: Petrel em Celadon, Proton em Lavender, Ariana em Saffron e Archer em Viridian. Cada um fala, luta, conta onde está o próximo, sai andando e some. Um guia em Saffron acompanha e, no fim, aponta para o santuário de Ilex. Os níveis são fixos, de 58 a 66. Usam o sprite comum da Rocket, porque não há sprite próprio identificado na decomp. Cena só move o próprio NPC: mover o jogador e a câmera ainda não existe.
 
-Falta: paletas e música da cara nova, evolução paga (parada por decisão) e mais histórias, como a continuação do Silver e o fim depois do Red. Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
+Segunda história: Silver na Rota 22, onde a cena dele com o Giovanni acontece. Ele só luta depois do evento em Tohjo Falls (`FLAG_UNK_178`, gravada no fim dele) e tem o inicial que vence o do jogador, como nas batalhas do jogo: a ação de batalha da Cena aceita um treinador por inicial. Níveis fixos, de 66 a 70.
+
+Falta: paletas e música da cara nova, evolução paga (parada por decisão) e o fim depois do Red. Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
 ### Mais conteúdo pedido (01/11/2026)
 

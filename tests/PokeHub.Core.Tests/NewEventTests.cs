@@ -114,6 +114,25 @@ public class NewEventTests
         Assert.True(names.LastIndexOf("SetFlag") < names.IndexOf("HidePerson"));
     }
 
+    [Fact]
+    public void Scene_battle_follows_the_players_starter()
+    {
+        var table = ScriptCommandTable.Hgss;
+        var scene = new SceneBehavior(NewEventService.ParseScene("battle: 10 20 30\nsay: Bye"));
+        var code = NewEventService.BuildScript(table, scene, [1], 0x95F, 12);
+        var file = new byte[8 + code.Length];
+        BitConverter.TryWriteBytes(file.AsSpan(0), 4);
+        BitConverter.TryWriteBytes(file.AsSpan(4), (ushort)0xFD13);
+        code.CopyTo(file, 8);
+        var ordered = new ScriptFile(file, table).Routine(1)!.Instructions.OrderBy(i => i.Offset).ToList();
+        Assert.Equal(new long[] { 10, 20, 30 }, ordered.Where(i => i.Name == "TrainerBattle").Select(i => (long)i.Args[0].Value));
+        Assert.Equal(1, ordered.Count(i => i.Name == "CheckBattleWon"));
+        var compares = ordered.Where(i => i.Name == "CompareVarToValue" && i.Args[1].Value > 100).Select(i => (long)i.Args[1].Value);
+        Assert.Equal(new long[] { 152, 155 }, compares);
+        Assert.Equal("battle: 10 20 30\nsay: Bye", NewEventService.FormatScene(scene.Steps, s => s));
+        Assert.Throws<ArgumentException>(() => NewEventService.ParseScene("battle: 1 2"));
+    }
+
     [Theory]
     [InlineData("say:")]
     [InlineData("walk: north 2")]
