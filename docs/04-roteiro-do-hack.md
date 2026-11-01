@@ -477,7 +477,9 @@ Registradas em 01/11/2026. **Valem para o jogo oficial, que ainda não será fei
 
 Fica em `pokemon_ss_from_pokhub`, um commit por contexto. O usuário pediu tudo de uma vez, para testar jogando. Aplicado e ainda sem jogar: curva de Johto inteira, experiência em 70%, selvagens de Kanto, Depois da Elite com alvos de 54 a 70, treinadores novos, trocas, fósseis, distribuição das capturas, arco pós-Elite com míticos, Rocket e Snorlax.
 
-Escolhas feitas sem aprovação, para rever jogando: posições dos NPCs, sorteadas pela planta em áreas abertas; piso 40 no × 1,3; falas e times dos treinadores novos; pedidos da cadeia de missões. Bancos de texto cheios deixam alguns lendários sem fala, só com o grito.
+As posições dos 73 NPCs novos foram revistas mapa a mapa. A planta engana de três jeitos: água e vazio podem estar sem colisão, célula do mapa-múndi de outro cabeçalho não carrega o NPC, e há cenário sem entrada, como a areia a oeste do portão da Rota 36, que é a casca do Parque Nacional. Para saber se um tile se alcança, inunde o mapa-múndi a partir das portas reais; borda de mapa não prova nada.
+
+Escolhas feitas sem aprovação, para rever jogando: piso 40 no × 1,3; falas e times dos treinadores novos; pedidos da cadeia de missões. Bancos de texto cheios deixam alguns lendários sem fala, só com o grito.
 
 Falta: cara nova, evolução paga (parada por decisão), Snorlax que realmente bloqueiem caminho, e novas histórias com cena, que pedem o editor de scripts. Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
