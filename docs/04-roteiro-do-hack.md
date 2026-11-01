@@ -481,7 +481,9 @@ As posições dos 73 NPCs novos foram revistas mapa a mapa. A planta engana de t
 
 Escolhas feitas sem aprovação, para rever jogando: piso 40 no × 1,3; falas e times dos treinadores novos; pedidos da cadeia de missões. Bancos de texto cheios deixam alguns lendários sem fala, só com o grito.
 
-Falta: cara nova, evolução paga (parada por decisão), Snorlax que realmente bloqueiem caminho, e novas histórias com cena, que pedem o editor de scripts. Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
+Snorlax que fecham caminho, com a opção Bloquear o caminho: só saem se vencidos ou capturados. Dois de nível 45 fecham a parte da Dark Cave ligada às Rotas 31 e 46, que também abre pela Rota 45 com Surf. Um de nível 60 fecha a porta do meio do Mt. Mortar na Rota 42, a única para o fundo da caverna. Um de nível 70 fecha o Mt. Moon na Rota 3, e com ele a Rota 4. Nenhum fica em caminho da história. Nas portas e faixas estreitas de rota obrigatória não dá para pôr bloqueio sem travar o jogo, e as rotas opcionais largas pediriam vários Snorlax lado a lado.
+
+Falta: cara nova, evolução paga (parada por decisão) e novas histórias com cena, que pedem o editor de scripts. Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
 ### Mais conteúdo pedido (01/11/2026)
 
