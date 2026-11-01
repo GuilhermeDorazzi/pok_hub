@@ -144,7 +144,8 @@
                         <TextBlock Text="{loc:T newev.level}" VerticalAlignment="Center" Margin="0,0,8,0" />
                         <TextBox Text="{Binding Level}" Width="50" HorizontalAlignment="Left" />
                     </DockPanel>
-                    <CheckBox Content="{loc:T newev.vanish}" IsChecked="{Binding Vanish}" Margin="0,0,0,8" />
+                    <CheckBox Content="{loc:T newev.vanish}" IsChecked="{Binding Vanish}" Margin="0,0,0,4" />
+                    <CheckBox Content="{loc:T newev.blocks}" ToolTip="{loc:T newev.blocks.tip}" IsChecked="{Binding Blocks}" IsEnabled="{Binding Vanish}" Margin="0,0,0,8" />
                     <TextBlock Text="{loc:T newev.noTeam}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8" />
                     <TextBlock Text="{loc:T newev.pokemonText}" Margin="0,0,0,4" />
                     <TextBox Text="{Binding PokemonText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="50" />

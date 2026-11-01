@@ -78,7 +78,7 @@ public class NewEventTests
         code.CopyTo(file, 6);
         var script = new ScriptFile(file, table).Routine(1)!;
         var ordered = script.Instructions.OrderBy(i => i.Offset).ToList();
-        Assert.Equal(["PlaySE", "LockAll", "FacePlayer", "PlayCry", "WaitCry", "PartyCountNotEgg", "CompareVarToValue", "GoToIf", "SetFlag", "WildBattle", "ClearFlag", "CheckBattleWon", "CompareVarToValue", "GoToIf", "SetFlag", "ReleaseAll", "End", "WhiteOut", "ReleaseAll", "End", "ReleaseAll", "End"], ordered.Select(i => i.Name));
+        Assert.Equal(["PlaySE", "LockAll", "FacePlayer", "PlayCry", "WaitCry", "PartyCountNotEgg", "CompareVarToValue", "GoToIf", "SetFlag", "WildBattle", "ClearFlag", "CheckBattleWon", "CompareVarToValue", "GoToIf", "GetStaticEncounterOutcome", "CompareVarToValue", "GoToIf", "CompareVarToValue", "GoToIf", "ReleaseAll", "End", "SetFlag", "ReleaseAll", "End", "WhiteOut", "ReleaseAll", "End", "ReleaseAll", "End"], ordered.Select(i => i.Name));
         var battle = ordered.First(i => i.Name == "WildBattle");
         Assert.Equal(25, battle.Args[0].Value);
         Assert.Equal(10, battle.Args[1].Value);
@@ -86,6 +86,27 @@ public class NewEventTests
         // sem sumir, não usa flag nem esconde
         var stays = NewEventService.BuildScript(table, new PokemonBehavior(25, 10, false, null), [], null);
         Assert.True(stays.Length < code.Length);
+    }
+
+    [Fact]
+    public void Blocking_pokemon_only_leaves_when_beaten_or_caught()
+    {
+        var table = ScriptCommandTable.Hgss;
+        var code = NewEventService.BuildScript(table, new PokemonBehavior(143, 45, true, null, Blocks: true), [], 0x95F, 12);
+        var file = new byte[6 + code.Length];
+        BitConverter.TryWriteBytes(file.AsSpan(0), 2);
+        BitConverter.TryWriteBytes(file.AsSpan(4), (ushort)0xFD13);
+        code.CopyTo(file, 6);
+        var ordered = new ScriptFile(file, table).Routine(1)!.Instructions.OrderBy(i => i.Offset).ToList();
+        var names = ordered.Select(i => i.Name).ToList();
+        // sem flag de encontro: a tela de volta não esconde nada, e fugir deixa o caminho fechado
+        Assert.Equal(1, names.Count(n => n == "SetFlag"));
+        Assert.DoesNotContain("ClearFlag", names);
+        int outcome = names.IndexOf("GetStaticEncounterOutcome");
+        Assert.Equal([1L, 4L], ordered.Skip(outcome).Where(i => i.Name == "CompareVarToValue").Take(2).Select(i => (long)i.Args[1].Value));
+        int hide = names.IndexOf("HidePerson");
+        Assert.True(hide > names.IndexOf("SetFlag"));
+        Assert.Equal(12, ordered[hide].Args[0].Value);
     }
 
     [Theory]

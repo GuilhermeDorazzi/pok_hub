@@ -154,6 +154,7 @@ public sealed partial class NewEventViewModel : ObservableObject
     [ObservableProperty] private NewEventChoice? _selectedSpecies;
     [ObservableProperty] private string _level = "10";
     [ObservableProperty] private bool _vanish = true;
+    [ObservableProperty] private bool _blocks;
     [ObservableProperty] private string _pokemonText = "";
     [ObservableProperty] private BitmapSource? _pokemonSprite;
     [ObservableProperty] private string _talkText = "";
@@ -374,6 +375,7 @@ public sealed partial class NewEventViewModel : ObservableObject
                 SelectedSpecies = Species.FirstOrDefault(c => c.Value == p.Species) ?? SelectedSpecies;
                 Level = p.Level.ToString();
                 Vanish = p.Vanish;
+                Blocks = p.Blocks;
                 PokemonText = Unwrap(p.Text ?? "");
                 break;
             case GroundItemBehavior g:
@@ -573,7 +575,7 @@ public sealed partial class NewEventViewModel : ObservableObject
             NpcBehavior behavior = IsGround ? new GroundItemBehavior(GroundItem!.Value, int.Parse(GroundQuantity), GroundHidden) : IsGuide ? new GuideBehavior(BuildGuideSteps(), Prepare(GuideFinalText)) : IsQuest ? BuildQuest() : IsSell ? BuildSell() : IsTrainer ? BuildTrainer() : IsTalk ? new TalkBehavior(Prepare(TalkText))
                 : IsItem ? new GiveItemBehavior(SelectedItem!.Value, int.Parse(Quantity), Prepare(BeforeText), Prepare(AfterText))
                 : IsTrade ? new TradeBehavior(AskSpecies!.Value, GiveSpecies!.Value, string.IsNullOrWhiteSpace(Nickname) ? null : Nickname.Trim(), Prepare(AskText), Prepare(ThanksText), Prepare(WrongText), Prepare(DeclineText), int.Parse(TradeMinLevel), Prepare(TradeTooLowText))
-                : new PokemonBehavior(SelectedSpecies!.Value, int.Parse(Level), Vanish, string.IsNullOrWhiteSpace(PokemonText) ? null : Prepare(PokemonText));
+                : new PokemonBehavior(SelectedSpecies!.Value, int.Parse(Level), Vanish, string.IsNullOrWhiteSpace(PokemonText) ? null : Prepare(PokemonText), Vanish && Blocks);
             await _snapshot(Loc.T("newev.snapshotBefore", map.Label));
             var request = new NewNpc(map.Id, tile.X + Layout.OriginX, tile.Y + Layout.OriginY, sprite.Id, facing.Value, behavior, (NpcMovement)(SelectedMovement?.Value ?? 0), range, BuildCondition());
             bool editing = SelectedCreated is not null;

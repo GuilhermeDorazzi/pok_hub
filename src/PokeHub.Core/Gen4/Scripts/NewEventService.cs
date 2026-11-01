@@ -11,8 +11,11 @@ public sealed record TalkBehavior(string Text) : NpcBehavior;
 /// <summary>Dá o item uma vez só: depois repete apenas a fala final.</summary>
 public sealed record GiveItemBehavior(int Item, int Quantity, string BeforeText, string AfterText) : NpcBehavior;
 
-/// <summary>Pokémon parado no mapa: grito e batalha. Com Vanish, some depois da batalha, a não ser que o jogador perca. Texto é opcional.</summary>
-public sealed record PokemonBehavior(int Species, int Level, bool Vanish, string? Text) : NpcBehavior;
+/// <summary>
+/// Pokémon parado no mapa: grito e batalha. Com Vanish, some depois de vencido ou capturado; se o jogador fugir, volta quando o mapa recarregar.
+/// Com Blocks, fica no lugar mesmo na tela de volta da batalha, para fugir não abrir o caminho. Texto é opcional.
+/// </summary>
+public sealed record PokemonBehavior(int Species, int Level, bool Vanish, string? Text, bool Blocks = false) : NpcBehavior;
 
 /// <summary>Troca: o NPC pede uma espécie e dá outra, usando uma vaga livre da tabela de trocas do jogo.</summary>
 public sealed record TradeBehavior(int AskSpecies, int GiveSpecies, string? Nickname, string AskText, string ThanksText, string WrongText, string DeclineText, int MinLevel = 0, string? TooLowText = null) : NpcBehavior;
@@ -127,6 +130,7 @@ public static class NewEventService
     private const int TradeGiveOffset = 0, TradeAbilityOffset = 28, TradeHeldItemOffset = 60, TradeAskOffset = 0x4C;
     private const int PartyCancelled = 255, ConditionNotEqual = 5;
     private const int SelectSoundCommandSeen = 609, SpecialVar0 = 0x8004, SpecialVar1 = 0x8005, ResultVar = 0x800C;
+    private const int OutcomeWin = 1, OutcomeCaught = 4;
     private const int GiveItemStd = 2033, BagFullStd = 2009, PlatinumGiveItem = 2016, PlatinumBagFull = 2017, ConditionEqual = 1, SelectSound = 1500, MaxSpecies = 493;
     /// <summary>Comparação do GoToIf: abaixo do valor. Depois de CheckFlag, quer dizer flag desligada.</summary>
     private const int ConditionLess = 0;
@@ -431,7 +435,7 @@ public static class NewEventService
                     BuildTradeBody(s, tradeSlot, flag!.Value, messages, platinum, swap.MinLevel);
                     break;
                 case PokemonBehavior mon:
-                    EmitPokemonBody(s, mon, messages, flag, engageFlag, platinum);
+                    EmitPokemonBody(s, mon, messages, flag, engageFlag, platinum, objectId);
                     break;
                 default:
                     throw new ArgumentException(behavior.GetType().Name);
@@ -451,7 +455,7 @@ public static class NewEventService
         if (behavior is PokemonBehavior wild)
         {
             s.Emit("PlaySE", SelectSound).Emit("LockAll").Emit("FacePlayer");
-            EmitPokemonBody(s, wild, messages, flag, engageFlag, platinum);
+            EmitPokemonBody(s, wild, messages, flag, engageFlag, platinum, objectId);
             return s.Build();
         }
         if (platinum) s.Emit("PlaySE", SelectSound);
@@ -484,7 +488,7 @@ public static class NewEventService
         return s.Build();
     }
 
-    private static void EmitPokemonBody(ScriptBuilder s, PokemonBehavior mon, IReadOnlyList<int> messages, int? flag, int? engageFlag, bool platinum)
+    private static void EmitPokemonBody(ScriptBuilder s, PokemonBehavior mon, IReadOnlyList<int> messages, int? flag, int? engageFlag, bool platinum, int objectId)
     {
         s.Emit("PlayCry", mon.Species, 0);
         bool talks = messages.Count > 0 && !string.IsNullOrEmpty(mon.Text);
@@ -501,7 +505,15 @@ public static class NewEventService
         s.Emit("CheckBattleWon", ResultVar)
             .Emit("CompareVarToValue", ResultVar, 0)
             .Emit("GoToIf", ConditionEqual, "lost");
+        // no HG/SS, só vitória e captura contam: quem foge encontra o Pokémon de novo
+        if (flag is not null && !platinum)
+            s.Emit("GetStaticEncounterOutcome", ResultVar)
+                .Emit("CompareVarToValue", ResultVar, OutcomeWin).Emit("GoToIf", ConditionEqual, "beaten")
+                .Emit("CompareVarToValue", ResultVar, OutcomeCaught).Emit("GoToIf", ConditionEqual, "beaten")
+                .Emit("ReleaseAll").Emit("End")
+                .Label("beaten");
         if (flag is { } hide) s.Emit("SetFlag", hide);
+        if (mon.Blocks) s.Emit("HidePerson", objectId);
         s.Emit("ReleaseAll").Emit("End")
             .Label("lost").Emit("WhiteOut").Emit("ReleaseAll").Emit("End")
             .Label("noTeam").Emit("ReleaseAll").Emit("End");
@@ -601,6 +613,7 @@ public static class NewEventService
         if (npc.Facing is < 0 or > 3) throw new ArgumentException(Loc.T("core.newev.badFacing"));
         if (npc.Behavior is GiveItemBehavior { Quantity: < 1 or > 99 }) throw new ArgumentException(Loc.T("core.newev.badQuantity"));
         if (npc.Behavior is PokemonBehavior { Level: < 1 or > 100 }) throw new ArgumentException(Loc.T("core.newev.badLevel"));
+        if (npc.Behavior is PokemonBehavior { Blocks: true } && (game.IsPlatinum || npc.Behavior is PokemonBehavior { Vanish: false })) throw new ArgumentException(Loc.T("core.newev.badBlocks"));
         if (npc.Behavior is PokemonBehavior { Species: < 1 or > MaxSpecies }) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
         if (npc.Behavior is PokemonBehavior mon && SpriteForSpecies(mon.Species, game.IsPlatinum) is null) throw new ArgumentException(Loc.T("core.newev.noFieldSprite"));
         if (npc.Behavior is TradeBehavior { AskSpecies: < 1 or > MaxSpecies } or TradeBehavior { GiveSpecies: < 1 or > MaxSpecies }) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
@@ -641,7 +654,7 @@ public static class NewEventService
             if (id < 1 || id >= trainerCount) throw new ArgumentException(Loc.T("core.newev.badTrainer", id, trainerCount - 1));
         if (sighted is not null && events.Objects.Any(o => o.Id != current?.Id && o.ScriptId == TrainerScriptOf(sighted.Trainer))) warnings.Add(Loc.T("core.newev.sharedTrainer"));
         bool needsFlag = sighted is null && npc.Behavior is GiveItemBehavior or TradeBehavior or PokemonBehavior { Vanish: true } or QuestBehavior or SellBehavior { Once: true } or TrainerBehavior or GroundItemBehavior;
-        bool vanishes = npc.Behavior is PokemonBehavior { Vanish: true };
+        bool vanishes = npc.Behavior is PokemonBehavior { Vanish: true, Blocks: false };
         var taken = new HashSet<int>(ledger.RetiredFlags);
         int trainers = Narc.Read(File.ReadAllBytes(game.TrainerDataPath)).Files.Count;
         int Pick()
@@ -761,7 +774,7 @@ public static class NewEventService
             },
             Type: sighted is not null ? 1 : 0,
             // a flag do Pokémon que some esconde o objeto; a do item só marca a entrega, e o NPC continua lá
-            EventFlag: vanishes || npc.Behavior is TrainerBehavior { Vanish: true, Sight: 0 } or GroundItemBehavior ? flag!.Value : 0,
+            EventFlag: npc.Behavior is PokemonBehavior { Vanish: true } or TrainerBehavior { Vanish: true, Sight: 0 } or GroundItemBehavior ? flag!.Value : 0,
             ScriptId: scriptId,
             Facing: npc.Facing,
             X: npc.X,
@@ -898,6 +911,7 @@ public sealed class CreatedNpc
     public int Species { get; set; }
     public int Level { get; set; }
     public bool Vanish { get; set; }
+    public bool Blocks { get; set; }
     public int AskSpecies { get; set; }
     public int GiveSpecies { get; set; }
     public string? Nickname { get; set; }
@@ -928,7 +942,7 @@ public sealed class CreatedNpc
     public NpcBehavior ToBehavior() => Kind switch
     {
         "item" => new GiveItemBehavior(Item, Quantity, Texts[0], Texts[1]),
-        "pokemon" => new PokemonBehavior(Species, Level, Vanish, Texts.FirstOrDefault()),
+        "pokemon" => new PokemonBehavior(Species, Level, Vanish, Texts.FirstOrDefault(), Blocks),
         "trade" => new TradeBehavior(AskSpecies, GiveSpecies, Nickname, Texts[0], Texts[1], Texts[2], Texts[3], MinLevel, Texts.ElementAtOrDefault(4)),
         "ground" => new GroundItemBehavior(Item, Quantity, Hidden),
         "guide" => new GuideBehavior(GuideFlags.Select((flag, i) => new GuideStep(flag, Texts[i])).ToList(), Texts[^1]),
@@ -955,7 +969,7 @@ public sealed class CreatedNpc
         {
             case TalkBehavior t: c.Kind = "talk"; c.Texts = [t.Text]; break;
             case GiveItemBehavior i: c.Kind = "item"; c.Item = i.Item; c.Quantity = i.Quantity; c.Texts = [i.BeforeText, i.AfterText]; break;
-            case PokemonBehavior p: c.Kind = "pokemon"; c.Species = p.Species; c.Level = p.Level; c.Vanish = p.Vanish; c.Texts = p.Text is { Length: > 0 } text ? [text] : []; break;
+            case PokemonBehavior p: c.Kind = "pokemon"; c.Species = p.Species; c.Level = p.Level; c.Vanish = p.Vanish; c.Blocks = p.Blocks; c.Texts = p.Text is { Length: > 0 } text ? [text] : []; break;
             case GroundItemBehavior g: c.Kind = "ground"; c.Item = g.Item; c.Quantity = g.Quantity; c.Hidden = g.Hidden; c.Texts = []; break;
             case GuideBehavior guide: c.Kind = "guide"; c.GuideFlags = guide.Steps.Select(step => step.Flag).ToList(); c.Texts = [.. guide.Steps.Select(step => step.Text), guide.FinalText]; break;
             case TradeBehavior { MinLevel: > 0 } t: c.Kind = "trade"; c.AskSpecies = t.AskSpecies; c.GiveSpecies = t.GiveSpecies; c.Nickname = t.Nickname; c.MinLevel = t.MinLevel; c.Texts = [t.AskText, t.ThanksText, t.WrongText, t.DeclineText, t.TooLowText ?? ""]; break;
