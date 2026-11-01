@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using PokeHub.Core.Localization;
 
@@ -21,21 +22,22 @@ public sealed partial class FeatureCardViewModel : ObservableObject
     private readonly Func<bool>? _customReady;
     private readonly Func<string>? _customAction;
     private readonly Func<string>? _customNotReadyStatus;
+    private readonly Func<ImageSource?>? _programIcon;
 
     public string Key { get; }
     public FeatureGroup Group { get; }
-    /// <summary>Marcador curto mostrado no ícone do card (ex.: "M" de mapas).</summary>
-    public string Glyph { get; }
     public ToolItemViewModel? Tool { get; }
+    /// <summary>O ícone do programa vinculado, quando ele está instalado e tem um; senão, o desenhado pelo hub.</summary>
+    public ImageSource? Icon => _programIcon?.Invoke() ?? Tool?.ProgramIcon ?? AppIcons.Drawing(Key);
     /// <summary>Comando usado no lugar do da ferramenta (ex.: Testar no emulador).</summary>
     public ICommand? CustomCommand { get; }
 
-    public FeatureCardViewModel(string key, FeatureGroup group, string glyph, ToolItemViewModel? tool,
-        ICommand? customCommand = null, Func<bool>? customReady = null, Func<string>? customAction = null, Func<string>? customNotReadyStatus = null)
+    public FeatureCardViewModel(string key, FeatureGroup group, ToolItemViewModel? tool,
+        ICommand? customCommand = null, Func<bool>? customReady = null, Func<string>? customAction = null, Func<string>? customNotReadyStatus = null, Func<ImageSource?>? programIcon = null)
     {
+        _programIcon = programIcon;
         Key = key;
         Group = group;
-        Glyph = glyph;
         Tool = tool;
         CustomCommand = customCommand;
         _customReady = customReady;
@@ -60,6 +62,7 @@ public sealed partial class FeatureCardViewModel : ObservableObject
 
     public void Refresh()
     {
+        OnPropertyChanged(nameof(Icon));
         if (CustomCommand is not null)
         {
             IsReady = _customReady?.Invoke() ?? true;

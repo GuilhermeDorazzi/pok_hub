@@ -727,33 +727,34 @@ public sealed partial class MainViewModel : ObservableObject
         string NeedsProject() => Loc.T("tool.status.openProject");
         FeatureCardViewModel[] cards =
         [
-            new("maps", FeatureGroup.Maps, "\uE707", Tool("dspre")),
-            new("newevent", FeatureGroup.Maps, "\uE710", null, OpenNewEventCommand, Extracted, Open, NeedsProject),
-            new("events", FeatureGroup.Maps, "\uE8A1", Tool("event-map")),
-            new("scripts", FeatureGroup.Maps, "\uE943", null, OpenScriptsCommand, Extracted, Open, NeedsProject),
-            new("encounters", FeatureGroup.Maps, "\uE909", Tool("encounter-editor")),
-            new("newmaps", FeatureGroup.Maps, "\uE8EC", Tool("pdsms")),
+            new("maps", FeatureGroup.Maps, Tool("dspre")),
+            new("newevent", FeatureGroup.Maps, null, OpenNewEventCommand, Extracted, Open, NeedsProject),
+            new("events", FeatureGroup.Maps, Tool("event-map")),
+            new("scripts", FeatureGroup.Maps, null, OpenScriptsCommand, Extracted, Open, NeedsProject),
+            new("encounters", FeatureGroup.Maps, Tool("encounter-editor")),
+            new("newmaps", FeatureGroup.Maps, Tool("pdsms")),
 
-            new("stats", FeatureGroup.Pokemon, "\uE9D2", null, OpenStatsCommand, Extracted, Open, NeedsProject),
-            new("trainers", FeatureGroup.Pokemon, "\uE716", Tool("trainer-editor")),
-            new("tables", FeatureGroup.Pokemon, "\uF0E2", null, OpenTablesCommand, Extracted, Open, NeedsProject),
-            new("pokedex", FeatureGroup.Pokemon, "\uE8F1", Tool("pokedex-area-editor")),
-            new("pokemon", FeatureGroup.Pokemon, "\uE9D9", Tool("pokeditor")),
+            new("stats", FeatureGroup.Pokemon, null, OpenStatsCommand, Extracted, Open, NeedsProject),
+            new("trainers", FeatureGroup.Pokemon, Tool("trainer-editor")),
+            new("tables", FeatureGroup.Pokemon, null, OpenTablesCommand, Extracted, Open, NeedsProject),
+            new("pokedex", FeatureGroup.Pokemon, Tool("pokedex-area-editor")),
+            new("pokemon", FeatureGroup.Pokemon, Tool("pokeditor")),
 
-            new("text", FeatureGroup.Media, "\uE8D2", Tool("text-editor")),
-            new("graphics", FeatureGroup.Media, "\uE8B9", Tool("nitropaint")),
-            new("narcs", FeatureGroup.Media, "\uE8B3", null, OpenNarcBrowserCommand, Extracted, Open, NeedsProject),
-            new("audio", FeatureGroup.Media, "\uE8D6", Tool("nitrostudio2")),
-            new("models", FeatureGroup.Media, "\uE8A9", Tool("apicula")),
+            new("text", FeatureGroup.Media, Tool("text-editor")),
+            new("graphics", FeatureGroup.Media, Tool("nitropaint")),
+            new("narcs", FeatureGroup.Media, null, OpenNarcBrowserCommand, Extracted, Open, NeedsProject),
+            new("audio", FeatureGroup.Media, Tool("nitrostudio2")),
+            new("models", FeatureGroup.Media, Tool("apicula")),
 
-            new("emulator", FeatureGroup.Release, "\uE768", null, EmulatorCardCommand, () => HasEmulators, () => HasEmulators ? PlayButtonText : Loc.T("feature.goTools")),
-            new("patch", FeatureGroup.Release, "\uE8C8", null, CreatePatchCommand, Extracted, () => Loc.T("patch.create"), NeedsProject),
-            new("randomizer", FeatureGroup.Release, "\uE8B1", Tool("randomizer-zx")),
+            new("emulator", FeatureGroup.Release, null, EmulatorCardCommand, () => HasEmulators, () => HasEmulators ? PlayButtonText : Loc.T("feature.goTools"), null,
+                () => SelectedEmulator is { } emulator ? Tool(emulator.Id)?.ProgramIcon : null),
+            new("patch", FeatureGroup.Release, null, CreatePatchCommand, Extracted, () => Loc.T("patch.create"), NeedsProject),
+            new("randomizer", FeatureGroup.Release, Tool("randomizer-zx")),
 
-            new("decomp", FeatureGroup.Advanced, "\uE943", DecompTool()),
-            new("inject", FeatureGroup.Advanced, "\uE756", null, OpenCodePatchesCommand, Extracted, Open, NeedsProject),
-            new("batch", FeatureGroup.Advanced, "\uE8FD", null, OpenBatchCommand, Extracted, Open, NeedsProject),
-            new("files", FeatureGroup.Advanced, "\uE8B7", Tool("tinke")),
+            new("decomp", FeatureGroup.Advanced, DecompTool()),
+            new("inject", FeatureGroup.Advanced, null, OpenCodePatchesCommand, Extracted, Open, NeedsProject),
+            new("batch", FeatureGroup.Advanced, null, OpenBatchCommand, Extracted, Open, NeedsProject),
+            new("files", FeatureGroup.Advanced, Tool("tinke")),
         ];
         CardGroups.Clear();
         foreach (var group in cards.GroupBy(c => c.Group)) CardGroups.Add(new FeatureCardGroup(group.Key, group.ToList()));

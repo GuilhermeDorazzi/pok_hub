@@ -158,6 +158,8 @@ Fase 2 concluída em 2026-10-30.
 
 30. **Início por assunto.** Os cards da tela inicial ficam em cinco grupos (`FeatureGroup`): mundo do jogo; Pokémon e dados do jogo; textos, gráficos e áudio; testar e distribuir; avançado. A ordem de `BuildCards` é a ordem na tela, com os mais usados primeiro.
 
+31. **Ícones dos cards.** `AppIcons` lê o ícone do .exe instalado da ferramenta vinculada. Sem programa instalado, sem ícone ou em .jar, entra o desenho do hub em `Views/CardIcons.xaml`, feito em vetor com formas simples e sem nada dos arquivos dos jogos.
+
 Publicado em github.com/GuilhermeDorazzi/pok_hub (privado por enquanto).
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)

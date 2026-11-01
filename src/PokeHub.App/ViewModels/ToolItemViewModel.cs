@@ -27,6 +27,10 @@ public sealed partial class ToolItemViewModel : ObservableObject
 
     public PluginManifest Manifest { get; }
 
+    /// <summary>Ícone do .exe instalado. Fica null em ferramentas embutidas, programas sem ícone e .jar.</summary>
+    public System.Windows.Media.Imaging.BitmapSource? ProgramIcon => AppIcons.Program(Installed?.ExecutablePath);
+    public bool HasProgramIcon => ProgramIcon is not null;
+
     [ObservableProperty] private InstalledTool? _installed;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isRunning;
@@ -43,6 +47,13 @@ public sealed partial class ToolItemViewModel : ObservableObject
     public bool UpdateAvailable => LatestVersion is { } latest && Installed is { } i && !string.Equals(latest, i.Version, StringComparison.OrdinalIgnoreCase);
     public string UpdateText => UpdateAvailable ? Loc.T("tools.updateAvailable", LatestVersion) : "";
     public string ContextsText => string.Join(" · ", Manifest.Contexts.Select(c => Loc.T("ctx." + c.ToString().ToLowerInvariant())));
+
+    partial void OnInstalledChanged(InstalledTool? value)
+    {
+        NotifyAll();
+        OnPropertyChanged(nameof(ProgramIcon));
+        OnPropertyChanged(nameof(HasProgramIcon));
+    }
 
     partial void OnLatestVersionChanged(string? value)
     {
@@ -202,7 +213,6 @@ public sealed partial class ToolItemViewModel : ObservableObject
     }
 
     partial void OnIsBusyChanged(bool value) => NotifyAll();
-    partial void OnInstalledChanged(InstalledTool? value) => NotifyAll();
 
     private bool CanInstall() => !IsBusy && !(Manifest.Scope == PluginScope.Project && _currentProject() is null);
 

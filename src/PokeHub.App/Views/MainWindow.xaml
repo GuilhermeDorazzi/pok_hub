@@ -21,8 +21,8 @@
                     <DockPanel>
                         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
                             <Border Width="36" Height="36" CornerRadius="8" Background="{StaticResource HoverBrush}" Margin="0,0,10,0">
-                                <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="17" Foreground="{StaticResource AccentBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Image Source="{Binding Icon}" Width="26" Height="26" RenderOptions.BitmapScalingMode="HighQuality"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" />
                         </DockPanel>
@@ -82,13 +82,17 @@
                             <CheckBox Grid.Column="0" IsChecked="{Binding IsInstalled, Mode=OneWay}" IsHitTestVisible="False" Focusable="False"
                                       ToolTip="{loc:T tools.installed}" VerticalAlignment="Center" Margin="0,0,14,0" />
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock>
-                                    <Run Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold" FontSize="14" />
-                                    <Run Text="   " />
-                                    <Run Text="{Binding LicenseText, Mode=OneWay}" Foreground="{StaticResource FaintBrush}" FontSize="11" />
-                                    <Run Text="  " />
-                                    <Run Text="{Binding ContextsText, Mode=OneWay}" Foreground="{StaticResource FaintBrush}" FontSize="11" />
-                                </TextBlock>
+                                <DockPanel>
+                                    <Image DockPanel.Dock="Left" Source="{Binding ProgramIcon}" Width="18" Height="18" Margin="0,0,6,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"
+                                           Visibility="{Binding HasProgramIcon, Converter={StaticResource BoolToVis}}" />
+                                    <TextBlock VerticalAlignment="Center">
+                                        <Run Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold" FontSize="14" />
+                                        <Run Text="   " />
+                                        <Run Text="{Binding LicenseText, Mode=OneWay}" Foreground="{StaticResource FaintBrush}" FontSize="11" />
+                                        <Run Text="  " />
+                                        <Run Text="{Binding ContextsText, Mode=OneWay}" Foreground="{StaticResource FaintBrush}" FontSize="11" />
+                                    </TextBlock>
+                                </DockPanel>
                                 <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}" />
                                 <TextBlock Text="{Binding RequiresText}" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0">
                                     <TextBlock.Style>
