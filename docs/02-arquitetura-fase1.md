@@ -156,6 +156,8 @@ Fase 2 concluída em 2026-10-30.
 
 29. **Números amigáveis.** Eventos e editor de scripts mostram flags e variáveis como `NOME (672, 0x2A0)` (`FlagNames.Label`), e as buscas aceitam decimal ou 0x. No editor, `ScriptListing` numera as linhas de cada script e mostra os saltos como `Script 3, linha 12 (01A4)`; o valor digitado no salto continua sendo o da coluna Pos. Editor de treinadores e patches de código continuam como estavam.
 
+30. **Início por assunto.** Os cards da tela inicial ficam em cinco grupos (`FeatureGroup`): mundo do jogo; Pokémon e dados do jogo; textos, gráficos e áudio; testar e distribuir; avançado. A ordem de `BuildCards` é a ordem na tela, com os mais usados primeiro.
+
 Publicado em github.com/GuilhermeDorazzi/pok_hub (privado por enquanto).
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)

@@ -46,8 +46,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Todas as ferramentas do catálogo para a geração do projeto aberto (inclui editores embutidos).</summary>
     public List<ToolItemViewModel> AllTools { get; } = [];
     public ObservableCollection<ToolGroupViewModel> ToolGroups { get; } = [];
-    public ObservableCollection<FeatureCardViewModel> EditCards { get; } = [];
-    public ObservableCollection<FeatureCardViewModel> AdvancedCards { get; } = [];
+    public ObservableCollection<FeatureCardGroup> CardGroups { get; } = [];
 
     [ObservableProperty] private LanguageOption _selectedLanguage = LanguageOption.All.First(l => l.Code == Loc.Instance.Language);
     [ObservableProperty] private Project? _currentProject;
@@ -723,48 +722,51 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void BuildCards()
     {
-        EditCards.Clear();
-        AdvancedCards.Clear();
-        EditCards.Add(new FeatureCardViewModel("maps", FeatureGroup.Edit, "\uE707", Tool("dspre")));
-        EditCards.Add(new FeatureCardViewModel("newmaps", FeatureGroup.Edit, "\uE8EC", Tool("pdsms")));
-        EditCards.Add(new FeatureCardViewModel("trainers", FeatureGroup.Edit, "\uE716", Tool("trainer-editor")));
-        EditCards.Add(new FeatureCardViewModel("encounters", FeatureGroup.Edit, "\uE909", Tool("encounter-editor")));
-        EditCards.Add(new FeatureCardViewModel("text", FeatureGroup.Edit, "\uE8D2", Tool("text-editor")));
-        EditCards.Add(new FeatureCardViewModel("events", FeatureGroup.Edit, "\uE8A1", Tool("event-map")));
-        EditCards.Add(new FeatureCardViewModel("pokedex", FeatureGroup.Edit, "\uE8F1", Tool("pokedex-area-editor")));
-        EditCards.Add(new FeatureCardViewModel("stats", FeatureGroup.Edit, "\uE9D2", null, OpenStatsCommand,
-            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
-        EditCards.Add(new FeatureCardViewModel("tables", FeatureGroup.Edit, "\uF0E2", null, OpenTablesCommand,
-            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
-        EditCards.Add(new FeatureCardViewModel("scripts", FeatureGroup.Edit, "\uE943", null, OpenScriptsCommand,
-            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
-        EditCards.Add(new FeatureCardViewModel("newevent", FeatureGroup.Edit, "\uE710", null, OpenNewEventCommand,
-            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
-        EditCards.Add(new FeatureCardViewModel("pokemon", FeatureGroup.Edit, "\uE9D9", Tool("pokeditor")));
-        EditCards.Add(new FeatureCardViewModel("graphics", FeatureGroup.Edit, "\uE8B9", Tool("nitropaint")));
-        EditCards.Add(new FeatureCardViewModel("narcs", FeatureGroup.Edit, "\uE8B3", null, OpenNarcBrowserCommand,
-            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
-        EditCards.Add(new FeatureCardViewModel("audio", FeatureGroup.Edit, "\uE8D6", Tool("nitrostudio2")));
-        AdvancedCards.Add(new FeatureCardViewModel("emulator", FeatureGroup.Advanced, "\uE768", null, EmulatorCardCommand,
-            () => HasEmulators, () => HasEmulators ? PlayButtonText : Loc.T("feature.goTools")));
-        AdvancedCards.Add(new FeatureCardViewModel("models", FeatureGroup.Advanced, "\uE8A9", Tool("apicula")));
-        AdvancedCards.Add(new FeatureCardViewModel("decomp", FeatureGroup.Advanced, "\uE943", DecompTool()));
-        AdvancedCards.Add(new FeatureCardViewModel("inject", FeatureGroup.Advanced, "\uE756", null, OpenCodePatchesCommand,
-            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
-        AdvancedCards.Add(new FeatureCardViewModel("randomizer", FeatureGroup.Advanced, "\uE8B1", Tool("randomizer-zx")));
-        AdvancedCards.Add(new FeatureCardViewModel("files", FeatureGroup.Advanced, "\uE8B7", Tool("tinke")));
-        AdvancedCards.Add(new FeatureCardViewModel("batch", FeatureGroup.Advanced, "\uE8FD", null, OpenBatchCommand,
-            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("main.open"), () => Loc.T("tool.status.openProject")));
-        AdvancedCards.Add(new FeatureCardViewModel("patch", FeatureGroup.Advanced, "\uE8C8", null, CreatePatchCommand,
-            () => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject), () => Loc.T("patch.create"), () => Loc.T("tool.status.openProject")));
+        bool Extracted() => CurrentProject is not null && WorkspaceService.IsExtracted(CurrentProject);
+        string Open() => Loc.T("main.open");
+        string NeedsProject() => Loc.T("tool.status.openProject");
+        FeatureCardViewModel[] cards =
+        [
+            new("maps", FeatureGroup.Maps, "\uE707", Tool("dspre")),
+            new("newevent", FeatureGroup.Maps, "\uE710", null, OpenNewEventCommand, Extracted, Open, NeedsProject),
+            new("events", FeatureGroup.Maps, "\uE8A1", Tool("event-map")),
+            new("scripts", FeatureGroup.Maps, "\uE943", null, OpenScriptsCommand, Extracted, Open, NeedsProject),
+            new("encounters", FeatureGroup.Maps, "\uE909", Tool("encounter-editor")),
+            new("newmaps", FeatureGroup.Maps, "\uE8EC", Tool("pdsms")),
+
+            new("stats", FeatureGroup.Pokemon, "\uE9D2", null, OpenStatsCommand, Extracted, Open, NeedsProject),
+            new("trainers", FeatureGroup.Pokemon, "\uE716", Tool("trainer-editor")),
+            new("tables", FeatureGroup.Pokemon, "\uF0E2", null, OpenTablesCommand, Extracted, Open, NeedsProject),
+            new("pokedex", FeatureGroup.Pokemon, "\uE8F1", Tool("pokedex-area-editor")),
+            new("pokemon", FeatureGroup.Pokemon, "\uE9D9", Tool("pokeditor")),
+
+            new("text", FeatureGroup.Media, "\uE8D2", Tool("text-editor")),
+            new("graphics", FeatureGroup.Media, "\uE8B9", Tool("nitropaint")),
+            new("narcs", FeatureGroup.Media, "\uE8B3", null, OpenNarcBrowserCommand, Extracted, Open, NeedsProject),
+            new("audio", FeatureGroup.Media, "\uE8D6", Tool("nitrostudio2")),
+            new("models", FeatureGroup.Media, "\uE8A9", Tool("apicula")),
+
+            new("emulator", FeatureGroup.Release, "\uE768", null, EmulatorCardCommand, () => HasEmulators, () => HasEmulators ? PlayButtonText : Loc.T("feature.goTools")),
+            new("patch", FeatureGroup.Release, "\uE8C8", null, CreatePatchCommand, Extracted, () => Loc.T("patch.create"), NeedsProject),
+            new("randomizer", FeatureGroup.Release, "\uE8B1", Tool("randomizer-zx")),
+
+            new("decomp", FeatureGroup.Advanced, "\uE943", DecompTool()),
+            new("inject", FeatureGroup.Advanced, "\uE756", null, OpenCodePatchesCommand, Extracted, Open, NeedsProject),
+            new("batch", FeatureGroup.Advanced, "\uE8FD", null, OpenBatchCommand, Extracted, Open, NeedsProject),
+            new("files", FeatureGroup.Advanced, "\uE8B7", Tool("tinke")),
+        ];
+        CardGroups.Clear();
+        foreach (var group in cards.GroupBy(c => c.Group)) CardGroups.Add(new FeatureCardGroup(group.Key, group.ToList()));
         RefreshCards();
     }
 
     private void RefreshCards()
     {
-        foreach (var c in EditCards.Concat(AdvancedCards)) c.GuideId = GuideIdFor(c.Key);
-        foreach (var c in EditCards) c.Refresh();
-        foreach (var c in AdvancedCards) c.Refresh();
+        foreach (var c in CardGroups.SelectMany(g => g.Cards))
+        {
+            c.GuideId = GuideIdFor(c.Key);
+            c.Refresh();
+        }
     }
 
     public void Log(string line)

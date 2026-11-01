@@ -287,18 +287,19 @@
                         </DockPanel>
                     </Border>
 
-                    <TextBlock Text="{loc:T home.group.edit}" Style="{StaticResource GroupTitle}" Margin="0,20,0,8" />
-                    <ItemsControl ItemsSource="{Binding EditCards}" ItemTemplate="{StaticResource FeatureCard}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
-
-                    <TextBlock Text="{loc:T home.group.advanced}" Style="{StaticResource GroupTitle}" />
-                    <ItemsControl ItemsSource="{Binding AdvancedCards}" ItemTemplate="{StaticResource FeatureCard}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
+                    <ItemsControl ItemsSource="{Binding CardGroups}" Margin="0,8,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" Style="{StaticResource GroupTitle}" />
+                                    <ItemsControl ItemsSource="{Binding Cards}" ItemTemplate="{StaticResource FeatureCard}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
             </ScrollViewer>

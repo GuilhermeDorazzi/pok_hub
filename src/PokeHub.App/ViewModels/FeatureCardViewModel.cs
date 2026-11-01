@@ -4,7 +4,13 @@ using PokeHub.Core.Localization;
 
 namespace PokeHub.App.ViewModels;
 
-public enum FeatureGroup { Edit, Advanced }
+/// <summary>Assuntos da tela inicial, na ordem em que aparecem.</summary>
+public enum FeatureGroup { Maps, Pokemon, Media, Release, Advanced }
+
+public sealed record FeatureCardGroup(FeatureGroup Group, IReadOnlyList<FeatureCardViewModel> Cards)
+{
+    public string Title => Loc.T("home.group." + Group.ToString().ToLowerInvariant());
+}
 
 /// <summary>
 /// Card da tela inicial: um recurso do hub (editar treinadores, testar no emulador...) ligado à ferramenta que o realiza.
