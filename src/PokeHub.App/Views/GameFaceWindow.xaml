@@ -13,7 +13,13 @@
                 <Border Background="#222" HorizontalAlignment="Left" Margin="0,0,0,6">
                     <Image Source="{Binding Logo}" Width="256" Height="120" RenderOptions.BitmapScalingMode="NearestNeighbor" />
                 </Border>
-                <Button Content="{loc:T face.importLogo}" Command="{Binding ImportLogoCommand}" HorizontalAlignment="Left" Padding="10,4" />
+                <Button Content="{loc:T face.importLogo}" Command="{Binding ImportLogoCommand}" HorizontalAlignment="Left" Padding="10,4" Margin="0,0,0,8" />
+                <TextBlock Text="{loc:T face.version.hint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,4" />
+                <WrapPanel>
+                    <TextBlock Text="{loc:T face.version}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBox Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}" Width="60" MaxLength="4" Margin="0,0,8,0" />
+                    <Button Content="{loc:T face.applyVersion}" Command="{Binding ApplyVersionCommand}" Padding="10,4" />
+                </WrapPanel>
             </StackPanel>
         </GroupBox>
 

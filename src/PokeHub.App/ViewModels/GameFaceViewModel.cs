@@ -22,9 +22,10 @@ public sealed partial class GameFaceViewModel : ObservableObject
     [ObservableProperty] private string _name = "";
     [ObservableProperty] private string _subtitle = "";
     [ObservableProperty] private string _romTitle = "";
+    [ObservableProperty] private string _version = "";
     [ObservableProperty] private string _status = "";
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(ImportLogoCommand), nameof(ImportIconCommand), nameof(SaveBannerCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ImportLogoCommand), nameof(ImportIconCommand), nameof(SaveBannerCommand), nameof(ApplyVersionCommand))]
     private bool _isBusy;
 
     public bool CanEditLogo { get; }
@@ -37,14 +38,17 @@ public sealed partial class GameFaceViewModel : ObservableObject
         _snapshot = snapshot;
         CanEditLogo = GameFaceService.CanEditLogo(project);
         CanEditBanner = GameFaceService.CanEditBanner(project);
-        if (CanEditBanner)
-        {
-            var text = GameFaceService.ReadBanner(project);
-            Name = text.Name;
-            Subtitle = text.Subtitle;
-            RomTitle = text.RomTitle;
-        }
+        if (CanEditBanner) ReadBannerFields();
         RefreshImages();
+    }
+
+    private void ReadBannerFields()
+    {
+        var text = GameFaceService.ReadBanner(_project);
+        Name = text.Name;
+        Subtitle = text.Subtitle;
+        RomTitle = text.RomTitle;
+        Version = GameFaceService.CurrentVersion(_project);
     }
 
     private void RefreshImages()
@@ -106,6 +110,14 @@ public sealed partial class GameFaceViewModel : ObservableObject
         if (PickImage(Loc.T("face.pickLogo")) is not { } image) return;
         await RunAsync(Loc.T("face.beforeLogo"), () => Loc.T("face.logoDone", GameFaceService.ImportLogo(_project, image)));
     }
+
+    [RelayCommand(CanExecute = nameof(CanAct))]
+    private async Task ApplyVersionAsync() => await RunAsync(Loc.T("face.beforeVersion"), () =>
+    {
+        GameFaceService.ApplyVersion(_project, Version);
+        if (CanEditBanner) ReadBannerFields();
+        return Loc.T("face.versionDone");
+    });
 
     [RelayCommand(CanExecute = nameof(CanAct))]
     private async Task ImportIconAsync()

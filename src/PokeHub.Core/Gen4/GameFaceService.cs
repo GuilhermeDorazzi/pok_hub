@@ -104,6 +104,89 @@ public static class GameFaceService
         return result;
     }
 
+    // áreas livres nos dois logos originais, à direita de VERSION: uma alta, para letra grande, e uma baixa, para versões de mais dígitos
+    private const int StampX = 182, StampTallY = 106, StampTallWidth = 18, StampWideY = 112, StampWideWidth = 26;
+    private static readonly Dictionary<char, string[]> StampFont = new()
+    {
+        ['V'] = ["X...X", "X...X", "X...X", "X...X", ".X.X.", ".X.X.", "..X.."],
+        ['0'] = ["XXX", "X.X", "X.X", "X.X", "X.X", "X.X", "XXX"],
+        ['1'] = [".X.", "XX.", ".X.", ".X.", ".X.", ".X.", "XXX"],
+        ['2'] = ["XXX", "..X", "..X", "XXX", "X..", "X..", "XXX"],
+        ['3'] = ["XXX", "..X", "..X", "XXX", "..X", "..X", "XXX"],
+        ['4'] = ["X.X", "X.X", "X.X", "XXX", "..X", "..X", "..X"],
+        ['5'] = ["XXX", "X..", "X..", "XXX", "..X", "..X", "XXX"],
+        ['6'] = ["XXX", "X..", "X..", "XXX", "X.X", "X.X", "XXX"],
+        ['7'] = ["XXX", "..X", "..X", ".X.", ".X.", ".X.", ".X."],
+        ['8'] = ["XXX", "X.X", "X.X", "XXX", "X.X", "X.X", "XXX"],
+        ['9'] = ["XXX", "X.X", "X.X", "XXX", "..X", "..X", "XXX"],
+    };
+
+    /// <summary>A versão atual, lida do fim do nome do cartão.</summary>
+    public static string CurrentVersion(Project project) =>
+        CanEditBanner(project) && Regex.Match(ReadBanner(project).Name, @" (V\d+)$") is { Success: true } m ? m.Groups[1].Value : "";
+
+    /// <summary>Marca a versão no logo e, quando há cartão, no fim do nome dele.</summary>
+    public static void ApplyVersion(Project project, string version)
+    {
+        if (!CanEditLogo(project)) throw new InvalidOperationException(Loc.T("core.face.noLogo"));
+        var browser = NarcBrowser.Open(TitlePath(project));
+        var (tilesFile, paletteFile) = LogoFiles(project);
+        browser.Replace(tilesFile, StampLogoVersion(browser.Raw(tilesFile), browser.Raw(paletteFile), version));
+        if (!CanEditBanner(project)) return;
+        var banner = ReadBanner(project);
+        WriteBanner(project, banner with { Name = WithVersion(banner.Name, version.Trim().ToUpperInvariant()) });
+    }
+
+    /// <summary>Troca ou acrescenta o V1...Vn no fim de um nome.</summary>
+    public static string WithVersion(string name, string version) => Regex.Replace(name.Trim(), @" V\d+$", "") + " " + version;
+
+    /// <summary>Desenha a versão à direita de VERSION, na cor mais clara do logo, e limpa a marca anterior. A paleta e o mapa não mudam.</summary>
+    public static byte[] StampLogoVersion(byte[] ncgr, byte[] nclr, string version)
+    {
+        version = version.Trim().ToUpperInvariant();
+        if (!Regex.IsMatch(version, @"^V[0-9]{1,3}$")) throw new ArgumentException(Loc.T("core.face.badVersion"));
+        const int tilesAt = 0x30, colorsAt = 0x28;
+        if (Encoding.ASCII.GetString(ncgr, 0, 4) != "RGCN" || BitConverter.ToInt32(ncgr, 0x1C) != 4 || BitConverter.ToInt32(ncgr, 0x28) != LogoTilesWide * LogoTilesHigh * 64
+            || Encoding.ASCII.GetString(nclr, 0, 4) != "RLCN")
+            throw new InvalidDataException(Loc.T("core.face.badLogo"));
+
+        byte bright = 1;
+        int brightest = -1;
+        for (int i = 1; i <= LogoColors; i++)
+        {
+            ushort c = BitConverter.ToUInt16(nclr, colorsAt + i * 2);
+            int light = (c & 31) + ((c >> 5) & 31) + ((c >> 10) & 31);
+            if (light > brightest) { brightest = light; bright = (byte)i; }
+        }
+
+        var result = (byte[])ncgr.Clone();
+        void Put(int x, int y, byte value)
+        {
+            int tile = y / 8 * LogoTilesWide + x / 8;
+            result[tilesAt + tile * 64 + y % 8 * 8 + x % 8] = value;
+        }
+        for (int y = StampTallY; y < LogoHeight; y++)
+            for (int x = StampX; x < StampX + StampTallWidth; x++) Put(x, y, 0);
+        for (int y = StampWideY; y < LogoHeight; y++)
+            for (int x = StampX; x < StampX + StampWideWidth; x++) Put(x, y, 0);
+
+        int Width(int size) => version.Sum(c => StampFont[c][0].Length * size) + version.Length - 1;
+        int scale = Width(2) <= StampTallWidth ? 2 : 1;
+        int left = StampX, top = scale == 2 ? StampTallY : StampWideY;
+        foreach (var c in version)
+        {
+            var glyph = StampFont[c];
+            for (int row = 0; row < glyph.Length; row++)
+                for (int column = 0; column < glyph[row].Length; column++)
+                    if (glyph[row][column] == 'X')
+                        for (int dy = 0; dy < scale; dy++)
+                            for (int dx = 0; dx < scale; dx++)
+                                Put(left + column * scale + dx, top + row * scale + dy, bright);
+            left += glyph[0].Length * scale + 1;
+        }
+        return result;
+    }
+
     private static string BannerYaml(Project project) => Path.Combine(project.Paths.Workspace, "banner", "banner.yaml");
     private static string HeaderYaml(Project project) => Path.Combine(project.Paths.Workspace, "header.yaml");
     private static string IconPath(Project project) => Path.Combine(project.Paths.Workspace, "banner", "bitmap.png");

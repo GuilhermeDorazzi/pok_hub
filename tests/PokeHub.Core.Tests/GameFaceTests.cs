@@ -133,6 +133,55 @@ public class GameFaceTests
         Assert.Equal(0, At(20, 0));
     }
 
+    private static byte[] Nclr()
+    {
+        var file = new byte[0x28 + 512 + 16];
+        Encoding.ASCII.GetBytes("RLCN").CopyTo(file, 0);
+        BitConverter.TryWriteBytes(file.AsSpan(0x28 + 40 * 2), (ushort)0x7FFF);
+        return file;
+    }
+
+    private static byte Pixel(byte[] ncgr, int x, int y) => ncgr[0x30 + (y / 8 * 32 + x / 8) * 64 + y % 8 * 8 + x % 8];
+
+    [Fact]
+    public void Version_stamp_uses_the_brightest_color_and_replaces_the_old_one()
+    {
+        var v8 = GameFaceService.StampLogoVersion(Ncgr(), Nclr(), "V8");
+        Assert.Equal(40, Pixel(v8, 182, 106));
+        Assert.Equal(0, Pixel(v8, 200, 106));
+        var v1 = GameFaceService.StampLogoVersion(v8, Nclr(), "v1");
+        Assert.NotEqual(v8, v1);
+        Assert.Equal(v1, GameFaceService.StampLogoVersion(Ncgr(), Nclr(), "V1"));
+    }
+
+    [Fact]
+    public void Long_version_drops_to_the_small_size_and_stays_in_its_area()
+    {
+        var stamped = GameFaceService.StampLogoVersion(Ncgr(), Nclr(), "V123");
+        for (int y = 0; y < 120; y++)
+            for (int x = 0; x < 256; x++)
+                if (Pixel(stamped, x, y) != 0)
+                {
+                    Assert.InRange(x, 182, 207);
+                    Assert.InRange(y, 112, 119);
+                }
+    }
+
+    [Theory]
+    [InlineData("1")]
+    [InlineData("V")]
+    [InlineData("V1000")]
+    [InlineData("V1a")]
+    public void Version_rejects_other_formats(string version) =>
+        Assert.Throws<ArgumentException>(() => GameFaceService.StampLogoVersion(Ncgr(), Nclr(), version));
+
+    [Theory]
+    [InlineData("Pokémon SoulSilver", "Pokémon SoulSilver V2")]
+    [InlineData("Pokémon SoulSilver V1", "Pokémon SoulSilver V2")]
+    [InlineData("Pokémon V1 SoulSilver V10", "Pokémon V1 SoulSilver V2")]
+    public void Version_goes_at_the_end_of_the_name(string name, string expected) =>
+        Assert.Equal(expected, GameFaceService.WithVersion(name, "V2"));
+
     [Fact]
     public void Png_starts_with_the_signature_and_has_an_end()
     {
