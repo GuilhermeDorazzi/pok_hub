@@ -490,6 +490,8 @@ Segunda história: Silver na Rota 22, onde a cena dele com o Giovanni acontece. 
 
 Terceira história, depois do Red: a vitória no Mt. Silver passou a gravar uma flag própria. Em Pallet, uma ajudante do Oak conta que ele voltou para casa e entrega uma Master Ball com 50000. No laboratório, o Oak do próprio jogo pede uma batalha, uma vez, de nível 80 a 86, e depois volta ao que fazia. Ele usa a classe Scientist, porque o jogo não tem classe de professor com time. Com isso, o esqueleto do arco pós-Elite está completo; falta jogar.
 
+Gramas de Johto com mais espécies: as 6 vagas comuns ficam iguais, e nas 6 raras entram espécies do ambiente, com diferença de manhã e à noite nas rotas. A média foi de 4,6 para 9,1 espécies por área. A Pokédex agora segue os encontros, com o botão Seguir os encontros do editor de áreas. Rode de novo sempre que mudar os encontros. Cabeçadas (bloco Todos) e a Safari ficam como estão, e os Pokémon parados no mapa não aparecem nela.
+
 Falta: paletas e música da cara nova e evolução paga (parada por decisão). Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
 ### Mais conteúdo pedido (01/11/2026)

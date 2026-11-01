@@ -1,3 +1,4 @@
+using System.IO;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -118,6 +119,28 @@ public sealed partial class PokedexAreaEditorViewModel : ObservableObject
     }
 
     private readonly PokeHub.Core.Projects.Project _project;
+
+    public bool CanFollowEncounters => _repo.Game.IsHgss;
+
+    /// <summary>Refaz as áreas de todas as espécies a partir dos encontros. O que estiver sem salvar vai junto.</summary>
+    [RelayCommand]
+    private async Task FollowEncountersAsync()
+    {
+        try
+        {
+            await _snapshot(Loc.T("dx.beforeFollow"));
+            var result = PokedexAreaSync.Apply(_project, _repo);
+            IsDirty = _repo.HasChanges;
+            LoadSpecies();
+            Status = Loc.T("dx.followDone", result.Added, result.Removed, result.SpeciesChanged);
+            _log(Status);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or NotSupportedException)
+        {
+            Status = Loc.T("common.saveError", ex.Message);
+            _log(Status);
+        }
+    }
 
     public PokedexAreaEditorViewModel(PokedexAreaRepository repo, PokeHub.Core.Projects.Project project, Action<string> log, Func<string, Task> snapshot)
     {

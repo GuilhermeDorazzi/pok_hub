@@ -49,6 +49,7 @@
         <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
             <TextBlock Text="{Binding Status}" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="{loc:T dx.follow}" ToolTip="{loc:T dx.follow.tip}" Command="{Binding FollowEncountersCommand}" IsEnabled="{Binding CanFollowEncounters}" Padding="12,6" />
                 <Button Content="{loc:T common.save}" Command="{Binding SaveCommand}" FontWeight="Bold" Padding="16,6" />
                 <Button Content="{loc:T common.close}" Click="Close_Click" Padding="16,6" />
             </StackPanel>
