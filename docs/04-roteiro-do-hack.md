@@ -22,8 +22,9 @@ Esforço, em tamanho relativo: **pequeno** (estende algo que já existe), **méd
 | 2. Treinador | Pronta, com "Duplicar como novo" no editor | Parcial: visão e batalha sim. Revanche, derrota do jogador, sumir e a fala de desafio corrigida, não |
 | 3. IA em lote | Pronta | Tela conferida; batalha com IA competitiva, não |
 | 4. O que falta capturar | Pronta: 65 espécies faltando na base do SoulSilver | Tela conferida; a lista fixa continua não confirmada |
-| Lote por área e por evolução | Pronto | Só por testes automáticos; não entrou em jogo |
-| Depois da Elite: liberar treinadores, × nível, santuário de Ilex | Pronto, card próprio | Não: os testes conferem scripts, compilação e gancho, e geram ROM em ds-rom. Falta jogar até o Hall da Fama e ir ao santuário |
+| Lote por área e por evolução | Pronto | Sim, em ds-rom: selvagens evoluídos na Rota 29 e método por pedra |
+| Depois da Elite: liberar treinadores, × nível, santuário de Ilex | Pronto, card próprio | Sim, em ds-rom, com o fim da Elite simulado por um NPC: treinadores voltam, níveis × 1,3 e evento do Giovanni com Celebi de Missão. Falta o comando real no Hall da Fama |
+| Enigma Stone por Missão, revanche, sumir, fala de desafio e derrota do jogador | Prontos | Sim, em ds-rom, testados pelo usuário em 01/11/2026 |
 | 5. Evolução paga | Pesquisada, sem código; parada por decisão do usuário | Não |
 | 6. Cara nova | Pesquisada, sem código | Não |
 
