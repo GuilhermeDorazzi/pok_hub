@@ -1321,7 +1321,7 @@
  "core.newev.badScene": "A cena precisa de 1 a {0} ações válidas, com falas preenchidas, e só funciona no HG/SS.",
  "core.newev.badSceneLine": "Não entendi esta linha da cena: {0}",
  "dx.follow": "Seguir os encontros",
- "dx.follow.tip": "Refaz manhã, dia e noite de todas as espécies a partir da grama, do surfe, das varas e do Rock Smash. Cabeçadas e locais sem encontros, como a Safari, ficam como estão. Só no HG/SS.",
+ "dx.follow.tip": "Refaz as áreas de todas as espécies: manhã, dia e noite a partir da grama, do surfe, das varas e do Rock Smash, e o bloco Todos a partir das cabeçadas. Locais sem encontros, como a Safari, ficam como estão. Só no HG/SS.",
  "dx.beforeFollow": "Antes de a Pokédex seguir os encontros",
  "dx.followDone": "Pokédex atualizada: {0} locais novos, {1} removidos, em {2} espécies.",
  "feature.newmaps": "Mapas novos",

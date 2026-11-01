@@ -1,10 +1,11 @@
+using PokeHub.Core.Gen4.Scripts;
 using PokeHub.Core.Projects;
 
 namespace PokeHub.Core.Gen4;
 
 /// <summary>
 /// Faz as áreas da Pokédex do HG/SS seguirem os encontros reais. Em manhã, dia e noite ficam grama, surfe, varas e Rock Smash, como no jogo.
-/// O bloco "todos" guarda cabeçadas e outras fontes, que não vêm destes dados, então fica como está. Locais sem par nos encontros também ficam, como a Safari.
+/// O bloco "todos" é o das cabeçadas, que valem a qualquer hora. Locais sem par nos encontros ficam como estão, como a Safari.
 /// </summary>
 public static class PokedexAreaSync
 {
@@ -75,6 +76,23 @@ public static class PokedexAreaSync
             }
         }
 
+        // cabeçadas: um arquivo por mapa com árvores
+        var treeKnown = new[] { new HashSet<uint>(), new HashSet<uint>() };
+        var trees = new Dictionary<(bool Special, uint Id), HashSet<int>>();
+        var headers = EventMap.Load(project).Headers;
+        var headbutt = GameTables.Load(project).First(t => t.Id == "headbutt");
+        var speciesColumn = headbutt.Columns.First(c => c.Key == "species");
+        for (int owner = 0; owner < (headbutt.Owners?.Count ?? 0); owner++)
+        {
+            var mapName = headbutt.Owners![owner].Split(' ', 2)[1];
+            if (headers.FirstOrDefault(h => h.InternalName == mapName) is not { } header) continue;
+            if (LocationOf(mapName, encounters.LocationName(header.LocationNameIndex)) is not { } place) continue;
+            treeKnown[place.Special ? 1 : 0].Add(place.Id);
+            if (!trees.TryGetValue((place.Special, place.Id), out var set)) trees[(place.Special, place.Id)] = set = [];
+            foreach (var row in headbutt.Rows(owner))
+                if (row.Get(speciesColumn) > 0) set.Add(row.Get(speciesColumn));
+        }
+
         int added = 0, removed = 0, changed = 0;
         for (int species = 1; species <= PokedexAreaRepository.SpeciesCount; species++)
         {
@@ -94,6 +112,20 @@ public static class PokedexAreaSync
                     touched = true;
                     dex.SetAreas(species, block, next);
                 }
+            foreach (var special in new[] { false, true })
+            {
+                var block = special ? PokedexAreaBlock.SpecialAll : PokedexAreaBlock.NormalAll;
+                var current = dex.GetAreas(species, block);
+                var places = treeKnown[special ? 1 : 0];
+                var expected = places.Where(id => trees[(special, id)].Contains(species)).ToHashSet();
+                var next = Merge(current, places, expected, new HashSet<uint>());
+                int gained = next.Except(current).Count(), lost = current.Except(next).Count();
+                if (gained + lost == 0) continue;
+                added += gained;
+                removed += lost;
+                touched = true;
+                dex.SetAreas(species, block, next);
+            }
             if (touched) changed++;
         }
         if (dex.HasChanges) dex.Save();

@@ -1321,7 +1321,7 @@
  "core.newev.badScene": "The scene needs 1 to {0} valid actions, with lines filled in, and only works in HG/SS.",
  "core.newev.badSceneLine": "I could not read this scene line: {0}",
  "dx.follow": "Follow encounters",
- "dx.follow.tip": "Rebuilds morning, day and night for every species from grass, surfing, rods and Rock Smash. Headbutt and places without encounters, such as the Safari, stay as they are. HG/SS only.",
+ "dx.follow.tip": "Rebuilds the areas of every species: morning, day and night from grass, surfing, rods and Rock Smash, and the All block from Headbutt. Places without encounters, such as the Safari, stay as they are. HG/SS only.",
  "dx.beforeFollow": "Before the Pokédex follows the encounters",
  "dx.followDone": "Pokédex updated: {0} new places, {1} removed, across {2} species.",
  "feature.newmaps": "New maps",
