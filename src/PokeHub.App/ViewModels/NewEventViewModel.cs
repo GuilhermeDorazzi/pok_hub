@@ -44,6 +44,12 @@ public sealed record NewEventChoice(int Value, string Label, Func<int, BitmapSou
 }
 
 /// <summary>Cria um NPC: mapa e posição na planta, aparência e o que ele faz. Grava tudo de uma vez, com versão antes e depois.</summary>
+public sealed partial class GuideRow : ObservableObject
+{
+    [ObservableProperty] private NewEventChoice? _choice;
+    [ObservableProperty] private string _text = "";
+}
+
 public sealed partial class NewEventViewModel : ObservableObject
 {
     private readonly Project _project;
@@ -79,6 +85,15 @@ public sealed partial class NewEventViewModel : ObservableObject
     [ObservableProperty] private bool _isSell;
     [ObservableProperty] private bool _isTrainer;
     // missão
+    [ObservableProperty] private bool _isGround;
+    [ObservableProperty] private bool _isGuide;
+    [ObservableProperty] private NewEventChoice? _groundItem;
+    [ObservableProperty] private string _groundQuantity = "1";
+    [ObservableProperty] private bool _groundHidden;
+    [ObservableProperty] private string _guideFinalText = "";
+    public IReadOnlyList<GuideRow> GuideSteps { get; } = Enumerable.Range(0, 5).Select(_ => new GuideRow()).ToList();
+    [ObservableProperty] private string _tradeMinLevel = "0";
+    [ObservableProperty] private string _tradeTooLowText = "";
     [ObservableProperty] private bool _questAsksItem = true;
     [ObservableProperty] private bool _questAsksNothing;
     [ObservableProperty] private string _condMaxLevel = "0";
@@ -168,6 +183,7 @@ public sealed partial class NewEventViewModel : ObservableObject
     public ObservableCollection<NewEventChoice> FinishedNpcs { get; } = [];
     public bool UsesScriptTexts => !(IsTrainer && TrainerSighted);
     public bool UsesRematchText => RematchMode?.Value is (int)TrainerRematch.Always or (int)TrainerRematch.AfterElite;
+    public bool ShowsRematchText => UsesRematchText && UsesScriptTexts;
     public bool QuestAsksPokemon => !QuestAsksItem && !QuestAsksNothing;
     public bool QuestAsksSomething => !QuestAsksNothing;
     public IReadOnlyList<NewEventChoice> Species { get; }
@@ -204,7 +220,7 @@ public sealed partial class NewEventViewModel : ObservableObject
         int freeTrades = NewEventService.FreeTradeSlots(map.Game).Count;
         FreeTradeNote = freeTrades == 0 ? Loc.T("core.newev.noTradeSlot") : Loc.T("newev.trade.free", freeTrades);
         SelectedFacing = Facings[0];
-        QuestAskItem = RewardItem = Items.FirstOrDefault();
+        QuestAskItem = RewardItem = GroundItem = Items.FirstOrDefault();
         QuestAskSpecies = RewardSpecies = SellSpecies = AllSpecies.FirstOrDefault();
         var trainers = Core.Gen4.TrainerRepository.Load(project);
         Trainers = trainers.Trainers.Where(t => t.Id > 0).Select(t => new NewEventChoice(t.Id, $"{t.Id:D3} {trainers.ClassOf(t)} {trainers.NameOf(t)}")).ToList();
@@ -227,8 +243,16 @@ public sealed partial class NewEventViewModel : ObservableObject
     partial void OnMapFilterChanged(string value) => ApplyMapFilter();
     partial void OnIsPokemonChanged(bool value) => OnPropertyChanged(nameof(UsesSpriteList));
     partial void OnIsTrainerChanged(bool value) => OnPropertyChanged(nameof(UsesScriptTexts));
-    partial void OnTrainerSightedChanged(bool value) => OnPropertyChanged(nameof(UsesScriptTexts));
-    partial void OnRematchModeChanged(NewEventChoice? value) => OnPropertyChanged(nameof(UsesRematchText));
+    partial void OnTrainerSightedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(UsesScriptTexts));
+        OnPropertyChanged(nameof(ShowsRematchText));
+    }
+    partial void OnRematchModeChanged(NewEventChoice? value)
+    {
+        OnPropertyChanged(nameof(UsesRematchText));
+        OnPropertyChanged(nameof(ShowsRematchText));
+    }
     partial void OnQuestAsksItemChanged(bool value) => OnPropertyChanged(nameof(QuestAsksPokemon));
     partial void OnQuestAsksNothingChanged(bool value)
     {
@@ -324,6 +348,8 @@ public sealed partial class NewEventViewModel : ObservableObject
         IsItem = npc.Kind == "item";
         IsPokemon = npc.Kind == "pokemon";
         IsTrade = npc.Kind == "trade";
+        IsGround = npc.Kind == "ground";
+        IsGuide = npc.Kind == "guide";
         IsQuest = npc.Kind == "quest";
         IsSell = npc.Kind == "sell";
         IsTrainer = npc.Kind == "trainer";
@@ -350,7 +376,23 @@ public sealed partial class NewEventViewModel : ObservableObject
                 Vanish = p.Vanish;
                 PokemonText = Unwrap(p.Text ?? "");
                 break;
+            case GroundItemBehavior g:
+                GroundItem = Items.FirstOrDefault(c => c.Value == g.Item) ?? GroundItem;
+                GroundQuantity = g.Quantity.ToString();
+                GroundHidden = g.Hidden;
+                break;
+            case GuideBehavior guide:
+                for (int i = 0; i < GuideSteps.Count; i++)
+                {
+                    var step = guide.Steps.ElementAtOrDefault(i);
+                    GuideSteps[i].Choice = FinishedNpcs.FirstOrDefault(c => c.Value == (step?.Flag ?? 0)) ?? FinishedNpcs.FirstOrDefault();
+                    GuideSteps[i].Text = step is null ? "" : Unwrap(step.Text);
+                }
+                GuideFinalText = Unwrap(guide.FinalText);
+                break;
             case TradeBehavior t:
+                TradeMinLevel = t.MinLevel.ToString();
+                TradeTooLowText = Unwrap(t.TooLowText ?? "");
                 AskSpecies = AllSpecies.FirstOrDefault(c => c.Value == t.AskSpecies) ?? AskSpecies;
                 GiveSpecies = AllSpecies.FirstOrDefault(c => c.Value == t.GiveSpecies) ?? GiveSpecies;
                 Nickname = t.Nickname ?? "";
@@ -467,6 +509,8 @@ public sealed partial class NewEventViewModel : ObservableObject
         RewardIsItem ? RewardItem?.Value : null, int.Parse(RewardQuantity), RewardIsPokemon ? RewardSpecies?.Value : null, int.Parse(RewardLevel), RewardIsMoney ? int.Parse(RewardMoney) : 0,
         Prepare(QuestAskText), Prepare(QuestNotYetText), Prepare(QuestRewardText), Prepare(QuestDoneText), Prepare(QuestFullText));
 
+    private List<PokeHub.Core.Gen4.Scripts.GuideStep> BuildGuideSteps() => GuideSteps.Where(g => g.Choice is { Value: > 0 } && !string.IsNullOrWhiteSpace(g.Text)).Select(g => new PokeHub.Core.Gen4.Scripts.GuideStep(g.Choice!.Value, Prepare(g.Text))).ToList();
+
     private NpcBehavior BuildSell() => new SellBehavior(SellSpecies!.Value, int.Parse(SellLevel), int.Parse(SellPrice), SellOnce,
         Prepare(SellOfferText), Prepare(SellThanksText), Prepare(SellNoMoneyText), Prepare(SellDeclineText), Prepare(SellFullText), Prepare(SellSoldOutText));
 
@@ -512,6 +556,9 @@ public sealed partial class NewEventViewModel : ObservableObject
         if (IsQuest && !int.TryParse(RewardMoney, out _)) { Status = Loc.T("core.newev.badMoney", 999999); return; }
         if (IsSell && !Filled(SellOfferText, SellThanksText, SellNoMoneyText, SellDeclineText, SellFullText, SellSoldOutText)) { Status = Loc.T("newev.needText"); return; }
         if (IsSell && !int.TryParse(SellLevel, out _)) { Status = Loc.T("core.newev.badLevel"); return; }
+        if (IsGround && (GroundItem is null || !int.TryParse(GroundQuantity, out _))) { Status = Loc.T("core.newev.badQuantity"); return; }
+        if (IsGuide && (BuildGuideSteps().Count == 0 || !Filled(GuideFinalText))) { Status = Loc.T("core.newev.badGuide", 8); return; }
+        if (IsTrade && !int.TryParse(TradeMinLevel, out _)) { Status = Loc.T("core.newev.badLevel"); return; }
         if (IsSell && !int.TryParse(SellPrice, out _)) { Status = Loc.T("core.newev.badMoney", 999999); return; }
         if (IsTrainer && TrainerChoice is null) { Status = Loc.T("newev.needTrainer"); return; }
         if (IsTrainer && TrainerSighted && !int.TryParse(TrainerSight, out _)) { Status = Loc.T("core.newev.badSight", 15); return; }
@@ -523,9 +570,9 @@ public sealed partial class NewEventViewModel : ObservableObject
 
         try
         {
-            NpcBehavior behavior = IsQuest ? BuildQuest() : IsSell ? BuildSell() : IsTrainer ? BuildTrainer() : IsTalk ? new TalkBehavior(Prepare(TalkText))
+            NpcBehavior behavior = IsGround ? new GroundItemBehavior(GroundItem!.Value, int.Parse(GroundQuantity), GroundHidden) : IsGuide ? new GuideBehavior(BuildGuideSteps(), Prepare(GuideFinalText)) : IsQuest ? BuildQuest() : IsSell ? BuildSell() : IsTrainer ? BuildTrainer() : IsTalk ? new TalkBehavior(Prepare(TalkText))
                 : IsItem ? new GiveItemBehavior(SelectedItem!.Value, int.Parse(Quantity), Prepare(BeforeText), Prepare(AfterText))
-                : IsTrade ? new TradeBehavior(AskSpecies!.Value, GiveSpecies!.Value, string.IsNullOrWhiteSpace(Nickname) ? null : Nickname.Trim(), Prepare(AskText), Prepare(ThanksText), Prepare(WrongText), Prepare(DeclineText))
+                : IsTrade ? new TradeBehavior(AskSpecies!.Value, GiveSpecies!.Value, string.IsNullOrWhiteSpace(Nickname) ? null : Nickname.Trim(), Prepare(AskText), Prepare(ThanksText), Prepare(WrongText), Prepare(DeclineText), int.Parse(TradeMinLevel), Prepare(TradeTooLowText))
                 : new PokemonBehavior(SelectedSpecies!.Value, int.Parse(Level), Vanish, string.IsNullOrWhiteSpace(PokemonText) ? null : Prepare(PokemonText));
             await _snapshot(Loc.T("newev.snapshotBefore", map.Label));
             var request = new NewNpc(map.Id, tile.X + Layout.OriginX, tile.Y + Layout.OriginY, sprite.Id, facing.Value, behavior, (NpcMovement)(SelectedMovement?.Value ?? 0), range, BuildCondition());

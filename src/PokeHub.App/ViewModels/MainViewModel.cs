@@ -140,6 +140,7 @@ public sealed partial class MainViewModel : ObservableObject
         OpenScriptsCommand.NotifyCanExecuteChanged();
         OpenNewEventCommand.NotifyCanExecuteChanged();
         OpenCatchCommand.NotifyCanExecuteChanged();
+        OpenTrainerCensusCommand.NotifyCanExecuteChanged();
         OpenPostEliteCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(HasProject));
         OnPropertyChanged(nameof(ProjectTitle));
@@ -314,6 +315,18 @@ public sealed partial class MainViewModel : ObservableObject
         if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
         if (!Gen4Game.For(p).IsHgss) { Log(Loc.T("core.postElite.hgssOnly")); return; }
         new PostEliteWindow(new PostEliteViewModel(p, _paths, Log, message => SnapshotForEditorAsync(p, message))) { Owner = Application.Current.MainWindow }.Show();
+    }
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private void OpenTrainerCensus()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
+        try
+        {
+            new TrainerCensusWindow(TrainerCensus.Build(p)) { Owner = Application.Current.MainWindow }.Show();
+        }
+        catch (Exception ex) { Log(Loc.T("vm.error", ex.Message)); }
     }
 
     [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
@@ -764,6 +777,7 @@ public sealed partial class MainViewModel : ObservableObject
             new("pokedex", FeatureGroup.Pokemon, Tool("pokedex-area-editor")),
             new("pokemon", FeatureGroup.Pokemon, Tool("pokeditor")),
             new("catch", FeatureGroup.Pokemon, null, OpenCatchCommand, Extracted, Open, NeedsProject),
+            new("census", FeatureGroup.Pokemon, null, OpenTrainerCensusCommand, Extracted, Open, NeedsProject),
 
             new("text", FeatureGroup.Media, Tool("text-editor")),
             new("graphics", FeatureGroup.Media, Tool("nitropaint")),

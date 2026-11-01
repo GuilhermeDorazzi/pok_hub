@@ -18,6 +18,10 @@ public static class GameDataTools
 
     private static string Name(IReadOnlyList<string> table, int index) => index >= 0 && index < table.Count ? table[index] : $"#{index}";
 
+    [McpServerTool(Name = "trainers_by_place"), Description("HG/SS: quantos treinadores cada mapa tem, com nível médio e máximo, do que tem menos para o que tem mais. Mostra só mapas com selvagens ou treinadores.")]
+    public static object TrainersByPlace(HubContext hub, string project, [Description("Só até esta quantidade de treinadores")] int maxTrainers = 999) =>
+        TrainerCensus.Build(Extracted(hub, project)).Where(r => r.Trainers <= maxTrainers).ToList();
+
     [McpServerTool(Name = "catch_report"), Description("HG/SS: o que dá para obter no jogo, cruzando encontros, scripts, trocas e evoluções. status: Found, Family (por evolução ou filhote), Known (lista fixa, não confirmada), Missing.")]
     public static object CatchReport(HubContext hub, string project, [Description("Só as que faltam")] bool onlyMissing = false)
     {

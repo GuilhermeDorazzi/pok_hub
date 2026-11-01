@@ -15,7 +15,7 @@ public sealed record GiveItemBehavior(int Item, int Quantity, string BeforeText,
 public sealed record PokemonBehavior(int Species, int Level, bool Vanish, string? Text) : NpcBehavior;
 
 /// <summary>Troca: o NPC pede uma espécie e dá outra, usando uma vaga livre da tabela de trocas do jogo.</summary>
-public sealed record TradeBehavior(int AskSpecies, int GiveSpecies, string? Nickname, string AskText, string ThanksText, string WrongText, string DeclineText) : NpcBehavior;
+public sealed record TradeBehavior(int AskSpecies, int GiveSpecies, string? Nickname, string AskText, string ThanksText, string WrongText, string DeclineText, int MinLevel = 0, string? TooLowText = null) : NpcBehavior;
 
 /// <summary>
 /// Missão: pede um item ou mostrar um Pokémon e dá uma recompensa, uma vez só. O Pokémon pedido só é conferido no time, sem sair dele.
@@ -28,6 +28,15 @@ public sealed record QuestBehavior(int? AskItem, int AskQuantity, bool TakeItem,
 public sealed record SellBehavior(int Species, int Level, int Price, bool Once, string OfferText, string ThanksText, string NoMoneyText, string DeclineText, string FullText, string SoldOutText) : NpcBehavior;
 
 public enum TrainerRematch { None, Always, AfterElite }
+
+/// <summary>Item para achar no mapa: numa Poké Bola visível, ou escondido num tile, que entrega ao apertar A virado para ele.</summary>
+public sealed record GroundItemBehavior(int Item, int Quantity, bool Hidden) : NpcBehavior;
+
+/// <summary>Uma etapa do guia: enquanto a marca estiver desligada, o NPC diz esta fala.</summary>
+public sealed record GuideStep(int Flag, string Text);
+
+/// <summary>NPC que acompanha o progresso: diz a fala da primeira etapa não concluída e, com tudo feito, a fala final.</summary>
+public sealed record GuideBehavior(IReadOnlyList<GuideStep> Steps, string FinalText) : NpcBehavior;
 
 /// <summary>
 /// Treinador. Com Sight 0 ele não chama: a batalha começa ao falar com ele, com as falas daqui e uma flag própria, sem mexer na do treinador original.
@@ -216,13 +225,13 @@ public static class NewEventService
         return Enumerable.Range(0, original).Concat(ExtraTradeSlots(original)).Where(slot => !used.Contains(slot)).ToList();
     }
 
-    private static void BuildTrade(ScriptBuilder s, int slot, int flag, IReadOnlyList<int> m, bool platinum)
+    private static void BuildTrade(ScriptBuilder s, int slot, int flag, IReadOnlyList<int> m, bool platinum, int minLevel = 0)
     {
         s.Emit("PlaySE", SelectSound).Emit("LockAll").Emit("FacePlayer");
-        BuildTradeBody(s, slot, flag, m, platinum);
+        BuildTradeBody(s, slot, flag, m, platinum, minLevel);
     }
 
-    private static void BuildTradeBody(ScriptBuilder s, int slot, int flag, IReadOnlyList<int> m, bool platinum)
+    private static void BuildTradeBody(ScriptBuilder s, int slot, int flag, IReadOnlyList<int> m, bool platinum, int minLevel = 0)
     {
         s.Emit("CheckFlag", flag).Emit("GoToIf", ConditionEqual, "done")
             .Emit("NPCMsg", m[0]);
@@ -240,14 +249,19 @@ public static class NewEventService
             .Emit("CopyVar", SpecialVar0, ResultVar)
             .Emit("GetPartyMonSpecies", SpecialVar0, SpecialVar1)
             .Emit("NPCTradeGetReqSpecies", ResultVar)
-            .Emit("CompareVarToVar", SpecialVar1, ResultVar).Emit("GoToIf", ConditionNotEqual, "wrong")
-            .Emit("NPCTradeExec", SpecialVar0).Emit("NPCTradeEnd")
+            .Emit("CompareVarToVar", SpecialVar1, ResultVar).Emit("GoToIf", ConditionNotEqual, "wrong");
+        if (minLevel > 0)
+            s.Emit("MonGetLevel", ResultVar, SpecialVar0).Emit("CompareVarToValue", ResultVar, minLevel).Emit("GoToIf", ConditionLess, "tooLow");
+        s.Emit("NPCTradeExec", SpecialVar0).Emit("NPCTradeEnd")
             .Emit("SetFlag", flag)
             .Label("done")
             .Emit("NPCMsg", m[1]).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End")
             .Label("wrong")
             .Emit("NPCTradeEnd")
-            .Emit("NPCMsg", m[2]).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End")
+            .Emit("NPCMsg", m[2]).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
+        if (minLevel > 0)
+            s.Label("tooLow").Emit("NPCTradeEnd").Emit("NPCMsg", m[4]).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
+        s
             .Label("decline")
             .Emit("NPCMsg", m[3]).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
     }
@@ -362,7 +376,30 @@ public static class NewEventService
         Say(s, m[2]);
     }
 
-    private static bool IsNewKind(NpcBehavior b) => b is QuestBehavior or SellBehavior or TrainerBehavior;
+    private static void BuildGroundItem(ScriptBuilder s, GroundItemBehavior g, int flag, int objectId)
+    {
+        s.Emit("CheckFlag", flag).Emit("GoToIf", ConditionEqual, "taken")
+            .Emit("SetVar", SpecialVar0, g.Item).Emit("SetVar", SpecialVar1, g.Quantity)
+            .Emit("HasSpaceForItem", SpecialVar0, SpecialVar1, ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "full")
+            .Emit("SetFlag", flag).Emit("CallStd", GiveItemStd).Emit("CloseMsg");
+        if (!g.Hidden) s.Emit("HidePerson", objectId);
+        s.Label("taken").Emit("ReleaseAll").Emit("End");
+        s.Label("full").Emit("CallStd", BagFullStd).Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
+    }
+
+    private static void BuildGuide(ScriptBuilder s, GuideBehavior g, IReadOnlyList<int> m)
+    {
+        for (int i = 0; i < g.Steps.Count; i++)
+            s.Emit("CheckFlag", g.Steps[i].Flag).Emit("GoToIf", ConditionLess, $"step{i}");
+        Say(s, m[g.Steps.Count]);
+        for (int i = 0; i < g.Steps.Count; i++)
+        {
+            s.Label($"step{i}");
+            Say(s, m[i]);
+        }
+    }
+
+    private static bool IsNewKind(NpcBehavior b) => b is QuestBehavior or SellBehavior or TrainerBehavior or GroundItemBehavior or GuideBehavior;
 
     public static byte[] BuildScript(ScriptCommandTable table, NpcBehavior behavior, IReadOnlyList<int> messages, int? flag, int objectId = 0, int tradeSlot = 0, int? engageFlag = null, NpcCondition? condition = null)
     {
@@ -377,6 +414,8 @@ public static class NewEventService
                 case QuestBehavior q: BuildQuest(s, q, messages, flag!.Value); break;
                 case SellBehavior v: BuildSell(s, v, messages, flag); break;
                 case TrainerBehavior t: BuildTrainer(s, t, messages, flag!.Value, objectId); break;
+                case GroundItemBehavior g: BuildGroundItem(s, g, flag!.Value, objectId); break;
+                case GuideBehavior guide: BuildGuide(s, guide, messages); break;
                 case TalkBehavior: Say(s, messages[0]); break;
                 case GiveItemBehavior item:
                     s.Emit("CheckFlag", flag!.Value).Emit("GoToIf", ConditionEqual, "after")
@@ -388,8 +427,8 @@ public static class NewEventService
                     Say(s, messages[1]);
                     s.Label("full").Emit("CallStd", BagFullStd).Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
                     break;
-                case TradeBehavior:
-                    BuildTradeBody(s, tradeSlot, flag!.Value, messages, platinum);
+                case TradeBehavior swap:
+                    BuildTradeBody(s, tradeSlot, flag!.Value, messages, platinum, swap.MinLevel);
                     break;
                 case PokemonBehavior mon:
                     EmitPokemonBody(s, mon, messages, flag, engageFlag, platinum);
@@ -404,9 +443,9 @@ public static class NewEventService
             }
             return s.Build();
         }
-        if (behavior is TradeBehavior)
+        if (behavior is TradeBehavior simple)
         {
-            BuildTrade(s, tradeSlot, flag!.Value, messages, platinum);
+            BuildTrade(s, tradeSlot, flag!.Value, messages, platinum, simple.MinLevel);
             return s.Build();
         }
         if (behavior is PokemonBehavior wild)
@@ -487,13 +526,15 @@ public static class NewEventService
         var scriptsNarc = Narc.Read(File.ReadAllBytes(game.ScriptsPath));
         var editor = new ScriptEditor(scriptsNarc.Files[header.ScriptsBank], table);
         var events = new EventFile(eventsNarc.Files[header.EventsBank]);
-        if (events.Objects.All(o => o.Id != existing.ObjectId)) throw new InvalidDataException(Loc.T("core.newev.notFound"));
+        if (existing.ObjectId >= 0 && events.Objects.All(o => o.Id != existing.ObjectId)) throw new InvalidDataException(Loc.T("core.newev.notFound"));
 
         // treinador com visão usa o script padrão do jogo: não há script próprio para esvaziar
         if (existing.ScriptId < TrainerStdScript) editor.ReplaceEntry(existing.ScriptId, NewBuilder(table).Emit("End").Build());
         if (existing.LevelScriptId is { } level) WriteLevelScript(editor, table, level, null, 0, existing.ChainScriptId);
         scriptsNarc.Files[header.ScriptsBank] = editor.Raw;
-        eventsNarc.Files[header.EventsBank] = EventFile.RemoveObject(eventsNarc.Files[header.EventsBank], existing.ObjectId);
+        eventsNarc.Files[header.EventsBank] = existing.ObjectId < 0
+            ? EventFile.RemoveBg(eventsNarc.Files[header.EventsBank], existing.ScriptId)
+            : EventFile.RemoveObject(eventsNarc.Files[header.EventsBank], existing.ObjectId);
 
         var ledger = NewEventLedger.Load(project);
         ledger.Npcs.RemoveAll(n => n.MapId == existing.MapId && n.ObjectId == existing.ObjectId);
@@ -580,9 +621,11 @@ public static class NewEventService
         var eventsNarc = Narc.Read(File.ReadAllBytes(game.EventsPath));
         var scriptsNarc = Narc.Read(File.ReadAllBytes(game.ScriptsPath));
         var events = new EventFile(eventsNarc.Files[header.EventsBank]);
-        var current = existing is null ? null : events.Objects.FirstOrDefault(o => o.Id == existing.ObjectId) ?? throw new InvalidDataException(Loc.T("core.newev.notFound"));
+        bool hiddenItem = npc.Behavior is GroundItemBehavior { Hidden: true };
+        var current = existing is null || existing.ObjectId < 0 ? null : events.Objects.FirstOrDefault(o => o.Id == existing.ObjectId) ?? throw new InvalidDataException(Loc.T("core.newev.notFound"));
 
         if (events.Objects.Any(o => o.X == npc.X && o.Z == npc.Z && o.Id != current?.Id)) warnings.Add(Loc.T("core.newev.occupied"));
+        if (existing is not null && (existing.ObjectId < 0) != hiddenItem) throw new ArgumentException(Loc.T("core.newev.groundSwitch"));
         if (existing is null && events.Objects.Count >= NpcWarningCount) warnings.Add(Loc.T("core.newev.tooMany", NpcWarningCount));
         var sharing = map.Headers.Where(h => h.Id != npc.MapId && (h.ScriptsBank == header.ScriptsBank || h.EventsBank == header.EventsBank)).Select(h => h.InternalName).Distinct().ToList();
         if (sharing.Count > 0) warnings.Add(Loc.T("core.newev.shared", string.Join(", ", sharing.Take(4))));
@@ -597,7 +640,7 @@ public static class NewEventService
         foreach (var id in TrainersOf(npc.Behavior))
             if (id < 1 || id >= trainerCount) throw new ArgumentException(Loc.T("core.newev.badTrainer", id, trainerCount - 1));
         if (sighted is not null && events.Objects.Any(o => o.Id != current?.Id && o.ScriptId == TrainerScriptOf(sighted.Trainer))) warnings.Add(Loc.T("core.newev.sharedTrainer"));
-        bool needsFlag = sighted is null && npc.Behavior is GiveItemBehavior or TradeBehavior or PokemonBehavior { Vanish: true } or QuestBehavior or SellBehavior { Once: true } or TrainerBehavior;
+        bool needsFlag = sighted is null && npc.Behavior is GiveItemBehavior or TradeBehavior or PokemonBehavior { Vanish: true } or QuestBehavior or SellBehavior { Once: true } or TrainerBehavior or GroundItemBehavior;
         bool vanishes = npc.Behavior is PokemonBehavior { Vanish: true };
         var taken = new HashSet<int>(ledger.RetiredFlags);
         int trainers = Narc.Read(File.ReadAllBytes(game.TrainerDataPath)).Files.Count;
@@ -618,7 +661,9 @@ public static class NewEventService
             GiveItemBehavior i => [EndWithWait(i.BeforeText), i.AfterText],
             PokemonBehavior { Text: { Length: > 0 } text } => [EndWithWait(text)],
             // sem o {YESNO 0} na fala, o HG/SS não abre o menu de Sim e Não; o Platinum tem comando próprio
+            TradeBehavior { MinLevel: > 0 } t => [WithYesNo(t.AskText), t.ThanksText, t.WrongText, t.DeclineText, t.TooLowText ?? ""],
             TradeBehavior t => [game.IsHgss ? WithYesNo(t.AskText) : t.AskText, t.ThanksText, t.WrongText, t.DeclineText],
+            GuideBehavior g => [.. g.Steps.Select(step => step.Text), g.FinalText],
             QuestBehavior q => [EndWithWait(q.AskText), q.NotYetText, EndWithWait(q.RewardText), q.DoneText, q.FullText],
             SellBehavior v => [WithYesNo(v.OfferText), v.ThanksText, v.NoMoneyText, v.DeclineText, v.FullText, v.SoldOutText],
             TrainerBehavior { Sight: > 0 } => [],
@@ -637,6 +682,24 @@ public static class NewEventService
                 messages.Add(existing.Messages[i]);
             }
             else messages.Add(texts.AddText(header.MsgBank, lines[i]));
+        }
+
+        // falas do próprio registro: com visão, são as que o jogo mostra; sem visão, a de derrota aparece no fim da batalha e não pode ficar vazia
+        TrainerMessages? trainerMessages = null;
+        if (npc.Behavior is TrainerBehavior spoken && game.IsHgss && !game.Japanese)
+        {
+            trainerMessages = TrainerMessages.Load(project);
+            var said = new Dictionary<int, string>();
+            if (spoken.Sight > 0)
+            {
+                if (!string.IsNullOrWhiteSpace(spoken.ChallengeText)) said[TrainerMessages.Intro] = spoken.ChallengeText;
+                if (!string.IsNullOrWhiteSpace(spoken.BeatenText)) said[TrainerMessages.Lose] = spoken.BeatenText;
+                if (!string.IsNullOrWhiteSpace(spoken.AfterText)) said[TrainerMessages.After] = spoken.AfterText;
+            }
+            else if (!trainerMessages.Has(spoken.Trainer, TrainerMessages.Lose) && !string.IsNullOrWhiteSpace(spoken.BeatenText))
+                said[TrainerMessages.Lose] = spoken.BeatenText;
+            if (said.Count > 0) trainerMessages.Set(texts, spoken.Trainer, said);
+            else trainerMessages = null;
         }
 
         var table = TableOf(game);
@@ -684,7 +747,7 @@ public static class NewEventService
             WriteLevelScript(editor, table, levelScript, vanishes ? objectId : null, engage ?? 0, chain);
         scriptsNarc.Files[header.ScriptsBank] = editor.Raw;
 
-        int sprite = npc.Behavior is PokemonBehavior p ? SpriteForSpecies(p.Species, game.IsPlatinum) ?? npc.SpriteId : npc.SpriteId;
+        int sprite = npc.Behavior is GroundItemBehavior ? ItemBallSprite : npc.Behavior is PokemonBehavior p ? SpriteForSpecies(p.Species, game.IsPlatinum) ?? npc.SpriteId : npc.SpriteId;
         var updated = new ObjectEvent(current?.Index ?? events.Objects.Count,
             Id: objectId,
             SpriteId: sprite,
@@ -698,7 +761,7 @@ public static class NewEventService
             },
             Type: sighted is not null ? 1 : 0,
             // a flag do Pokémon que some esconde o objeto; a do item só marca a entrega, e o NPC continua lá
-            EventFlag: vanishes || npc.Behavior is TrainerBehavior { Vanish: true, Sight: 0 } ? flag!.Value : 0,
+            EventFlag: vanishes || npc.Behavior is TrainerBehavior { Vanish: true, Sight: 0 } or GroundItemBehavior ? flag!.Value : 0,
             ScriptId: scriptId,
             Facing: npc.Facing,
             X: npc.X,
@@ -707,9 +770,17 @@ public static class NewEventService
             XRange: npc.Movement is NpcMovement.Wander or NpcMovement.LeftRight ? npc.Range : 0,
             ZRange: npc.Movement is NpcMovement.Wander or NpcMovement.UpDown ? npc.Range : 0,
             Sight: sighted?.Sight ?? 0);
-        eventsNarc.Files[header.EventsBank] = current is null
-            ? EventFile.AddObject(eventsNarc.Files[header.EventsBank], updated)
-            : EventFile.ReplaceObject(eventsNarc.Files[header.EventsBank], updated);
+        if (hiddenItem)
+        {
+            // escondido não é objeto: é um evento de tile, e o número negativo do script o identifica na lista
+            objectId = -scriptId;
+            var spot = new BgEvent(0, scriptId, BgNormal, npc.X, npc.Z, 0, BgAnyDirection);
+            eventsNarc.Files[header.EventsBank] = existing is null ? EventFile.AddBg(eventsNarc.Files[header.EventsBank], spot) : EventFile.MoveBg(eventsNarc.Files[header.EventsBank], spot);
+        }
+        else
+            eventsNarc.Files[header.EventsBank] = current is null
+                ? EventFile.AddObject(eventsNarc.Files[header.EventsBank], updated)
+                : EventFile.ReplaceObject(eventsNarc.Files[header.EventsBank], updated);
 
         // o que a edição deixou de usar não volta para a lista de livres: num save, a flag pode já estar ligada
         if (existing?.Flag is { } oldFlag && oldFlag != flag) ledger.RetireFlag(oldFlag);
@@ -721,12 +792,15 @@ public static class NewEventService
         WriteAtomic(game.ScriptsPath, scriptsNarc.Write());
         WriteAtomic(game.EventsPath, eventsNarc.Write());
         if (tradeNarc is not null) WriteAtomic(TradesPathOf(game), tradeNarc);
+        trainerMessages?.Save();
         ledger.Save(project);
         return new NewNpcResult(updated.Index, scriptId, flag, warnings);
     }
 
     /// <summary>Nos NPCs do jogo, 14 a 17 olham fixo para cima, baixo, esquerda e direita.</summary>
     private const int FixedFacingMovement = 14, MovementLookAround = 2, MovementWander = 3;
+    /// <summary>Sprite de Poké Bola dos itens do jogo; evento de tile comum, que aceita o jogador de qualquer lado.</summary>
+    private const int ItemBallSprite = 87, BgNormal = 0, BgAnyDirection = 4, MaxGuideSteps = 8;
     /// <summary>Tipo de entrada do cabeçalho do mapa que os encontros parados do jogo usam, nos dois jogos.</summary>
     private const int ReturnScriptKind = 4;
     private const int JumpSize = 6;
@@ -746,6 +820,17 @@ public static class NewEventService
         static bool Species(int? s) => s is >= 1 and <= MaxSpecies;
         switch (npc.Behavior)
         {
+            case TradeBehavior swap:
+                if (swap.MinLevel is < 0 or > 100) throw new ArgumentException(Loc.T("core.newev.badLevel"));
+                if (swap.MinLevel > 0 && string.IsNullOrWhiteSpace(swap.TooLowText)) throw new ArgumentException(Loc.T("core.newev.tooLowText"));
+                break;
+            case GroundItemBehavior g:
+                if (g.Quantity is < 1 or > 99) throw new ArgumentException(Loc.T("core.newev.badQuantity"));
+                break;
+            case GuideBehavior guide:
+                if (guide.Steps.Count is < 1 or > MaxGuideSteps || guide.Steps.Any(step => step.Flag <= 0 || string.IsNullOrWhiteSpace(step.Text)) || string.IsNullOrWhiteSpace(guide.FinalText))
+                    throw new ArgumentException(Loc.T("core.newev.badGuide", MaxGuideSteps));
+                break;
             case QuestBehavior q:
                 if (q.AskItem is not null && q.AskSpecies is not null) throw new ArgumentException(Loc.T("core.newev.questAsk"));
                 if (q.AskItem is not null && q.AskQuantity is < 1 or > 99) throw new ArgumentException(Loc.T("core.newev.badQuantity"));
@@ -835,13 +920,18 @@ public sealed class CreatedNpc
     public int? ConditionBadge { get; set; }
     public int? ConditionAfterFlag { get; set; }
     public int ConditionMaxPartyLevel { get; set; }
+    public int MinLevel { get; set; }
+    public bool Hidden { get; set; }
+    public List<int> GuideFlags { get; set; } = [];
     public string? ConditionText { get; set; }
 
     public NpcBehavior ToBehavior() => Kind switch
     {
         "item" => new GiveItemBehavior(Item, Quantity, Texts[0], Texts[1]),
         "pokemon" => new PokemonBehavior(Species, Level, Vanish, Texts.FirstOrDefault()),
-        "trade" => new TradeBehavior(AskSpecies, GiveSpecies, Nickname, Texts[0], Texts[1], Texts[2], Texts[3]),
+        "trade" => new TradeBehavior(AskSpecies, GiveSpecies, Nickname, Texts[0], Texts[1], Texts[2], Texts[3], MinLevel, Texts.ElementAtOrDefault(4)),
+        "ground" => new GroundItemBehavior(Item, Quantity, Hidden),
+        "guide" => new GuideBehavior(GuideFlags.Select((flag, i) => new GuideStep(flag, Texts[i])).ToList(), Texts[^1]),
         "quest" => new QuestBehavior(AskItem > 0 ? AskItem : null, AskQuantity, TakeItem, AskSpecies > 0 ? AskSpecies : null, RewardItem > 0 ? RewardItem : null, RewardQuantity,
             RewardSpecies > 0 ? RewardSpecies : null, RewardLevel, RewardMoney, Texts[0], Texts[1], Texts[2], Texts[3], Texts[4]),
         "sell" => new SellBehavior(Species, Level, Price, Once, Texts[0], Texts[1], Texts[2], Texts[3], Texts[4], Texts[5]),
@@ -866,6 +956,9 @@ public sealed class CreatedNpc
             case TalkBehavior t: c.Kind = "talk"; c.Texts = [t.Text]; break;
             case GiveItemBehavior i: c.Kind = "item"; c.Item = i.Item; c.Quantity = i.Quantity; c.Texts = [i.BeforeText, i.AfterText]; break;
             case PokemonBehavior p: c.Kind = "pokemon"; c.Species = p.Species; c.Level = p.Level; c.Vanish = p.Vanish; c.Texts = p.Text is { Length: > 0 } text ? [text] : []; break;
+            case GroundItemBehavior g: c.Kind = "ground"; c.Item = g.Item; c.Quantity = g.Quantity; c.Hidden = g.Hidden; c.Texts = []; break;
+            case GuideBehavior guide: c.Kind = "guide"; c.GuideFlags = guide.Steps.Select(step => step.Flag).ToList(); c.Texts = [.. guide.Steps.Select(step => step.Text), guide.FinalText]; break;
+            case TradeBehavior { MinLevel: > 0 } t: c.Kind = "trade"; c.AskSpecies = t.AskSpecies; c.GiveSpecies = t.GiveSpecies; c.Nickname = t.Nickname; c.MinLevel = t.MinLevel; c.Texts = [t.AskText, t.ThanksText, t.WrongText, t.DeclineText, t.TooLowText ?? ""]; break;
             case TradeBehavior t: c.Kind = "trade"; c.AskSpecies = t.AskSpecies; c.GiveSpecies = t.GiveSpecies; c.Nickname = t.Nickname; c.Texts = [t.AskText, t.ThanksText, t.WrongText, t.DeclineText]; break;
             case QuestBehavior q:
                 c.Kind = "quest"; c.AskItem = q.AskItem ?? 0; c.AskQuantity = q.AskQuantity; c.TakeItem = q.TakeItem; c.AskSpecies = q.AskSpecies ?? 0;

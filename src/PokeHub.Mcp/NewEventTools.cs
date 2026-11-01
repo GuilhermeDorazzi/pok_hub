@@ -67,13 +67,13 @@ public static class NewEventTools
 
     [McpServerTool(Name = "create_trade_npc"), Description("Cria um NPC que troca Pokémon (HG/SS e Platinum), usando uma vaga de troca que nenhum script usa; passadas as originais, cria vagas novas no arquivo de trocas. Falha se não houver vaga livre. Salva versão antes e depois.")]
     public static async Task<object> CreateTradeNpc(HubContext hub, string project, int mapId, int x, int z, int sprite, int askSpecies, int giveSpecies,
-        string askText, string thanksText, string wrongText, string declineText, string? nickname = null, int facing = 1,
+        string askText, string thanksText, string wrongText, string declineText, string? nickname = null, int facing = 1, [Description("Nível mínimo do Pokémon entregue; 0 aceita qualquer. Só HG/SS")] int minLevel = 0, string? tooLowText = null,
         [Description("fixed, look, wander, updown ou leftright")] string movement = "fixed", int range = 1)
     {
         var p = hub.OpenProject(project);
         if (!WorkspaceService.IsExtracted(p)) throw new InvalidOperationException("Workspace vazio: extraia a ROM primeiro (extract_rom).");
         var game = Gen4Game.For(p);
-        var behavior = new TradeBehavior(askSpecies, giveSpecies, nickname, Wrap(game, askText), Wrap(game, thanksText), Wrap(game, wrongText), Wrap(game, declineText));
+        var behavior = new TradeBehavior(askSpecies, giveSpecies, nickname, Wrap(game, askText), Wrap(game, thanksText), Wrap(game, wrongText), Wrap(game, declineText), minLevel, tooLowText is null ? null : Wrap(game, tooLowText));
         var log = new LogCollector();
         if (hub.Git.IsAvailable) await hub.Git.SnapshotAsync(p, $"Antes de criar troca no mapa {mapId}", log);
         var result = NewEventService.Create(p, EventMap.Load(p), new NewNpc(mapId, x, z, sprite, facing, behavior, Movement(movement), range));
@@ -113,6 +113,15 @@ public static class NewEventTools
         if (hub.Git.IsAvailable) await hub.Git.SnapshotAsync(p, "Depois da Elite configurado", log);
         return new { trainersReset = count, levelsScaled = scaleLevels, percent, floor };
     }
+
+    [McpServerTool(Name = "create_ground_item"), Description("Coloca um item para achar no mapa (HG/SS): numa Poké Bola, ou escondido num tile com hidden=true, que entrega ao apertar A virado para ele. Serve para fósseis, por exemplo. A posição do escondido precisa ter por onde o jogador chegar.")]
+    public static Task<object> CreateGroundItem(HubContext hub, string project, int mapId, int x, int z, int item, int quantity = 1, bool hidden = false) =>
+        CreateAsync(hub, project, "item no mapa", mapId, _ => new NewNpc(mapId, x, z, 0, 0, new GroundItemBehavior(item, quantity, hidden)));
+
+    [McpServerTool(Name = "create_guide_npc"), Description("NPC guia (HG/SS): percorre as etapas em ordem e diz a fala da primeira cuja flag esteja desligada; com todas feitas, diz finalText. flags e texts têm o mesmo tamanho, até 8. Use as flags de list_created_npcs ou devolvidas ao criar missões.")]
+    public static Task<object> CreateGuideNpc(HubContext hub, string project, int mapId, int x, int z, int sprite, int[] flags, string[] texts, string finalText, int facing = 1) =>
+        flags.Length != texts.Length ? throw new ArgumentException("flags e texts precisam ter o mesmo tamanho.") :
+        CreateAsync(hub, project, "guia", mapId, game => new NewNpc(mapId, x, z, sprite, facing, new GuideBehavior(flags.Select((flag, i) => new GuideStep(flag, Wrap(game, texts[i]))).ToList(), Wrap(game, finalText))));
 
     [McpServerTool(Name = "create_quest_npc"), Description("Cria uma missão (HG/SS): pede um item (askItem) ou mostrar um Pokémon no time (askSpecies) e dá uma recompensa uma vez só (rewardItem, rewardSpecies ou rewardMoney). Aceita condições: depois da Elite, insígnias e flag de outra missão. Salva versão antes e depois.")]
     public static Task<object> CreateQuestNpc(HubContext hub, string project, int mapId, int x, int z, int sprite, string askText, string notYetText, string rewardText, string doneText, string fullText,

@@ -473,6 +473,18 @@ Registradas em 01/11/2026. **Valem para o jogo oficial, que ainda não será fei
 | Níveis por insígnia em Kanto | Pronta e testada no jogo | Card Depois da Elite. A lista de quem é de Kanto sai dos mapas de região 1: 192 de rota e 8 líderes na base, incluindo Giovanni como rota. Esses treinadores ficam fora do × 1,3, porque Kanto só se alcança depois da Elite. Com 8 insígnias, o alvo é 65 |
 | Experiência maior para quem está atrás | Não feita | Só se precisar. Pesquisa nova |
 
+### Mais conteúdo pedido (01/11/2026)
+
+1. Treinadores novos, principalmente onde há poucos.
+2. Treinadores fortes, com iniciais e times equilibrados.
+3. Tipo dragão cedo para alguns treinadores. Cuidado: Dragon Rage tira 40 de dano fixo, então escolher os golpes à mão.
+4. Fósseis com dicas de NPCs. O reviver já existe em `T03R0101`, que confere os 7 fósseis.
+5. Fósseis para encontrar no mapa.
+6. Evoluções por troca recebidas em trocas de NPC, e trocas novas nas duas regiões: pedindo Pokémon raros, filhotes que forçam o daycare e, em alguns casos, nível mínimo. Há 118 vagas livres. O jogo não sabe se o filhote nasceu de ovo.
+7. NPCs que ajudam nas tarefas do jogo novo.
+
+Pontos 2, 3 e 4 já dão para fazer com o hub. As ferramentas dos outros estão prontas e foram aprovadas no jogo em ds-rom em 01/11/2026, inclusive reviver o Old Amber em `T03R0101`: card Treinadores por local, falas de treinador novo com visão, nível mínimo na troca, item em bola e escondido e NPC guia. Item escondido é um evento de tile comum, não o dos itens do jogo, então a Dowsing Machine não o encontra.
+
 ### O que foi confirmado
 
 **Validado no jogo** (SoulSilver, 2026-10-31):

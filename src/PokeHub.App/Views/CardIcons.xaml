@@ -50,6 +50,18 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!-- Treinadores por local: pessoa e marcador -->
+    <DrawingImage x:Key="icon.census">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <StaticResource ResourceKey="Frame" />
+                <GeometryDrawing Brush="{StaticResource B}" Geometry="M9,4 A4,4 0 1 1 8.99,4 Z M2,21 V19 A7,6 0 0 1 16,19 V21 Z" />
+                <GeometryDrawing Brush="{StaticResource R}" Geometry="M19,3 A4,4 0 0 1 23,7 C23,10 19,15 19,15 C19,15 15,10 15,7 A4,4 0 0 1 19,3 Z" />
+                <GeometryDrawing Brush="{StaticResource W}" Geometry="M19,5.5 A1.5,1.5 0 1 1 18.99,5.5 Z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
     <!-- O que falta capturar: Poké Bola -->
     <DrawingImage x:Key="icon.catch">
         <DrawingImage.Drawing>

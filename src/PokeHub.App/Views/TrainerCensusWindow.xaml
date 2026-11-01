@@ -1,0 +1,31 @@
+<Window x:Class="PokeHub.App.Views.TrainerCensusWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:PokeHub.App"
+        Title="{loc:T census.title}" Width="760" Height="600" MinWidth="520" MinHeight="320"
+        WindowStartupLocation="CenterOwner" FontSize="13">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" TextWrapping="Wrap" Margin="0,0,0,8" Foreground="{DynamicResource MutedBrush}" Text="{loc:T census.intro}" />
+        <DockPanel Grid.Row="1" Margin="0,0,0,8">
+            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,8,0" Text="{loc:T census.search}" />
+            <TextBox x:Name="SearchBox" TextChanged="SearchBox_TextChanged" />
+        </DockPanel>
+        <DataGrid x:Name="RowsGrid" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{loc:T census.col.place}" Width="*" Binding="{Binding Place}" />
+                <DataGridTextColumn Header="{loc:T census.col.map}" Width="110" Binding="{Binding Map}" />
+                <DataGridTextColumn Header="{loc:T batch.region}" Width="70" Binding="{Binding Region}" />
+                <DataGridTextColumn Header="{loc:T census.col.trainers}" Width="90" Binding="{Binding Trainers}" />
+                <DataGridTextColumn Header="{loc:T census.col.average}" Width="90" Binding="{Binding AverageLevel}" />
+                <DataGridTextColumn Header="{loc:T census.col.top}" Width="90" Binding="{Binding TopLevel}" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <Button Grid.Row="3" HorizontalAlignment="Right" Margin="0,10,0,0" Content="{loc:T common.close}" IsCancel="True" />
+    </Grid>
+</Window>

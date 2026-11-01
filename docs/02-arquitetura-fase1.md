@@ -170,6 +170,8 @@ Fase 2 concluída em 2026-10-30.
 
 36. **Depois da Elite.** `PostEliteService` tem três opções independentes. Liberar treinadores: um script novo em `T10R0701`, chamado antes de `HOFCredits 0`, com um `ClearTrainerFlag` por treinador. Santuário de Ilex: em `D36R0101`, `FollowerPokeIsEventTrigger 3` vira uma chamada que confere só a espécie com `GetPartyMonSpecies`. Níveis: patch de código gerado, com gancho `call` em `0x0207363A`, a única leitura de time, que depois da leitura multiplica os níveis se o jogo foi zerado. Só SoulSilver US em ds-rom; endereços conferidos no arm9 contra a decomp. Nada disso foi visto no jogo ainda.
 
+37. **Conteúdo novo.** `TrainerMessages` lê e grava as falas de treinador: `trtbl` (a/0/5/7) e o banco 728 têm uma entrada por mensagem, e `trtblofs` (a/1/3/1) diz onde cada treinador começa. Entrada nova vai para o fim, então nenhum número antigo muda. Treinador com visão grava as falas escritas no registro; sem visão, só preenche a fala de derrota que faltar. `TrainerCensus` conta treinadores por mapa. No Novo evento: troca com nível mínimo (`MonGetLevel`), item em bola ou escondido (evento de tile, com número negativo do script no registro) e guia, que diz a fala da primeira flag desligada.
+
 Publicado em github.com/GuilhermeDorazzi/pok_hub (privado por enquanto).
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)

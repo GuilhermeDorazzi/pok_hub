@@ -53,6 +53,53 @@ public sealed class EventFile
         throw new InvalidDataException($"NPC {id}");
     }
 
+    private static void WriteBg(byte[] result, int at, BgEvent b)
+    {
+        BitConverter.TryWriteBytes(result.AsSpan(at), (ushort)b.ScriptId);
+        BitConverter.TryWriteBytes(result.AsSpan(at + 2), (ushort)b.Type);
+        BitConverter.TryWriteBytes(result.AsSpan(at + 4), b.X);
+        BitConverter.TryWriteBytes(result.AsSpan(at + 8), b.Z);
+        BitConverter.TryWriteBytes(result.AsSpan(at + 12), b.Y);
+        BitConverter.TryWriteBytes(result.AsSpan(at + 16), (ushort)b.Dir);
+    }
+
+    /// <summary>Acrescenta um evento de tile no fim da lista deles; o que vem depois é copiado como está.</summary>
+    public static byte[] AddBg(byte[] raw, BgEvent b)
+    {
+        int count = BitConverter.ToInt32(raw, 0), at = 4 + count * BgRecord;
+        var result = new byte[raw.Length + BgRecord];
+        Buffer.BlockCopy(raw, 0, result, 0, at);
+        Buffer.BlockCopy(raw, at, result, at + BgRecord, raw.Length - at);
+        BitConverter.TryWriteBytes(result.AsSpan(0), count + 1);
+        WriteBg(result, at, b);
+        return result;
+    }
+
+    private static int IndexOfBg(byte[] raw, int scriptId)
+    {
+        int count = BitConverter.ToInt32(raw, 0);
+        for (int i = 0; i < count; i++)
+            if (BitConverter.ToUInt16(raw, 4 + i * BgRecord) == scriptId) return i;
+        throw new InvalidDataException($"Bg {scriptId}");
+    }
+
+    public static byte[] MoveBg(byte[] raw, BgEvent b)
+    {
+        var result = raw.ToArray();
+        WriteBg(result, 4 + IndexOfBg(raw, b.ScriptId) * BgRecord, b);
+        return result;
+    }
+
+    public static byte[] RemoveBg(byte[] raw, int scriptId)
+    {
+        int at = 4 + IndexOfBg(raw, scriptId) * BgRecord;
+        var result = new byte[raw.Length - BgRecord];
+        Buffer.BlockCopy(raw, 0, result, 0, at);
+        Buffer.BlockCopy(raw, at + BgRecord, result, at, raw.Length - at - BgRecord);
+        BitConverter.TryWriteBytes(result.AsSpan(0), BitConverter.ToInt32(raw, 0) - 1);
+        return result;
+    }
+
     /// <summary>Tira um NPC da lista. Os outros mudam de posição na lista, mas não de número, que é o que scripts usam.</summary>
     public static byte[] RemoveObject(byte[] raw, int id)
     {

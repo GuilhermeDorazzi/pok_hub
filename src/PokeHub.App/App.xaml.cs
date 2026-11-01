@@ -89,7 +89,7 @@ public partial class App : Application
                     }
                 }
                 catch (Exception ex) { Console.Error.WriteLine(ex); }
-                foreach (var (command, suffix) in new[] { ((System.Windows.Input.ICommand)vm.OpenStatsCommand, "stats"), (vm.OpenNarcBrowserCommand, "narcs"), (vm.OpenTablesCommand, "tables"), (vm.OpenScriptsCommand, "scripts"), (vm.OpenNewEventCommand, "newevent"), (vm.OpenCatchCommand, "catch"), (vm.OpenPostEliteCommand, "postelite") })
+                foreach (var (command, suffix) in new[] { ((System.Windows.Input.ICommand)vm.OpenStatsCommand, "stats"), (vm.OpenNarcBrowserCommand, "narcs"), (vm.OpenTablesCommand, "tables"), (vm.OpenScriptsCommand, "scripts"), (vm.OpenNewEventCommand, "newevent"), (vm.OpenCatchCommand, "catch"), (vm.OpenPostEliteCommand, "postelite"), (vm.OpenTrainerCensusCommand, "census") })
                 {
                     try
                     {
@@ -114,7 +114,7 @@ public partial class App : Application
                         enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
                         using (var fs = File.Create(Path.Combine(Path.GetDirectoryName(basePath)!, Path.GetFileNameWithoutExtension(basePath) + "-" + suffix + ".png"))) enc.Save(fs);
                         if (win.DataContext is NewEventViewModel kinds)
-                            foreach (var (show, kind) in new (Action, string)[] { (() => kinds.IsQuest = true, "quest"), (() => kinds.IsSell = true, "sell"), (() => kinds.IsTrainer = true, "trainer") })
+                            foreach (var (show, kind) in new (Action, string)[] { (() => kinds.IsQuest = true, "quest"), (() => kinds.IsSell = true, "sell"), (() => kinds.IsTrainer = true, "trainer"), (() => kinds.IsGround = true, "ground"), (() => kinds.IsGuide = true, "guide"), (() => kinds.IsTrade = true, "trade") })
                             {
                                 show();
                                 await Task.Delay(500);
