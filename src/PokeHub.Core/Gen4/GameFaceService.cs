@@ -45,6 +45,9 @@ public static class GameFaceService
         browser.Replace(tilesFile, tiles);
         browser.Replace(paletteFile, palette);
         browser.Replace(LogoScreen, screen);
+        // o desenho novo não tem a palavra VERSION no lugar conhecido: daqui em diante a marca é a simples
+        File.Delete(LogoBaselinePath(project));
+        File.WriteAllText(CustomLogoMark(project), "");
         return reduced.OriginalColors;
     }
 
@@ -125,13 +128,48 @@ public static class GameFaceService
     public static string CurrentVersion(Project project) =>
         CanEditBanner(project) && Regex.Match(ReadBanner(project).Name, @" (V\d+)$") is { Success: true } m ? m.Groups[1].Value : "";
 
+    // números no estilo de VERSION: só o miolo, porque o contorno sai da distância até ele
+    private static readonly Dictionary<char, string[]> StyledFont = new()
+    {
+        ['0'] = [".XXXXX.", "XXX.XXX", "XX...XX", "XX...XX", "XX...XX", "XX...XX", "XX...XX", "XXX.XXX", ".XXXXX."],
+        ['1'] = [".XX", "XXX", ".XX", ".XX", ".XX", ".XX", ".XX", ".XX", ".XX"],
+        ['2'] = [".XXXXX.", "XXX.XXX", ".....XX", "....XXX", "..XXXX.", ".XXX...", "XXX....", "XXXXXXX", "XXXXXXX"],
+        ['3'] = [".XXXXX.", "XXX.XXX", ".....XX", "...XXX.", "...XXX.", ".....XX", ".....XX", "XXX.XXX", ".XXXXX."],
+        ['4'] = ["...XXX.", "..XXXX.", ".XXXXX.", "XXX.XX.", "XX..XX.", "XXXXXXX", "XXXXXXX", "....XX.", "....XX."],
+        ['5'] = ["XXXXXXX", "XXXXXXX", "XX.....", "XXXXXX.", "XXXXXXX", ".....XX", ".....XX", "XXX.XXX", ".XXXXX."],
+        ['6'] = [".XXXXX.", "XXX.XXX", "XX.....", "XXXXXX.", "XXXXXXX", "XX...XX", "XX...XX", "XXX.XXX", ".XXXXX."],
+        ['7'] = ["XXXXXXX", "XXXXXXX", ".....XX", "....XXX", "...XXX.", "..XXX..", "..XX...", "..XX...", "..XX..."],
+        ['8'] = [".XXXXX.", "XXX.XXX", "XX...XX", "XXX.XXX", ".XXXXX.", "XXX.XXX", "XX...XX", "XXX.XXX", ".XXXXX."],
+        ['9'] = [".XXXXX.", "XXX.XXX", "XX...XX", "XX...XX", "XXXXXXX", ".XXXXXX", ".....XX", "XXX.XXX", ".XXXXX."],
+    };
+
+    private const int WordLeft = 64, WordLeftTop = 69, WordRight = 177, WordTop = 101, WordTopRightFrom = 165, WordTopRight = 104, WordBottom = 119;
+    private const int ArtVLeft = 69, ArtVWidth = 18, StyledBodyTop = 106, RampColumn = 138, EdgeColumn = 135;
+    private const int StampGap = 2, StampRightLimit = 199;
+
+    private static string CustomLogoMark(Project project) => Path.Combine(project.Paths.Workspace, "pokehub-logo-custom.txt");
+    private static string LogoBaselinePath(Project project) => Path.Combine(project.Paths.Workspace, "pokehub-logo-original.ncgr");
+
     /// <summary>Marca a versão no logo e, quando há cartão, no fim do nome dele.</summary>
     public static void ApplyVersion(Project project, string version)
     {
         if (!CanEditLogo(project)) throw new InvalidOperationException(Loc.T("core.face.noLogo"));
+        version = version.Trim().ToUpperInvariant();
         var browser = NarcBrowser.Open(TitlePath(project));
         var (tilesFile, paletteFile) = LogoFiles(project);
-        browser.Replace(tilesFile, StampLogoVersion(browser.Raw(tilesFile), browser.Raw(paletteFile), version));
+        byte[] tiles;
+        if (File.Exists(CustomLogoMark(project)) || version.Length > 3)
+            tiles = StampLogoVersion(browser.Raw(tilesFile), browser.Raw(paletteFile), version);
+        else
+        {
+            // sempre a partir do desenho original, para que subir a versão não mova VERSION duas vezes
+            if (!File.Exists(LogoBaselinePath(project))) File.WriteAllBytes(LogoBaselinePath(project), WithoutPlainStamp(browser.Raw(tilesFile)));
+            var original = File.ReadAllBytes(LogoBaselinePath(project));
+            // o logo do HeartGold tem outro recorte, então pode não caber
+            try { tiles = StampStyledVersion(original, version); }
+            catch (ArgumentException) when (Regex.IsMatch(version, @"^V[0-9]{1,2}$")) { tiles = StampLogoVersion(original, browser.Raw(paletteFile), version); }
+        }
+        browser.Replace(tilesFile, tiles);
         if (!CanEditBanner(project)) return;
         var banner = ReadBanner(project);
         WriteBanner(project, banner with { Name = WithVersion(banner.Name, version.Trim().ToUpperInvariant()) });
@@ -139,6 +177,86 @@ public static class GameFaceService
 
     /// <summary>Troca ou acrescenta o V1...Vn no fim de um nome.</summary>
     public static string WithVersion(string name, string version) => Regex.Replace(name.Trim(), @" V\d+$", "") + " " + version;
+
+    /// <summary>
+    /// Escreve a versão como continuação de VERSION: o V vem do próprio desenho, e os números usam o degradê e o contorno da letra I.
+    /// Move a palavra para a esquerda o quanto for preciso para caber antes da cauda da Lugia.
+    /// </summary>
+    public static byte[] StampStyledVersion(byte[] original, string version)
+    {
+        version = version.Trim().ToUpperInvariant();
+        if (!Regex.IsMatch(version, @"^V[0-9]{1,2}$")) throw new ArgumentException(Loc.T("core.face.badVersion"));
+        const int tilesAt = 0x30;
+        if (Encoding.ASCII.GetString(original, 0, 4) != "RGCN" || BitConverter.ToInt32(original, 0x1C) != 4 || BitConverter.ToInt32(original, 0x28) != LogoTilesWide * LogoTilesHigh * 64)
+            throw new InvalidDataException(Loc.T("core.face.badLogo"));
+
+        int At(int x, int y) => tilesAt + (y / 8 * LogoTilesWide + x / 8) * 64 + y % 8 * 8 + x % 8;
+        byte Old(int x, int y) => original[At(x, y)];
+        bool InWord(int x, int y) => x >= (y >= WordTopRight ? WordLeft : WordLeftTop) && x <= WordRight && y >= (x >= WordTopRightFrom ? WordTopRight : WordTop) && y <= WordBottom;
+
+        const int ring = 2;
+        var digits = version[1..].Select(c => StyledFont[c]).ToList();
+        int width = StampGap + ArtVWidth + digits.Sum(g => g[0].Length + ring * 2 - 1);
+        int shift = Math.Max(0, WordRight + width - StampRightLimit);
+
+        var result = (byte[])original.Clone();
+        var moved = new List<(int X, int Y, byte Value)>();
+        for (int y = WordTop; y <= WordBottom; y++)
+            for (int x = WordLeft; x <= WordRight; x++)
+                if (InWord(x, y))
+                {
+                    if (Old(x, y) != 0) moved.Add((x - shift, y, Old(x, y)));
+                    result[At(x, y)] = 0;
+                }
+        void Draw(int x, int y, byte value)
+        {
+            // nada pode cair em cima do resto do logo
+            if (x < 0 || x >= LogoWidth || y < 0 || y >= LogoHeight || (Old(x, y) != 0 && !InWord(x, y))) throw new ArgumentException(Loc.T("core.face.versionNoRoom", version));
+            result[At(x, y)] = value;
+        }
+        foreach (var (x, y, value) in moved) Draw(x, y, value);
+
+        int left = WordRight - shift + 1 + StampGap;
+        for (int y = WordTop; y <= WordBottom; y++)
+            for (int x = 0; x < ArtVWidth; x++)
+                if (y >= WordTopRight && Old(ArtVLeft + x, y) != 0) Draw(left + x, y, Old(ArtVLeft + x, y));
+        left += ArtVWidth - 1;
+
+        byte highlight = Old(EdgeColumn, 107), silver = Old(EdgeColumn, 110), edge = Old(EdgeColumn, 116);
+        foreach (var glyph in digits)
+        {
+            int w = glyph[0].Length + ring * 2, h = glyph.Length + ring * 2;
+            bool Body(int x, int y) => x >= ring && y >= ring && x < w - ring && y < h - ring && glyph[y - ring][x - ring] == 'X';
+            int Near(int x, int y)
+            {
+                for (int r = 0; r <= ring; r++)
+                    for (int dy = -r; dy <= r; dy++)
+                        for (int dx = -r; dx <= r; dx++)
+                            if (Body(x + dx, y + dy)) return r;
+                return ring + 1;
+            }
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    int distance = Near(x, y), row = StyledBodyTop - ring + y;
+                    if (distance == 0) Draw(left + x, row, Old(RampColumn, row));
+                    else if (distance == 1) Draw(left + x, row, Near(x, y + 1) == 0 ? highlight : silver);
+                    else if (distance == 2 && result[At(left + x, row)] == 0 && Old(left + x, row) == 0) Draw(left + x, row, edge);
+                }
+            left += w - 1;
+        }
+        return result;
+    }
+
+    /// <summary>Tira a marca simples do logo, que ficava em áreas vazias no original.</summary>
+    public static byte[] WithoutPlainStamp(byte[] ncgr)
+    {
+        var result = (byte[])ncgr.Clone();
+        for (int y = StampTallY; y < LogoHeight; y++)
+            for (int x = StampX; x < StampX + (y < StampWideY ? StampTallWidth : StampWideWidth); x++)
+                result[0x30 + (y / 8 * LogoTilesWide + x / 8) * 64 + y % 8 * 8 + x % 8] = 0;
+        return result;
+    }
 
     /// <summary>Desenha a versão à direita de VERSION, na cor mais clara do logo, e limpa a marca anterior. A paleta e o mapa não mudam.</summary>
     public static byte[] StampLogoVersion(byte[] ncgr, byte[] nclr, string version)

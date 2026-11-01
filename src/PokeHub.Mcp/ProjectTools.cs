@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using ModelContextProtocol.Server;
+using PokeHub.Core.Gen4;
 using PokeHub.Core.Projects;
 
 namespace PokeHub.Mcp;
@@ -64,6 +65,17 @@ public static class ProjectTools
         if (hub.Git.IsAvailable && WorkspaceGit.IsRepo(p)) await hub.Git.SnapshotAsync(p, "Antes de empacotar (agente)", log);
         var output = await hub.Workspace.PackAsync(p, log);
         return new { rom = output, log = log.Lines };
+    }
+
+    [McpServerTool(Name = "set_game_version"), Description("Marca a versão do jogo (V1, V2...) no logo da tela de título e no fim do nome do cartão, e salva um commit com ela. Em HG/SS.")]
+    public static async Task<object> SetGameVersion(HubContext hub, string project, [Description("V seguido de 1 a 3 números, como V2")] string version)
+    {
+        var p = hub.OpenProject(project);
+        if (!WorkspaceService.IsExtracted(p)) throw new InvalidOperationException("Workspace vazio: extraia a ROM primeiro (extract_rom).");
+        GameFaceService.ApplyVersion(p, version);
+        var log = new LogCollector();
+        var saved = hub.Git.IsAvailable && await hub.Git.SnapshotAsync(p, $"Versão {version.Trim().ToUpperInvariant()}", log);
+        return new { version = GameFaceService.CurrentVersion(p), saved, log = log.Lines };
     }
 
     [McpServerTool(Name = "save_version"), Description("Salva um ponto de restauração do workspace (commit no git interno do projeto). Use antes de qualquer edição.")]

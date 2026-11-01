@@ -167,6 +167,39 @@ public class GameFaceTests
                 }
     }
 
+    [Fact]
+    public void Styled_version_always_starts_from_the_original()
+    {
+        var original = Ncgr();
+        // cor do degradê, tirada da letra I
+        for (int y = 100; y < 120; y++) original[0x30 + (y / 8 * 32 + 138 / 8) * 64 + y % 8 * 8 + 138 % 8] = 9;
+        var clean = (byte[])original.Clone();
+        var v12 = GameFaceService.StampStyledVersion(original, "V12");
+        var v1 = GameFaceService.StampStyledVersion(original, "v1");
+        Assert.NotEqual(v12, v1);
+        Assert.Equal(v1, GameFaceService.StampStyledVersion(original, "V1"));
+        Assert.Equal(clean, original);
+        Assert.Throws<ArgumentException>(() => GameFaceService.StampStyledVersion(original, "V100"));
+    }
+
+    [Fact]
+    public void Styled_version_stays_off_the_rest_of_the_logo()
+    {
+        // um pixel da cauda da Lugia onde o número cairia: melhor recusar do que cobrir
+        var logo = Ncgr();
+        const int x = 188, y = 110;
+        logo[0x30 + (y / 8 * 32 + x / 8) * 64 + y % 8 * 8 + x % 8] = 5;
+        Assert.Throws<ArgumentException>(() => GameFaceService.StampStyledVersion(logo, "V88"));
+    }
+
+    [Fact]
+    public void Plain_mark_is_removed_for_the_original()
+    {
+        var stamped = GameFaceService.StampLogoVersion(Ncgr(), Nclr(), "V1");
+        Assert.NotEqual(Ncgr(), stamped);
+        Assert.Equal(Ncgr(), GameFaceService.WithoutPlainStamp(stamped));
+    }
+
     [Theory]
     [InlineData("1")]
     [InlineData("V")]
