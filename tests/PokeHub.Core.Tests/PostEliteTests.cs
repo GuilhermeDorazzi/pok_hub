@@ -150,6 +150,61 @@ public class PostEliteTests
         }
     }
 
+    [Fact]
+    public void Real_special_events_check_the_species_and_can_go_back()
+    {
+        if (Scratch() is not { } project) return;
+        var game = Gen4Game.For(project);
+        var settingsFile = Path.Combine(project.Paths.Workspace, PostEliteSettings.FileName);
+        var saved = File.ReadAllBytes(game.ScriptsPath);
+        var savedSettings = File.Exists(settingsFile) ? File.ReadAllText(settingsFile) : null;
+        try
+        {
+            var headers = MapHeaders.Load(game);
+            List<ScriptInstruction> Read(string map) => ScriptArchive.Load(project).Open(headers.First(h => h.InternalName == map).ScriptsBank).Instructions();
+            bool Checks(string map, int type) => Read(map).Any(i => i.Name == "FollowerPokeIsEventTrigger" && i.Args[0].Value == type);
+            var maps = new[] { "D24R0101", "D24R0205", "D24R0216", "D24R0218", "D51R0201" };
+            var outside = Read("D24R0101");
+            int firstCheck = outside.FindIndex(i => i.Name == "FollowerPokeIsEventTrigger");
+            var next = outside.Skip(firstCheck + 1).Take(2).Select(i => i.Name).ToList();
+
+            PostEliteService.ApplySpecialEvents(project, true, 60, true, 376);
+            foreach (var map in maps)
+            {
+                Assert.False(Checks(map, 2), map);
+                // o Arceus de outro jogo continua negando
+                Assert.True(Checks(map, 1), map);
+            }
+            Assert.False(Checks("D36R0101", 0));
+            Assert.True(Checks("D36R0101", 3));
+            var pichu = Read("D36R0101");
+            int flag = pichu.FindIndex(i => i.Name == "CheckFlag" && i.Args[0].Value == 376);
+            Assert.Equal("GetPartyMonSpecies", pichu[flag + 2].Name);
+            Assert.All(Read("D51R0201").Where(i => i.Name == "GiveMon" && i.Args[0].Value is 483 or 484 or 487), i => Assert.Equal(60, i.Args[1].Value));
+            var open = Read("D24R0101");
+            var call = open.First(i => i.Name == "Call" && open.Any(j => j.Name == "GetPartyMonSpecies" && j.Offset == i.Args[0].Value));
+            Assert.Equal(next, open.SkipWhile(i => i != call).Skip(1).Take(2).Select(i => i.Name));
+
+            // desligar devolve a checagem e o nível originais, sem o arquivo crescer
+            int size = File.ReadAllBytes(game.ScriptsPath).Length;
+            PostEliteService.ApplySpecialEvents(project, false, 60, false, 376);
+            Assert.Equal(size, File.ReadAllBytes(game.ScriptsPath).Length);
+            Assert.True(Checks("D51R0201", 2));
+            Assert.True(Checks("D36R0101", 0));
+            Assert.All(Read("D51R0201").Where(i => i.Name == "GiveMon" && i.Args[0].Value is 483 or 484 or 487), i => Assert.Equal(1, i.Args[1].Value));
+            PostEliteService.ApplySpecialEvents(project, true, 70, true, 376);
+            Assert.False(Checks("D51R0201", 2));
+            Assert.All(Read("D51R0201").Where(i => i.Name == "GiveMon" && i.Args[0].Value is 483 or 484 or 487), i => Assert.Equal(70, i.Args[1].Value));
+            Assert.Equal(size, File.ReadAllBytes(game.ScriptsPath).Length);
+        }
+        finally
+        {
+            File.WriteAllBytes(game.ScriptsPath, saved);
+            if (savedSettings is null) File.Delete(settingsFile);
+            else File.WriteAllText(settingsFile, savedSettings);
+        }
+    }
+
     private static long PostEliteRoutine(Project project, int bank) =>
         ScriptArchive.Load(project).Open(bank).File.EntryOffsets[PostEliteSettings.Load(project).IlexEntry - 1];
 

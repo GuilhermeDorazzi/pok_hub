@@ -96,8 +96,8 @@ public static class NewEventTools
         return new { result.ObjectIndex, result.ScriptId, result.Flag, result.Warnings };
     }
 
-    [McpServerTool(Name = "configure_post_elite"), Description("HG/SS: o que acontece ao vencer a Elite. resetTrainers libera os treinadores para lutarem de novo, com o mesmo time. scaleLevels multiplica o nível dos times em batalha depois do fim do jogo (só SoulSilver US em ds-rom; limite 100; floor é o nível mínimo). openIlexShrine faz o santuário de Ilex aceitar qualquer Celebi na frente do time, abrindo o evento do Giovanni. kantoBadges dá aos treinadores de Kanto o nível pelas insígnias de Kanto, com 9 valores em kantoTargets (0 a 8 insígnias), o nível do mais forte do líder, e kantoRouteGap níveis a menos nos de rota; eles ficam fora do multiplicador. Listas de fora aceitam 1, 2, 701-705. Não gera ROM.")]
-    public static async Task<object> ConfigurePostElite(HubContext hub, string project, bool resetTrainers = false, string resetSkip = "", bool scaleLevels = false, int percent = 130, int floor = 0, string levelSkip = "", bool openIlexShrine = false, bool kantoBadges = false, string? kantoTargets = null, int kantoRouteGap = PostEliteService.DefaultRouteGap)
+    [McpServerTool(Name = "configure_post_elite"), Description("HG/SS: o que acontece ao vencer a Elite. resetTrainers libera os treinadores para lutarem de novo, com o mesmo time. scaleLevels multiplica o nível dos times em batalha depois do fim do jogo (só SoulSilver US em ds-rom; limite 100; floor é o nível mínimo). openIlexShrine faz o santuário de Ilex aceitar qualquer Celebi na frente do time, abrindo o evento do Giovanni. kantoBadges dá aos treinadores de Kanto o nível pelas insígnias de Kanto, com 9 valores em kantoTargets (0 a 8 insígnias), o nível do mais forte do líder, e kantoRouteGap níveis a menos nos de rota; eles ficam fora do multiplicador. openArceus faz o evento das Sinjoh Ruins aceitar qualquer Arceus, com os prêmios no nível arceusPrizeLevel. openPichu faz o santuário de Ilex dar o Pichu de orelha espigada a quem tiver Pichu, Pikachu ou Raichu na frente do time, depois da flag pichuAfterFlag (0 é vencer a Elite). Listas de fora aceitam 1, 2, 701-705. Não gera ROM.")]
+    public static async Task<object> ConfigurePostElite(HubContext hub, string project, bool resetTrainers = false, string resetSkip = "", bool scaleLevels = false, int percent = 130, int floor = 0, string levelSkip = "", bool openIlexShrine = false, bool kantoBadges = false, string? kantoTargets = null, int kantoRouteGap = PostEliteService.DefaultRouteGap, bool openArceus = false, int arceusPrizeLevel = PostEliteService.DefaultPrizeLevel, bool openPichu = false, int pichuAfterFlag = 0)
     {
         var p = hub.OpenProject(project);
         if (!WorkspaceService.IsExtracted(p)) throw new InvalidOperationException("Workspace vazio: extraia a ROM primeiro (extract_rom).");
@@ -107,6 +107,7 @@ public static class NewEventTools
         if (hub.Git.IsAvailable) await hub.Git.SnapshotAsync(p, "Antes de configurar o que vem depois da Elite", log);
         int count = PostEliteService.ApplyReset(p, resetTrainers, resetIds);
         PostEliteService.ApplyIlex(p, openIlexShrine);
+        PostEliteService.ApplySpecialEvents(p, openArceus, arceusPrizeLevel, openPichu, pichuAfterFlag);
         var targets = kantoTargets is null ? PostEliteService.DefaultKantoTargets : PostEliteService.ParseTargets(kantoTargets);
         if (scaleLevels || kantoBadges || PostEliteService.CanScaleLevels(p))
             await new PostEliteService(hub.Paths).ApplyLevelsAsync(p, scaleLevels, percent, floor, levelIds, new Progress<string>(_ => { }), default, kantoBadges, targets, kantoRouteGap);

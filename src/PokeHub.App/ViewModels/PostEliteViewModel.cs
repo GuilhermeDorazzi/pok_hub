@@ -21,6 +21,10 @@ public sealed partial class PostEliteViewModel : ObservableObject
     [ObservableProperty] private bool _resetTrainers;
     [ObservableProperty] private string _resetSkip;
     [ObservableProperty] private bool _openIlexShrine;
+    [ObservableProperty] private bool _openArceus;
+    [ObservableProperty] private int _arceusPrizeLevel;
+    [ObservableProperty] private bool _openPichu;
+    [ObservableProperty] private int _pichuAfterFlag;
     [ObservableProperty] private bool _scaleLevels;
     [ObservableProperty] private int _levelPercent;
     [ObservableProperty] private int _levelFloor;
@@ -43,6 +47,10 @@ public sealed partial class PostEliteViewModel : ObservableObject
         _resetTrainers = s.ResetTrainers;
         _resetSkip = string.Join(", ", s.ResetSkip);
         _openIlexShrine = s.OpenIlexShrine;
+        _openArceus = s.OpenArceus;
+        _arceusPrizeLevel = s.ArceusPrizeLevel;
+        _openPichu = s.OpenPichu;
+        _pichuAfterFlag = s.PichuAfterFlag;
         _scaleLevels = s.ScaleLevels;
         _levelPercent = s.LevelPercent;
         _levelFloor = s.LevelFloor;
@@ -67,6 +75,7 @@ public sealed partial class PostEliteViewModel : ObservableObject
             await _snapshot(Loc.T("postElite.before"));
             int count = PostEliteService.ApplyReset(_project, ResetTrainers, resetSkip);
             PostEliteService.ApplyIlex(_project, OpenIlexShrine);
+            PostEliteService.ApplySpecialEvents(_project, OpenArceus, ArceusPrizeLevel, OpenPichu, PichuAfterFlag);
             var targets = PostEliteService.ParseTargets(KantoTargets);
             if (CanScaleLevels || ScaleLevels || KantoBadges)
                 await _service.ApplyLevelsAsync(_project, ScaleLevels, LevelPercent, LevelFloor, levelSkip, new Progress<string>(_log), default, KantoBadges, targets, KantoRouteGap);

@@ -57,6 +57,28 @@
             <TextBlock Text="{loc:T postElite.ilex.hint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" />
         </GroupBox>
 
+        <GroupBox Padding="8" Margin="0,0,0,10">
+            <GroupBox.Header><CheckBox Content="{loc:T postElite.arceus}" IsChecked="{Binding OpenArceus}" FontWeight="Bold" /></GroupBox.Header>
+            <StackPanel>
+                <TextBlock Text="{loc:T postElite.arceus.hint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" />
+                <WrapPanel Margin="0,6,0,0">
+                    <TextBlock Text="{loc:T postElite.arceus.level}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox Width="50" Text="{Binding ArceusPrizeLevel}" />
+                </WrapPanel>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Padding="8" Margin="0,0,0,10">
+            <GroupBox.Header><CheckBox Content="{loc:T postElite.pichu}" IsChecked="{Binding OpenPichu}" FontWeight="Bold" /></GroupBox.Header>
+            <StackPanel>
+                <TextBlock Text="{loc:T postElite.pichu.hint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" />
+                <WrapPanel Margin="0,6,0,0">
+                    <TextBlock Text="{loc:T postElite.pichu.flag}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox Width="70" Text="{Binding PichuAfterFlag}" />
+                </WrapPanel>
+            </StackPanel>
+        </GroupBox>
+
         <DockPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button Content="{loc:T batch.apply}" Command="{Binding ApplyCommand}" FontWeight="Bold" Padding="14,4" />

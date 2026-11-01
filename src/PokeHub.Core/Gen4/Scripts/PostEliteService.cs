@@ -23,6 +23,14 @@ public sealed class PostEliteSettings
     public int IlexResultVar { get; set; }
     /// <summary>Script novo no mapa do santuário; zero enquanto não houver. Depois de criado, só troca de conteúdo.</summary>
     public int IlexEntry { get; set; }
+    public bool OpenArceus { get; set; }
+    /// <summary>Nível do Dialga, do Palkia e do Giratina do Mystri Stage. O jogo entrega no nível 1.</summary>
+    public int ArceusPrizeLevel { get; set; } = PostEliteService.DefaultPrizeLevel;
+    public bool OpenPichu { get; set; }
+    /// <summary>Flag que libera o Pichu de orelha espigada, para o evento não abrir com o primeiro Pichu do jogo.</summary>
+    public int PichuAfterFlag { get; set; } = PostEliteService.GameClearFlag;
+    /// <summary>Scripts novos que trocaram as checagens de distribuição. Depois de criados, só mudam de conteúdo.</summary>
+    public List<OpenedCheck> OpenedChecks { get; set; } = [];
     public bool ScaleLevels { get; set; }
     public int LevelPercent { get; set; } = 130;
     public int LevelFloor { get; set; }
@@ -41,6 +49,9 @@ public sealed class PostEliteSettings
 
     public void Save(Project p) => File.WriteAllText(Path.Combine(p.Paths.Workspace, FileName), JsonSerializer.Serialize(this, HubConfig.JsonOptions));
 }
+
+/// <summary>Uma checagem de distribuição trocada por um script novo no mapa, com as variáveis que ela usava.</summary>
+public sealed record OpenedCheck(string Map, int Event, int PartyVar, int ResultVar, int Entry);
 
 /// <summary>
 /// O que acontece ao vencer a Elite. Liberar os treinadores é script e serve em qualquer formato de HG/SS; os níveis mudam só em
@@ -62,7 +73,13 @@ public sealed class PostEliteService(HubPaths hub)
     private const string EliteMap = "T10R0701", SupportedGame = "IPGE";
     private const int EliteCredits = 0;
     private const string IlexMap = "D36R0101";
-    private const int CelebiEvent = 3, Celebi = 251, ConditionEqual = 1;
+    private const int CelebiEvent = 3, Celebi = 251, ConditionFalse = 0, ConditionEqual = 1;
+    public const int DefaultPrizeLevel = 60, GameClearFlag = NewEventService.GameClearFlag;
+    // o evento do Arceus começa nas Ruins of Alph e termina no Mystri Stage; o outro tipo de Arceus pede um encontro em outro jogo e segue negando
+    private static readonly string[] ArceusMaps = ["D24R0101", "D24R0205", "D24R0216", "D24R0218", "D51R0201"];
+    private const string MystriStageMap = "D51R0201", ShrineMap = IlexMap;
+    private const int ArceusEvent = 2, PichuEvent = 0, Arceus = 493, OriginalPrizeLevel = 1;
+    private static readonly int[] ArceusSpecies = [Arceus], PichuSpecies = [172, 25, 26], ArceusPrizes = [483, 484, 487];
     // endereços do SoulSilver US, conferidos no arm9 contra pokeheartgold
     private const string ReadPartyCall = "0x0207363A", ReadPartyCallBytes = "FFF7D5FF";
 
@@ -121,14 +138,76 @@ public sealed class PostEliteService(HubPaths hub)
     }
 
     /// <summary>A checagem que vale no santuário: a original, que exige a marca de distribuição, ou só a espécie.</summary>
-    public static byte[] BuildIlexCheck(ScriptCommandTable table, bool open, int partyVar, int resultVar)
+    public static byte[] BuildIlexCheck(ScriptCommandTable table, bool open, int partyVar, int resultVar) =>
+        BuildEventCheck(table, open, CelebiEvent, [Celebi], 0, partyVar, resultVar);
+
+    /// <summary>A checagem de um evento: a original, ou só a espécie, com uma flag antes quando ela é pedida.</summary>
+    public static byte[] BuildEventCheck(ScriptCommandTable table, bool open, int eventType, IReadOnlyList<int> species, int afterFlag, int partyVar, int resultVar)
     {
         var s = new ScriptBuilder(table);
-        if (!open) return s.Emit("FollowerPokeIsEventTrigger", CelebiEvent, partyVar, resultVar).Emit("Return").Build();
-        return s.Emit("GetPartyMonSpecies", partyVar, resultVar)
-            .Emit("CompareVarToValue", resultVar, Celebi).Emit("GoToIf", ConditionEqual, "yes")
-            .Emit("SetVar", resultVar, 0).Emit("Return")
+        if (!open) return s.Emit("FollowerPokeIsEventTrigger", eventType, partyVar, resultVar).Emit("Return").Build();
+        if (afterFlag > 0) s.Emit("CheckFlag", afterFlag).Emit("GoToIf", ConditionFalse, "no");
+        s.Emit("GetPartyMonSpecies", partyVar, resultVar);
+        foreach (var id in species) s.Emit("CompareVarToValue", resultVar, id).Emit("GoToIf", ConditionEqual, "yes");
+        return s.Label("no").Emit("SetVar", resultVar, 0).Emit("Return")
             .Label("yes").Emit("SetVar", resultVar, 1).Emit("Return").Build();
+    }
+
+    /// <summary>
+    /// Os eventos do Arceus e do Pichu de orelha espigada pedem um Pokémon de distribuição, que não existe na ROM. Ligados, conferem só a espécie
+    /// na frente do time. O Pichu passa a depender de uma flag, porque sem ela o evento abriria já no começo do jogo.
+    /// </summary>
+    public static void ApplySpecialEvents(Project p, bool arceus, int prizeLevel, bool pichu, int pichuFlag)
+    {
+        RequireHgss(p);
+        if (prizeLevel is < 1 or > 100) throw new ArgumentOutOfRangeException(nameof(prizeLevel));
+        if (pichuFlag <= 0) pichuFlag = GameClearFlag;
+        var settings = PostEliteSettings.Load(p);
+        var headers = MapHeaders.Load(Gen4Game.For(p));
+        var archive = ScriptArchive.Load(p);
+        void Apply(string map, int type, int[] species, int flag, bool on)
+        {
+            var known = settings.OpenedChecks.Where(c => c.Map == map && c.Event == type).ToList();
+            if (!on && known.Count == 0) return;
+            var header = headers.FirstOrDefault(h => h.InternalName == map) ?? throw new InvalidDataException(Loc.T("core.postElite.noEvent", map));
+            var editor = archive.Open(header.ScriptsBank);
+            if (known.Count == 0)
+            {
+                bool Original(ScriptInstruction i) => i.Name == "FollowerPokeIsEventTrigger" && i.Args[0].Value == type;
+                if (!editor.Instructions().Any(Original)) throw new InvalidDataException(Loc.T("core.postElite.noEvent", map));
+                int call = Enumerable.Range(0, editor.Table.Commands.Count).First(i => editor.Table.Commands[i].Name == "Call");
+                while (editor.Instructions().Where(Original).OrderBy(i => i.Offset).FirstOrDefault() is { } check)
+                {
+                    int party = (int)check.Args[1].Value, result = (int)check.Args[2].Value;
+                    var routine = settings.OpenedChecks.FirstOrDefault(c => c.Map == map && c.Event == type && c.PartyVar == party && c.ResultVar == result);
+                    if (routine is null)
+                    {
+                        routine = new OpenedCheck(map, type, party, result, editor.AddEntry(BuildEventCheck(editor.Table, true, type, species, flag, party, result)));
+                        settings.OpenedChecks.Add(routine);
+                        check = editor.Instructions().Where(Original).OrderBy(i => i.Offset).First();
+                    }
+                    int at = check.Offset;
+                    editor.Insert(at, call, [editor.File.EntryOffsets[routine.Entry - 1]]);
+                    editor.Remove(editor.Instructions().Where(i => Original(i) && i.Offset > at).Min(i => i.Offset));
+                }
+            }
+            foreach (var c in settings.OpenedChecks.Where(c => c.Map == map && c.Event == type))
+                editor.Overwrite(editor.File.EntryOffsets[c.Entry - 1], BuildEventCheck(editor.Table, on, type, species, flag, c.PartyVar, c.ResultVar));
+        }
+        foreach (var map in ArceusMaps) Apply(map, ArceusEvent, ArceusSpecies, 0, arceus);
+        Apply(ShrineMap, PichuEvent, PichuSpecies, pichuFlag, pichu);
+        if (arceus || settings.OpenArceus)
+        {
+            var stage = archive.Open(headers.First(h => h.InternalName == MystriStageMap).ScriptsBank);
+            foreach (var give in stage.Instructions().Where(i => i.Name == "GiveMon" && ArceusPrizes.Contains((int)i.Args[0].Value)))
+                stage.Overwrite(give.Args[1].At, BitConverter.GetBytes((ushort)(arceus ? prizeLevel : OriginalPrizeLevel)));
+        }
+        archive.Save();
+        settings.OpenArceus = arceus;
+        settings.ArceusPrizeLevel = prizeLevel;
+        settings.OpenPichu = pichu;
+        settings.PichuAfterFlag = pichuFlag;
+        settings.Save(p);
     }
 
     /// <summary>
