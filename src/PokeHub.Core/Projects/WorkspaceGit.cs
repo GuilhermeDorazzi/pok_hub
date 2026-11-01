@@ -7,6 +7,7 @@ namespace PokeHub.Core.Projects;
 /// <summary>
 /// Versionamento automático de workspace/ com git: um repositório por projeto, commits a cada marco
 /// (extração, antes de empacotar, ao fechar uma ferramenta, ou quando o usuário pede).
+/// Se a pasta do projeto já é um repositório, as versões entram nele, e os comandos ficam restritos a workspace/.
 /// </summary>
 public sealed class WorkspaceGit(RuntimeManager runtimes)
 {
@@ -14,7 +15,10 @@ public sealed class WorkspaceGit(RuntimeManager runtimes)
 
     public bool IsAvailable => runtimes.ResolveGit() is not null;
 
-    public static bool IsRepo(Project p) => Directory.Exists(Path.Combine(p.Paths.Workspace, ".git"));
+    /// <summary>A pasta do projeto é o próprio repositório, como num projeto publicado no GitHub.</summary>
+    public static bool UsesProjectRepo(Project p) => Directory.Exists(Path.Combine(p.Paths.Dir, ".git")) || File.Exists(Path.Combine(p.Paths.Dir, ".git"));
+
+    public static bool IsRepo(Project p) => UsesProjectRepo(p) || Directory.Exists(Path.Combine(p.Paths.Workspace, ".git"));
 
     /// <summary>Cria o repositório em workspace/ se ainda não existir e faz o commit inicial.</summary>
     public async Task EnsureRepoAsync(Project p, IProgress<string> log, CancellationToken ct = default)
@@ -24,9 +28,10 @@ public sealed class WorkspaceGit(RuntimeManager runtimes)
         if (!IsRepo(p))
         {
             await Run(git, ["init", "-q", "-b", "main"], p, log, ct);
-            await File.WriteAllTextAsync(Path.Combine(p.Paths.Workspace, ".gitattributes"), "* binary\n", ct);
             log.Report(Loc.T("core.git.repoCreated"));
         }
+        var attributes = Path.Combine(p.Paths.Workspace, ".gitattributes");
+        if (!File.Exists(attributes)) await File.WriteAllTextAsync(attributes, "* binary\n", ct);
         await SnapshotAsync(p, Loc.T("core.git.initialSnapshot"), log, ct);
     }
 
@@ -35,7 +40,7 @@ public sealed class WorkspaceGit(RuntimeManager runtimes)
     {
         var git = RequireGit();
         if (!IsRepo(p)) return false;
-        await Run(git, ["add", "-A"], p, null, ct);
+        await Run(git, ["add", "-A", "--", "."], p, null, ct);
         var (code, _) = await ProcessRunner.CaptureAsync(git, [.. Identity, "-C", p.Paths.Workspace, "diff", "--cached", "--quiet"], timeoutMs: 120000);
         if (code == 0) { log.Report(Loc.T("core.git.noChanges")); return false; }
         var rc = await Run(git, ["commit", "-q", "-m", $"{message} ({DateTime.Now:yyyy-MM-dd HH:mm})"], p, null, ct);
@@ -49,7 +54,7 @@ public sealed class WorkspaceGit(RuntimeManager runtimes)
     {
         var git = RequireGit();
         if (!IsRepo(p)) return [];
-        var (code, output) = await ProcessRunner.CaptureAsync(git, ["-C", p.Paths.Workspace, "log", $"-{count}", "--pretty=format:%h\t%s"], timeoutMs: 30000);
+        var (code, output) = await ProcessRunner.CaptureAsync(git, ["-C", p.Paths.Workspace, "log", $"-{count}", "--pretty=format:%h\t%s", "--", "."], timeoutMs: 30000);
         if (code != 0) return [];
         return output.Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(l => l.Split('\t', 2))
@@ -73,7 +78,7 @@ public sealed class WorkspaceGit(RuntimeManager runtimes)
     public async Task<IReadOnlyList<string>> ChangedFilesAsync(Project p, string hash)
     {
         var git = RequireGit();
-        var (code, output) = await ProcessRunner.CaptureAsync(git, ["-C", p.Paths.Workspace, "diff", "--name-only", hash, "--"], timeoutMs: 60000);
+        var (code, output) = await ProcessRunner.CaptureAsync(git, ["-C", p.Paths.Workspace, "diff", "--name-only", "--relative", hash, "--", "."], timeoutMs: 60000);
         if (code != 0) return [];
         return output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
     }
@@ -82,7 +87,7 @@ public sealed class WorkspaceGit(RuntimeManager runtimes)
     public async Task<byte[]?> ReadFileAtAsync(Project p, string hash, string relativePath)
     {
         var git = RequireGit();
-        var (code, bytes) = await ProcessRunner.CaptureBytesAsync(git, ["-C", p.Paths.Workspace, "show", $"{hash}:{relativePath.Replace('\\', '/')}"]);
+        var (code, bytes) = await ProcessRunner.CaptureBytesAsync(git, ["-C", p.Paths.Workspace, "show", $"{hash}:./{relativePath.Replace('\\', '/')}"]);
         return code == 0 ? bytes : null;
     }
 
