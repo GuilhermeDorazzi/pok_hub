@@ -498,6 +498,8 @@ Líderes de área: quem não chama de longe e o jogador vai procurar tem time ch
 
 Surfe e pesca pelo ambiente (mar, água doce e caverna), com níveis da área: a média foi de 4,5 para 11,8 espécies por área somando surfe e varas. A primeira vaga fica, a última é a rara, e cada vara é melhor que a anterior. Lake of Rage, Dragon's Den, Safari e o lago de Celadon mantêm as espécies, e só as áreas com taxa de encontro mudaram. Chances: surfe 60, 30, 5, 4 e 1; varas 40, 30, 15, 10 e 5.
 
+Mais Pokémon fecham passagem, como o Sudowoodo, com nível da área e tema do lugar: Slugma no Burned Tower (22), Baltoy nas Ruins of Alph (22), Graveler na entrada oeste do Mt. Mortar (28), Exeggutor e Tangela na Rota 44 (34), Tangela no Ginásio de Celadon (34), Golduck na Rota 25 (33), dois Clefairy na Rota 3 (26) e Drowzee na Rota 16 (30). Só saem se vencidos ou capturados, então não travam o jogo. Quatro ficam em caminho da história: Burned Tower, Mt. Mortar e os dois da Rota 44.
+
 Falta: paletas e música da cara nova e evolução paga (parada por decisão). Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
 ### Mais conteúdo pedido (01/11/2026)
