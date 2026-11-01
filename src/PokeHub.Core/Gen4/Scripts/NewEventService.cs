@@ -12,8 +12,8 @@ public sealed record TalkBehavior(string Text) : NpcBehavior;
 public sealed record GiveItemBehavior(int Item, int Quantity, string BeforeText, string AfterText) : NpcBehavior;
 
 /// <summary>
-/// Pokémon parado no mapa: grito e batalha. Com Vanish, some depois de vencido ou capturado; se o jogador fugir, volta quando o mapa recarregar.
-/// Com Blocks, fica no lugar mesmo na tela de volta da batalha, para fugir não abrir o caminho. Texto é opcional.
+/// Pokémon parado no mapa: grito e batalha. Com Vanish, some depois da batalha; só capturado some de vez, senão volta quando o mapa recarregar.
+/// Com Blocks, sai de vez se vencido ou capturado e, ao fugir, fica no lugar, para não abrir o caminho. Texto é opcional.
 /// </summary>
 public sealed record PokemonBehavior(int Species, int Level, bool Vanish, string? Text, bool Blocks = false) : NpcBehavior;
 
@@ -505,13 +505,15 @@ public static class NewEventService
         s.Emit("CheckBattleWon", ResultVar)
             .Emit("CompareVarToValue", ResultVar, 0)
             .Emit("GoToIf", ConditionEqual, "lost");
-        // no HG/SS, só vitória e captura contam: quem foge encontra o Pokémon de novo
+        // no HG/SS, como nos lendários do jogo, só a captura resolve: nocauteado ou deixado para trás, volta quando o mapa recarregar. Quem bloqueia sai também ao ser vencido
         if (flag is not null && !platinum)
-            s.Emit("GetStaticEncounterOutcome", ResultVar)
-                .Emit("CompareVarToValue", ResultVar, OutcomeWin).Emit("GoToIf", ConditionEqual, "beaten")
-                .Emit("CompareVarToValue", ResultVar, OutcomeCaught).Emit("GoToIf", ConditionEqual, "beaten")
+        {
+            s.Emit("GetStaticEncounterOutcome", ResultVar);
+            if (mon.Blocks) s.Emit("CompareVarToValue", ResultVar, OutcomeWin).Emit("GoToIf", ConditionEqual, "beaten");
+            s.Emit("CompareVarToValue", ResultVar, OutcomeCaught).Emit("GoToIf", ConditionEqual, "beaten")
                 .Emit("ReleaseAll").Emit("End")
                 .Label("beaten");
+        }
         if (flag is { } hide) s.Emit("SetFlag", hide);
         if (mon.Blocks) s.Emit("HidePerson", objectId);
         s.Emit("ReleaseAll").Emit("End")

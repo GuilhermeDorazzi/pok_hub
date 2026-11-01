@@ -78,7 +78,9 @@ public class NewEventTests
         code.CopyTo(file, 6);
         var script = new ScriptFile(file, table).Routine(1)!;
         var ordered = script.Instructions.OrderBy(i => i.Offset).ToList();
-        Assert.Equal(["PlaySE", "LockAll", "FacePlayer", "PlayCry", "WaitCry", "PartyCountNotEgg", "CompareVarToValue", "GoToIf", "SetFlag", "WildBattle", "ClearFlag", "CheckBattleWon", "CompareVarToValue", "GoToIf", "GetStaticEncounterOutcome", "CompareVarToValue", "GoToIf", "CompareVarToValue", "GoToIf", "ReleaseAll", "End", "SetFlag", "ReleaseAll", "End", "WhiteOut", "ReleaseAll", "End", "ReleaseAll", "End"], ordered.Select(i => i.Name));
+        Assert.Equal(["PlaySE", "LockAll", "FacePlayer", "PlayCry", "WaitCry", "PartyCountNotEgg", "CompareVarToValue", "GoToIf", "SetFlag", "WildBattle", "ClearFlag", "CheckBattleWon", "CompareVarToValue", "GoToIf", "GetStaticEncounterOutcome", "CompareVarToValue", "GoToIf", "ReleaseAll", "End", "SetFlag", "ReleaseAll", "End", "WhiteOut", "ReleaseAll", "End", "ReleaseAll", "End"], ordered.Select(i => i.Name));
+        // só a captura resolve: nocauteado, volta quando o mapa recarregar
+        Assert.Equal(4, ordered.SkipWhile(i => i.Name != "GetStaticEncounterOutcome").First(i => i.Name == "CompareVarToValue").Args[1].Value);
         var battle = ordered.First(i => i.Name == "WildBattle");
         Assert.Equal(25, battle.Args[0].Value);
         Assert.Equal(10, battle.Args[1].Value);
