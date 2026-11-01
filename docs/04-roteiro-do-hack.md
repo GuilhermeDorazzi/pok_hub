@@ -500,6 +500,8 @@ Surfe e pesca pelo ambiente (mar, água doce e caverna), com níveis da área: a
 
 Mais Pokémon fecham passagem, como o Sudowoodo, com nível da área e tema do lugar: Slugma no Burned Tower (22), Baltoy nas Ruins of Alph (22), Graveler na entrada oeste do Mt. Mortar (28), Exeggutor e Tangela na Rota 44 (34), Tangela no Ginásio de Celadon (34), Golduck na Rota 25 (33), dois Clefairy na Rota 3 (26) e Drowzee na Rota 16 (30). Só saem se vencidos ou capturados, então não travam o jogo. Quatro ficam em caminho da história: Burned Tower, Mt. Mortar e os dois da Rota 44.
 
+Safari Zone: as 12 áreas têm um raro de assinatura na grama desde a primeira visita, de dia e à noite, e um raro de surfe e um de Supervara, cada um em 10% dos encontros. O bônus mais difícil de liberar com os objetos virou o grande prêmio da área, um Pokémon totalmente evoluído de nível 50 a 55. Níveis da grama foram de 15 a 17 para 28 a 33. Só PHIONE segue sem captura.
+
 Falta: paletas e música da cara nova e evolução paga (parada por decisão). Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
 ### Mais conteúdo pedido (01/11/2026)
