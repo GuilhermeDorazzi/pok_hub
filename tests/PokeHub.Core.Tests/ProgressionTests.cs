@@ -87,6 +87,8 @@ public class ProgressionTests
         Assert.DoesNotContain("Whitney", leaders);
         Assert.True(kinds.Count(k => k == 1) > 50, $"rota: {kinds.Count(k => k == 1)}");
         foreach (var rematch in new[] { 489, 672, 701, 720 }) Assert.Equal(0, kinds[rematch]);
+        // a Liga e o caminho até ela vêm antes do fim do jogo: Elite, Lance e Giovanni (Tohjo Falls) ficam de fora
+        foreach (var league in new[] { 244, 245, 246, 247, 418, 700 }) Assert.Equal(0, kinds[league]);
         Assert.Equal(0, kinds[0]);
     }
 

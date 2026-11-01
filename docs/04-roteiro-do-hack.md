@@ -470,8 +470,14 @@ Registradas em 01/11/2026. **Valem para o jogo oficial, que ainda não será fei
 | IVs em lote nos treinadores | Pronta, só com testes automáticos | Operações em lote: dificuldade de 0 a 255. O jogo não mostra os IVs do adversário |
 | Dar Pokémon sem pedir nada, no Novo evento | Pronta e testada no jogo | Missão com "Nada: é um presente" |
 | Condição de nível máximo do time | Pronta e testada no jogo | Condições do Novo evento, com `PartyCountMonsAtOrBelowLevel` |
-| Níveis por insígnia em Kanto | Pronta e testada no jogo | Card Depois da Elite. A lista de quem é de Kanto sai dos mapas de região 1: 192 de rota e 8 líderes na base, incluindo Giovanni como rota. Esses treinadores ficam fora do × 1,3, porque Kanto só se alcança depois da Elite. Com 8 insígnias, o alvo é 65 |
+| Níveis por insígnia em Kanto | Pronta e testada no jogo | Card Depois da Elite. A lista de quem é de Kanto sai dos mapas de região 1, tirando a Liga e o caminho até ela (T10, D43, D45, R26 e R27), que vêm antes do fim do jogo. Giovanni, em Tohjo Falls, fica fora da escala. Esses treinadores ficam fora do × 1,3, porque Kanto só se alcança depois da Elite. Com 8 insígnias, o alvo é 65 |
 | Experiência maior para quem está atrás | Não feita | Só se precisar. Pesquisa nova |
+
+### Jogo oficial: onde está
+
+Fica em `pokemon_ss_from_pokhub`, um commit por contexto. Já aplicado em Johto, sem ser jogado: selvagens de grama, líderes, Elite, Lance, treinadores de rota e cavernas, e experiência em 70%.
+
+Falta decidir ou aplicar: treinadores de ginásio, Rival e Equipe Rocket; treinadores novos nos locais vazios; alvos de Kanto, com a sugestão de 54 a 70 por causa do Lance no 56; Depois da Elite no projeto. Times de rebatalha por telefone não mudaram e podem ficar abaixo da primeira luta.
 
 ### Mais conteúdo pedido (01/11/2026)
 

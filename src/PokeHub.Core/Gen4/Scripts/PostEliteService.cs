@@ -53,6 +53,9 @@ public sealed class PostEliteService(HubPaths hub)
     // times de rebatalha do jogo: já têm o nível próprio
     private static readonly int[] RematchTeams = [.. Enumerable.Range(489, 3), .. Enumerable.Range(672, 3), .. Enumerable.Range(701, 5), .. Enumerable.Range(712, 16)];
     private const byte KantoRoute = 1, KantoLeader = 2;
+    // contam como região 1, mas são o caminho até a Liga: o jogador passa por eles antes de vencer a Elite
+    private static readonly string[] BeforeEliteMaps = ["T10", "D43", "D45", "R26", "R27"];
+    private static readonly string[] LeagueClasses = ["Elite", "Champion"];
     private const int VarBase = 0x4000, StandardTrainer = 3000, DoubleTrainer = 5000, LastSightScript = 7000;
     private const string EliteMap = "T10R0701", SupportedGame = "IPGE";
     private const int EliteCredits = 0;
@@ -171,7 +174,7 @@ public sealed class PostEliteService(HubPaths hub)
         var archive = ScriptArchive.Load(p);
         var found = new HashSet<int>();
         var files = new HashSet<int>();
-        foreach (var header in MapHeaders.Load(game).Where(h => h.Region == 1))
+        foreach (var header in MapHeaders.Load(game).Where(h => h.Region == 1 && !BeforeEliteMaps.Any(h.InternalName.StartsWith)))
         {
             if (header.EventsBank >= 0 && header.EventsBank < events.Files.Count)
                 foreach (var o in new EventFile(events.Files[header.EventsBank]).Objects)
@@ -186,7 +189,7 @@ public sealed class PostEliteService(HubPaths hub)
                 if (i.Name == "TrainerBattle" && i.Args[0].Value is > 0 and < VarBase) found.Add((int)i.Args[0].Value);
 
         var kinds = new byte[repo.Trainers.Count];
-        foreach (var id in found.Where(id => id > 0 && id < kinds.Length).Except(RematchTeams))
+        foreach (var id in found.Where(id => id > 0 && id < kinds.Length).Except(RematchTeams).Where(id => !LeagueClasses.Any(repo.ClassOf(repo.Trainers[id]).Contains)))
             kinds[id] = repo.ClassOf(repo.Trainers[id]).Contains("Leader", StringComparison.OrdinalIgnoreCase) ? KantoLeader : KantoRoute;
         return kinds;
     }
