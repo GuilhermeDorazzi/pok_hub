@@ -26,7 +26,7 @@ Esforço, em tamanho relativo: **pequeno** (estende algo que já existe), **méd
 | Depois da Elite: liberar treinadores, × nível, santuário de Ilex | Pronto, card próprio | Sim, em ds-rom, com o fim da Elite simulado por um NPC: treinadores voltam, níveis × 1,3 e evento do Giovanni com Celebi de Missão. Falta o comando real no Hall da Fama |
 | Enigma Stone por Missão, revanche, sumir, fala de desafio e derrota do jogador | Prontos | Sim, em ds-rom, testados pelo usuário em 01/11/2026 |
 | 5. Evolução paga | Pesquisada, sem código; parada por decisão do usuário | Não |
-| 6. Cara nova | Pesquisada, sem código | Não |
+| 6. Cara nova | Card Cara do jogo: logo, nome e ícone. Falta a arte e o nome | Só em cópia: a ROM montada traz nome e ícone novos. O logo não foi visto no jogo |
 
 **Enigma Stone.** A leitura anterior estava errada: `ScrCmd_546` modo 0 não quer dizer "ainda não leu". Ele compara a variável `0x4043` com `0x06F2`, e quem grava esse valor é o Presente Misterioso ao entregar a pedra. Uma Missão com a Enigma Stone como recompensa grava os dois.
 
@@ -36,7 +36,7 @@ Esforço, em tamanho relativo: **pequeno** (estende algo que já existe), **méd
 
 **Evolução por injeção:** continua possível (`sub_02075A7C` abre a tela de evolução), mas exige ds-rom e um comando novo.
 
-**Cara nova.** A tela de título usa modelos 3D e animações do NARC `demo/title/titledemo`, mais fundos 2D (`src/title_screen.c`). Trocar a arte dos fundos e as texturas é o caminho sem reimportação 3D; o logo precisa de teste próprio.
+**Cara nova.** A tela de título fica em `a/0/4/6`. O logo é 2D: 256 × 120 em 8 bits, nos arquivos 1 (tiles) e 2 (paleta) no SoulSilver e 3 e 4 no HeartGold, com o mapa no arquivo 0. Ele usa os índices 1 a 127 da paleta; do 128 em diante são do fundo, nos arquivos 34 a 37. A Lugia e o Ho-Oh são modelos 3D, nos arquivos 20 e 25, e o texto "Developed by" está nos arquivos 15 a 17.
 
 Fontes da comunidade: [exclusivos de HG/SS](https://www.serebii.net/heartgoldsoulsilver/exclusives.shtml) e [rotas do Pokéwalker](https://www.serebii.net/heartgoldsoulsilver/pokewalker-area.shtml), ambos do Serebii. A Bulbapedia recusou o acesso automático.
 
@@ -362,9 +362,10 @@ A GS Ball não existe em HG/SS: é do Crystal. A ideia vira uma missão pós-Eli
 
 **O que construir:**
 
-- [ ] Descobrir onde estão a tela de título e o logo no HG/SS, e se o formato deles é editável.
+- [x] Descobrir onde estão a tela de título e o logo no HG/SS, e se o formato deles é editável.
 - [ ] Guia passo a passo com NitroPaint, navegador de NARCs e Nitro Studio 2.
-- [ ] Edição do banner, se faltar no hub.
+- [x] Edição do banner: card Cara do jogo, só em ds-rom.
+- [x] Importar o logo e o ícone a partir de PNG, com redução de cores.
 - [ ] Trocar textos fixos com o nome do jogo, pelo editor de Textos.
 
 **Comandos e dados:** nenhum comando de script. Gráficos em NARCs (`Graphics/NarcBrowser`), banner, bancos de texto, áudio SDAT. A prévia de texto ajuda a conferir linhas longas.
@@ -375,7 +376,7 @@ A GS Ball não existe em HG/SS: é do Crystal. A ideia vira uma missão pós-Eli
 
 **Riscos:**
 
-- A tela de título não foi investigada: pode ter partes em código ou em outro formato.
+- O logo novo ainda não foi visto no jogo. O primeiro tile fica vazio, porque o resto da tela aponta para ele.
 - O navegador de NARCs não garante as cores quando o arquivo não indica a paleta.
 - Imagem maior ou com mais cores que o original pode quebrar a tela.
 
