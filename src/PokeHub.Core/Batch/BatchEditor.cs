@@ -19,13 +19,32 @@ public sealed class TrainerBatchOptions
     /// <summary>Trocar espécie A por B nos times; null = não mexer.</summary>
     public ushort? ReplaceSpeciesFrom { get; set; }
     public ushort? ReplaceSpeciesTo { get; set; }
+    /// <summary>Opções de IA a ligar e a desligar, em bits. O que não estiver em nenhuma das duas fica como está.</summary>
+    public uint AiFlagsOn { get; set; }
+    public uint AiFlagsOff { get; set; }
+    /// <summary>Os 4 itens que o treinador usa em batalha; null = não mexer. Zero deixa o espaço vazio.</summary>
+    public ushort[]? BattleItems { get; set; }
+    /// <summary>Com a tabela, cada Pokémon vira a espécie que já seria no nível final; null = não mexer.</summary>
+    public EvolutionChart? Evolutions { get; set; }
+    /// <summary>Nível em que entram as evoluções sem nível (pedra, amizade, troca). Zero deixa essas de fora.</summary>
+    public int EvolveOtherAt { get; set; }
 
     public bool ChangesLevel => Math.Abs(LevelPercent - 100) > 0.001 || LevelOffset != 0;
 }
 
-/// <summary>Regras de lote sobre encontros: troca de espécie em todas as tabelas e escala de nível.</summary>
+/// <summary>Região do jogo que o lote de encontros alcança. No Platinum tudo conta como a primeira região.</summary>
+public enum EncounterRegion { All, First, Second }
+
+/// <summary>Regras de lote sobre encontros: filtro por área, troca de espécie e escala de nível.</summary>
 public sealed class EncounterBatchOptions
 {
+    public EncounterRegion Region { get; set; }
+    /// <summary>Lugares separados por vírgula, pelo nome do local ou nome interno do mapa; vazio = todos.</summary>
+    public string PlaceFilter { get; set; } = "";
+    /// <summary>Com a tabela, cada encontro com nível vira a espécie que já seria nesse nível; null = não mexer.</summary>
+    public EvolutionChart? Evolutions { get; set; }
+    /// <summary>Nível em que entram as evoluções sem nível (pedra, amizade, troca). Zero deixa essas de fora.</summary>
+    public int EvolveOtherAt { get; set; }
     public ushort? ReplaceSpeciesFrom { get; set; }
     public ushort? ReplaceSpeciesTo { get; set; }
     public double LevelPercent { get; set; } = 100;
@@ -62,9 +81,21 @@ public static class BatchEditor
             if (o.ClassFilter is { } c && t.Class != c) continue;
             if (o.NameFilter.Length > 0 && !repo.NameOf(t).Contains(o.NameFilter, StringComparison.OrdinalIgnoreCase)) continue;
             var who = $"{repo.ClassOf(t)} {repo.NameOf(t)} (#{t.Id})";
+            uint ai = (t.AiFlags | o.AiFlagsOn) & ~o.AiFlagsOff;
+            if (ai != t.AiFlags)
+            {
+                lines.Add(Loc.T("batch.tr.ai", who, $"0x{t.AiFlags:X}", $"0x{ai:X}"));
+                if (apply) t.AiFlags = ai;
+            }
+            if (o.BattleItems is { } items && !items.SequenceEqual(t.Items))
+            {
+                lines.Add(Loc.T("batch.tr.battleItems", who, string.Join(", ", t.Items.Where(i => i > 0).Select(i => Sp(repo.Items, i))), string.Join(", ", items.Where(i => i > 0).Select(i => Sp(repo.Items, i)))));
+                if (apply) items.CopyTo(t.Items, 0);
+            }
             for (int k = 0; k < t.Party.Count; k++)
             {
                 var m = t.Party[k];
+                int startLevel = m.Level;
                 if (o.ChangesLevel)
                 {
                     var nl = ScaleLevel(m.Level, o.LevelPercent, o.LevelOffset, o.MinLevel, o.MaxLevel);
@@ -78,6 +109,17 @@ public static class BatchEditor
                 {
                     lines.Add(Loc.T("batch.tr.species", who, Sp(repo.Species, from), Sp(repo.Species, to)));
                     if (apply) m.Species = to;
+                }
+                if (o.Evolutions is { } chart)
+                {
+                    int level = o.ChangesLevel ? ScaleLevel(startLevel, o.LevelPercent, o.LevelOffset, o.MinLevel, o.MaxLevel) : startLevel;
+                    int species = apply ? m.Species : m.Species == o.ReplaceSpeciesFrom && o.ReplaceSpeciesTo is { } shown ? shown : m.Species;
+                    int evolved = chart.Evolve(species, level, o.EvolveOtherAt);
+                    if (evolved != species)
+                    {
+                        lines.Add(Loc.T("batch.tr.evolve", who, Sp(repo.Species, species), Sp(repo.Species, evolved), level));
+                        if (apply) m.Species = (ushort)evolved;
+                    }
                 }
                 if (o.HeldItem is { } item && m.Item != item)
                 {
@@ -120,6 +162,17 @@ public static class BatchEditor
                     lines.Add(Loc.T("batch.enc.species", where, $"{what} {i + 1}", Sp(s.Species), Sp(o.ReplaceSpeciesTo!.Value)));
                     if (apply) s.Species = o.ReplaceSpeciesTo.Value;
                 }
+                if (o.Evolutions is { } chart && s.Species != 0)
+                {
+                    int level = o.ChangesLevel ? ScaleLevel(s.MaxLevel, o.LevelPercent, o.LevelOffset, o.MinLevel, o.MaxLevel) : s.MaxLevel;
+                    int species = !apply && replace && s.Species == o.ReplaceSpeciesFrom ? o.ReplaceSpeciesTo!.Value : s.Species;
+                    int evolved = chart.Evolve(species, level, o.EvolveOtherAt);
+                    if (evolved != species)
+                    {
+                        lines.Add(Loc.T("batch.enc.evolve", where, $"{what} {i + 1}", Sp(species), Sp(evolved), level));
+                        if (apply) s.Species = (ushort)evolved;
+                    }
+                }
                 if (o.ChangesLevel && s.Species != 0)
                 {
                     int lo = ScaleLevel(s.MinLevel, o.LevelPercent, o.LevelOffset, o.MinLevel, o.MaxLevel);
@@ -133,13 +186,37 @@ public static class BatchEditor
             }
         }
 
+        var places = o.PlaceFilter.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        bool InArea(EncounterEntry e)
+        {
+            if (o.Region == EncounterRegion.All && places.Length == 0) return true;
+            return e.Maps.Any(m =>
+                (o.Region == EncounterRegion.All || m.Region == (o.Region == EncounterRegion.First ? 0 : 1))
+                && (places.Length == 0 || places.Any(p => repo.LocationName(m.LocationNameIndex).Contains(p, StringComparison.OrdinalIgnoreCase) || m.InternalName.Contains(p, StringComparison.OrdinalIgnoreCase))));
+        }
+
         foreach (var e in repo.Entries)
         {
+            if (!InArea(e)) continue;
             var where = repo.Label(e);
             if (e.Hgss is { } h)
             {
                 Species(h.Morning, where, Loc.T("report.enc.kind.morning")); Species(h.Day, where, Loc.T("report.enc.kind.day")); Species(h.Night, where, Loc.T("report.enc.kind.night"));
                 Species(h.HoennSound, where, Loc.T("report.enc.kind.hoenn")); Species(h.SinnohSound, where, Loc.T("report.enc.kind.sinnoh")); Species(h.Swarm, where, Loc.T("report.enc.kind.swarm"));
+                if (o.Evolutions is { } grass)
+                    for (int i = 0; i < 12; i++)
+                    {
+                        int level = o.ChangesLevel ? ScaleLevel(h.WalkingLevels[i], o.LevelPercent, o.LevelOffset, o.MinLevel, o.MaxLevel) : h.WalkingLevels[i];
+                        foreach (var (period, kind) in new[] { (h.Morning, "report.enc.kind.morning"), (h.Day, "report.enc.kind.day"), (h.Night, "report.enc.kind.night") })
+                        {
+                            if (period[i] == 0) continue;
+                            int species = !apply && replace && period[i] == o.ReplaceSpeciesFrom ? o.ReplaceSpeciesTo!.Value : period[i];
+                            int evolved = grass.Evolve(species, level, o.EvolveOtherAt);
+                            if (evolved == species) continue;
+                            lines.Add(Loc.T("batch.enc.evolve", where, $"{Loc.T(kind)} {i + 1}", Sp(species), Sp(evolved), level));
+                            if (apply) period[i] = (ushort)evolved;
+                        }
+                    }
                 if (o.ChangesLevel)
                     for (int i = 0; i < 12; i++)
                     {

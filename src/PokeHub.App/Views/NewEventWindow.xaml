@@ -85,7 +85,10 @@
                 <RadioButton Content="{loc:T newev.talk}" IsChecked="{Binding IsTalk}" Margin="0,0,0,4" />
                 <RadioButton Content="{loc:T newev.item}" IsChecked="{Binding IsItem}" Margin="0,0,0,4" />
                 <RadioButton Content="{loc:T newev.pokemon}" IsChecked="{Binding IsPokemon}" Margin="0,0,0,4" />
-                <RadioButton Content="{loc:T newev.trade}" IsChecked="{Binding IsTrade}" Margin="0,0,0,8" />
+                <RadioButton Content="{loc:T newev.trade}" IsChecked="{Binding IsTrade}" Margin="0,0,0,4" />
+                <RadioButton Content="{loc:T newev.quest}" IsChecked="{Binding IsQuest}" Margin="0,0,0,4" />
+                <RadioButton Content="{loc:T newev.sell}" IsChecked="{Binding IsSell}" Margin="0,0,0,4" />
+                <RadioButton Content="{loc:T newev.trainer}" IsChecked="{Binding IsTrainer}" Margin="0,0,0,8" />
 
                 <StackPanel Visibility="{Binding IsTalk, Converter={StaticResource BoolToVis}}">
                     <TextBlock Text="{loc:T newev.talkText}" Margin="0,0,0,4" />
@@ -143,6 +146,119 @@
                     <TextBlock Text="{loc:T newev.trade.declineText}" Margin="0,0,0,4" />
                     <TextBox Text="{Binding DeclineText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="36" />
                 </StackPanel>
+
+                <StackPanel Visibility="{Binding IsQuest, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{loc:T newev.quest.asks}" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <RadioButton Content="{loc:T newev.quest.askItem}" IsChecked="{Binding QuestAsksItem}" GroupName="QuestAsk" Margin="0,0,0,4" />
+                    <DockPanel Margin="0,0,0,4" Visibility="{Binding QuestAsksItem, Converter={StaticResource BoolToVis}}">
+                        <TextBox DockPanel.Dock="Right" Text="{Binding QuestAskQuantity}" Width="44" Margin="8,0,0,0" ToolTip="{loc:T newev.quantity}" />
+                        <ComboBox ItemTemplate="{StaticResource ChoiceWithIcon}" ItemsPanel="{StaticResource LongListPanel}" TextSearch.TextPath="Label" ItemsSource="{Binding Items}" SelectedItem="{Binding QuestAskItem}" />
+                    </DockPanel>
+                    <CheckBox Content="{loc:T newev.quest.take}" IsChecked="{Binding QuestTakeItem}" Margin="0,0,0,6" Visibility="{Binding QuestAsksItem, Converter={StaticResource BoolToVis}}" />
+                    <RadioButton Content="{loc:T newev.quest.askMon}" IsChecked="{Binding QuestAsksPokemon, Mode=OneWay}" GroupName="QuestAsk" Click="QuestAskMon_Click" Margin="0,0,0,4" />
+                    <ComboBox ItemTemplate="{StaticResource ChoiceWithIcon}" ItemsPanel="{StaticResource LongListPanel}" TextSearch.TextPath="Label" ItemsSource="{Binding AllSpecies}" SelectedItem="{Binding QuestAskSpecies}" Margin="0,0,0,8" Visibility="{Binding QuestAsksPokemon, Converter={StaticResource BoolToVis}}" />
+                    <TextBlock Text="{loc:T newev.quest.reward}" FontWeight="SemiBold" Margin="0,4,0,4" />
+                    <RadioButton Content="{loc:T newev.quest.rewardItem}" IsChecked="{Binding RewardIsItem}" GroupName="QuestReward" Margin="0,0,0,4" />
+                    <DockPanel Margin="0,0,0,6" Visibility="{Binding RewardIsItem, Converter={StaticResource BoolToVis}}">
+                        <TextBox DockPanel.Dock="Right" Text="{Binding RewardQuantity}" Width="44" Margin="8,0,0,0" ToolTip="{loc:T newev.quantity}" />
+                        <ComboBox ItemTemplate="{StaticResource ChoiceWithIcon}" ItemsPanel="{StaticResource LongListPanel}" TextSearch.TextPath="Label" ItemsSource="{Binding Items}" SelectedItem="{Binding RewardItem}" />
+                    </DockPanel>
+                    <RadioButton Content="{loc:T newev.quest.rewardMon}" IsChecked="{Binding RewardIsPokemon}" GroupName="QuestReward" Margin="0,0,0,4" />
+                    <DockPanel Margin="0,0,0,6" Visibility="{Binding RewardIsPokemon, Converter={StaticResource BoolToVis}}">
+                        <TextBox DockPanel.Dock="Right" Text="{Binding RewardLevel}" Width="44" Margin="8,0,0,0" ToolTip="{loc:T newev.level}" />
+                        <ComboBox ItemTemplate="{StaticResource ChoiceWithIcon}" ItemsPanel="{StaticResource LongListPanel}" TextSearch.TextPath="Label" ItemsSource="{Binding AllSpecies}" SelectedItem="{Binding RewardSpecies}" />
+                    </DockPanel>
+                    <RadioButton Content="{loc:T newev.quest.rewardMoney}" IsChecked="{Binding RewardIsMoney}" GroupName="QuestReward" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding RewardMoney}" Width="90" HorizontalAlignment="Left" Margin="0,0,0,8" Visibility="{Binding RewardIsMoney, Converter={StaticResource BoolToVis}}" />
+                    <TextBlock Text="{loc:T newev.quest.askText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding QuestAskText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.quest.notYetText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding QuestNotYetText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.quest.rewardText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding QuestRewardText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.quest.doneText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding QuestDoneText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.quest.fullText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding QuestFullText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="36" />
+                </StackPanel>
+
+                <StackPanel Visibility="{Binding IsSell, Converter={StaticResource BoolToVis}}">
+                    <DockPanel Margin="0,0,0,6">
+                        <TextBlock Text="{loc:T newev.species}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <ComboBox ItemTemplate="{StaticResource ChoiceWithIcon}" ItemsPanel="{StaticResource LongListPanel}" TextSearch.TextPath="Label" ItemsSource="{Binding AllSpecies}" SelectedItem="{Binding SellSpecies}" />
+                    </DockPanel>
+                    <WrapPanel Margin="0,0,0,6">
+                        <TextBlock Text="{loc:T newev.level}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox Text="{Binding SellLevel}" Width="50" Margin="0,0,16,0" />
+                        <TextBlock Text="{loc:T newev.sell.price}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox Text="{Binding SellPrice}" Width="80" />
+                    </WrapPanel>
+                    <CheckBox Content="{loc:T newev.sell.once}" IsChecked="{Binding SellOnce}" Margin="0,0,0,8" />
+                    <TextBlock Text="{loc:T newev.sell.offerText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding SellOfferText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.sell.thanksText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding SellThanksText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.sell.noMoneyText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding SellNoMoneyText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="36" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.trade.declineText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding SellDeclineText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="36" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.quest.fullText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding SellFullText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="36" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:T newev.sell.soldOutText}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding SellSoldOutText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="36" />
+                </StackPanel>
+
+                <StackPanel Visibility="{Binding IsTrainer, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{loc:T newev.trainer.which}" Margin="0,0,0,4" />
+                    <ComboBox ItemsSource="{Binding Trainers}" SelectedItem="{Binding TrainerChoice}" TextSearch.TextPath="Label" Margin="0,0,0,6">
+                        <ComboBox.ItemsPanel><StaticResource ResourceKey="LongListPanel" /></ComboBox.ItemsPanel>
+                    </ComboBox>
+                    <CheckBox Content="{loc:T newev.trainer.sighted}" IsChecked="{Binding TrainerSighted}" Margin="0,0,0,4" />
+                    <DockPanel Margin="0,0,0,6" Visibility="{Binding TrainerSighted, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{loc:T newev.trainer.sight}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox Text="{Binding TrainerSight}" Width="50" HorizontalAlignment="Left" />
+                    </DockPanel>
+                    <TextBlock Text="{loc:T newev.trainer.sightedNote}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8" Visibility="{Binding TrainerSighted, Converter={StaticResource BoolToVis}}" />
+                    <StackPanel Visibility="{Binding UsesScriptTexts, Converter={StaticResource BoolToVis}}">
+                        <CheckBox Content="{loc:T newev.trainer.vanish}" IsChecked="{Binding TrainerVanish}" Margin="0,0,0,6" />
+                        <TextBlock Text="{loc:T newev.trainer.challengeText}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding TrainerChallengeText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
+                        <TextBlock Text="{loc:T newev.trainer.beatenText}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding TrainerBeatenText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
+                        <TextBlock Text="{loc:T newev.trainer.afterText}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding TrainerAfterText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" Margin="0,0,0,6" />
+                        <DockPanel Margin="0,0,0,6">
+                            <TextBlock Text="{loc:T newev.trainer.rematch}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <ComboBox ItemsSource="{Binding RematchModes}" SelectedItem="{Binding RematchMode}" />
+                        </DockPanel>
+                        <StackPanel Visibility="{Binding UsesRematchText, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{loc:T newev.trainer.rematchTrainer}" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding RematchTrainers}" SelectedItem="{Binding RematchTrainerChoice}" TextSearch.TextPath="Label" Margin="0,0,0,6">
+                                <ComboBox.ItemsPanel><StaticResource ResourceKey="LongListPanel" /></ComboBox.ItemsPanel>
+                            </ComboBox>
+                            <TextBlock Text="{loc:T newev.trainer.rematchText}" Margin="0,0,0,4" />
+                            <TextBox Text="{Binding TrainerRematchText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <Expander Header="{loc:T newev.cond.title}" Margin="0,10,0,0" Visibility="{Binding UsesScriptTexts, Converter={StaticResource BoolToVis}}">
+                    <StackPanel Margin="0,6,0,0">
+                        <CheckBox Content="{loc:T newev.cond.elite}" IsChecked="{Binding CondAfterElite}" Margin="0,0,0,6" />
+                        <DockPanel Margin="0,0,0,6">
+                            <TextBlock Text="{loc:T newev.cond.minBadges}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBox Text="{Binding CondMinBadges}" Width="44" HorizontalAlignment="Left" />
+                        </DockPanel>
+                        <DockPanel Margin="0,0,0,6">
+                            <TextBlock Text="{loc:T newev.cond.badge}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <ComboBox ItemsSource="{Binding Badges}" SelectedItem="{Binding CondBadge}" />
+                        </DockPanel>
+                        <TextBlock Text="{loc:T newev.cond.afterNpc}" Margin="0,0,0,4" />
+                        <ComboBox ItemsSource="{Binding FinishedNpcs}" SelectedItem="{Binding CondAfterNpc}" Margin="0,0,0,6" />
+                        <TextBlock Text="{loc:T newev.cond.text}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding CondText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="46" />
+                    </StackPanel>
+                </Expander>
 
                 <TextBlock Text="{loc:T newev.hint}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,8,0,0" />
             </StackPanel>

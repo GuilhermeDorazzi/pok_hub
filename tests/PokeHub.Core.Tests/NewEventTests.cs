@@ -5,6 +5,7 @@ using Xunit;
 
 namespace PokeHub.Core.Tests;
 
+[Collection("Eventos no workspace real")] // gravam no mesmo workspace: em paralelo, um apaga o que o outro criou
 public class NewEventTests
 {
     [Fact]

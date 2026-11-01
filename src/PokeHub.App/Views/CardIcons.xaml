@@ -40,6 +40,28 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!-- Depois da Elite: troféu -->
+    <DrawingImage x:Key="icon.postelite">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <StaticResource ResourceKey="Frame" />
+                <GeometryDrawing Brush="{StaticResource G}" Geometry="M7,3 H17 V10 A5,5 0 0 1 7,10 Z M4,4 H7 V6 H6 V8 A2,2 0 0 0 7.2,9.8 L7.6,11.7 A4,4 0 0 1 4,8 Z M20,4 H17 V6 H18 V8 A2,2 0 0 1 16.8,9.8 L16.4,11.7 A4,4 0 0 0 20,8 Z M11,15 H13 V18 H16 V21 H8 V18 H11 Z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- O que falta capturar: Poké Bola -->
+    <DrawingImage x:Key="icon.catch">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <StaticResource ResourceKey="Frame" />
+                <GeometryDrawing Brush="{StaticResource R}" Geometry="M2,12 A10,10 0 0 1 22,12 H15.5 A3.5,3.5 0 0 0 8.5,12 Z" />
+                <GeometryDrawing Brush="{StaticResource W}" Geometry="M2,12 A10,10 0 0 0 22,12 H15.5 A3.5,3.5 0 0 1 8.5,12 Z" />
+                <GeometryDrawing Brush="{StaticResource W}" Geometry="M10,12 A2,2 0 1 1 14,12 A2,2 0 1 1 10,12 Z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
     <!-- Eventos e scripts: a exclamação que aparece sobre os NPCs -->
     <DrawingImage x:Key="icon.events">
         <DrawingImage.Drawing>

@@ -49,6 +49,23 @@
                         </WrapPanel>
                         <CheckBox Content="{loc:T batch.heldItem}" IsChecked="{Binding SetHeldItem}" Margin="0,8,0,4" />
                         <ComboBox ItemsSource="{Binding Items}" SelectedItem="{Binding HeldItem}" DisplayMemberPath="Name" IsEnabled="{Binding SetHeldItem}" IsEditable="True" IsTextSearchEnabled="True" />
+                        <DockPanel Margin="0,8,0,4">
+                            <Button DockPanel.Dock="Right" Content="{loc:T batch.aiRecipe}" Command="{Binding CompetitiveRecipeCommand}" ToolTip="{loc:T batch.aiRecipeTip}" Padding="8,2" Margin="0" />
+                            <CheckBox Content="{loc:T batch.setAi}" IsChecked="{Binding SetAi}" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <ItemsControl ItemsSource="{Binding AiFlags}" IsEnabled="{Binding SetAi}" Margin="16,0,0,4">
+                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate><CheckBox Content="{Binding Name}" IsChecked="{Binding IsOn}" Width="160" Margin="0,0,0,2" /></DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <CheckBox Content="{loc:T batch.battleItems}" IsChecked="{Binding SetBattleItems}" Margin="0,4,0,4" ToolTip="{loc:T batch.battleItemsTip}" />
+                        <UniformGrid Columns="2" IsEnabled="{Binding SetBattleItems}" Margin="16,0,0,4">
+                            <ComboBox ItemsSource="{Binding Items}" SelectedItem="{Binding BattleItem1}" DisplayMemberPath="Name" Margin="0,0,4,4" />
+                            <ComboBox ItemsSource="{Binding Items}" SelectedItem="{Binding BattleItem2}" DisplayMemberPath="Name" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding Items}" SelectedItem="{Binding BattleItem3}" DisplayMemberPath="Name" Margin="0,0,4,0" />
+                            <ComboBox ItemsSource="{Binding Items}" SelectedItem="{Binding BattleItem4}" DisplayMemberPath="Name" />
+                        </UniformGrid>
                         <CheckBox Content="{loc:T batch.replaceSpecies}" IsChecked="{Binding TrainerReplace}" Margin="0,8,0,4" />
                         <Grid IsEnabled="{Binding TrainerReplace}">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -56,12 +73,27 @@
                             <TextBlock Grid.Column="1" Text="→" Margin="8,0" VerticalAlignment="Center" />
                             <views:SpeciesPicker Grid.Column="2" Catalog="{Binding Catalog}" SelectedSpecies="{Binding TrainerTo}" HideEmpty="True" />
                         </Grid>
+                        <CheckBox Content="{loc:T batch.evolve}" ToolTip="{loc:T batch.evolveTip}" IsChecked="{Binding TrainerEvolve}" IsEnabled="{Binding CanEvolve}" Margin="0,8,0,4" />
+                        <DockPanel IsEnabled="{Binding TrainerEvolve}" Margin="16,0,0,0">
+                            <TextBox DockPanel.Dock="Right" Width="44" Text="{Binding TrainerEvolveOtherAt}" />
+                            <TextBlock Text="{loc:T batch.evolveOtherAt}" Style="{StaticResource Lbl}" />
+                        </DockPanel>
                     </StackPanel>
                 </GroupBox>
 
                 <GroupBox Padding="8">
                     <GroupBox.Header><CheckBox Content="{loc:T batch.encounters}" IsChecked="{Binding EncountersEnabled}" FontWeight="Bold" /></GroupBox.Header>
                     <StackPanel IsEnabled="{Binding EncountersEnabled}">
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="{loc:T batch.region}" Style="{StaticResource Lbl}" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding Regions}" SelectedItem="{Binding SelectedRegion}" DisplayMemberPath="Name" />
+                        </Grid>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="{loc:T batch.places}" Style="{StaticResource Lbl}" />
+                            <TextBox Grid.Column="1" Text="{Binding PlaceFilter, UpdateSourceTrigger=PropertyChanged}" ToolTip="{loc:T batch.placesTip}" />
+                        </Grid>
                         <CheckBox Content="{loc:T batch.replaceSpeciesAll}" IsChecked="{Binding EncounterReplace}" Margin="0,0,0,4" />
                         <Grid IsEnabled="{Binding EncounterReplace}">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -80,6 +112,11 @@
                             <TextBlock Text="{loc:T batch.max}" Style="{StaticResource Lbl}" />
                             <TextBox Width="44" Text="{Binding EncounterMaxLevel}" Margin="0,0,0,4" />
                         </WrapPanel>
+                        <CheckBox Content="{loc:T batch.evolve}" ToolTip="{loc:T batch.evolveTip}" IsChecked="{Binding EncounterEvolve}" IsEnabled="{Binding CanEvolve}" Margin="0,8,0,4" />
+                        <DockPanel IsEnabled="{Binding EncounterEvolve}" Margin="16,0,0,0">
+                            <TextBox DockPanel.Dock="Right" Width="44" Text="{Binding EncounterEvolveOtherAt}" />
+                            <TextBlock Text="{loc:T batch.evolveOtherAt}" Style="{StaticResource Lbl}" />
+                        </DockPanel>
                     </StackPanel>
                 </GroupBox>
             </StackPanel>

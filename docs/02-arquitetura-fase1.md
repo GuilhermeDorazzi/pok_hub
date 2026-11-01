@@ -162,6 +162,14 @@ Fase 2 concluída em 2026-10-30.
 
 32. **Save entre ROMs.** Cada empacotamento gera uma ROM com nome novo, e o melonDS procura o `.sav` com esse nome. `WorkspaceService.CarrySave` copia o `.sav` mais recente da pasta builds para a ROM nova, sem substituir nada. O DeSmuME guarda saves em outra pasta e não é coberto.
 
+33. **Novos modelos de NPC.** `NewEventService` ganhou Missão, Vender Pokémon, Treinador e condições (Elite, insígnias, outro NPC), só no HG/SS. A ordem da missão confere pedido e espaço antes de tirar o item. Treinador com visão usa o script padrão do jogo (`3000 + id - 1`), com o alcance gravado no objeto e as falas do próprio registro. Recompensa com Enigma Stone grava junto a variável `0x4043 = 0x06F2`, que é o que o Presente Misterioso faz (`MGGive_Item`) e o que `T03R0101` lê.
+
+34. **O que falta capturar.** `CatchAudit` cruza encontros, Headbutt, Safari, trocas, scripts e evoluções. Só lê. O que o jogo decide em código fica numa lista fixa e aparece como não confirmado; exclusivos e Pokéwalker vêm das listas do Serebii.
+
+35. **Lote por área e por evolução.** `EncounterBatchOptions` filtra por região e lugares; a região vem de `regionNo` no cabeçalho do mapa (0 Johto, 1 Kanto). `EvolutionChart` diz em que espécie um Pokémon já estaria no nível final, em treinadores e encontros, e evoluções sem nível entram num nível à escolha.
+
+36. **Depois da Elite.** `PostEliteService` tem três opções independentes. Liberar treinadores: um script novo em `T10R0701`, chamado antes de `HOFCredits 0`, com um `ClearTrainerFlag` por treinador. Santuário de Ilex: em `D36R0101`, `FollowerPokeIsEventTrigger 3` vira uma chamada que confere só a espécie com `GetPartyMonSpecies`. Níveis: patch de código gerado, com gancho `call` em `0x0207363A`, a única leitura de time, que depois da leitura multiplica os níveis se o jogo foi zerado. Só SoulSilver US em ds-rom; endereços conferidos no arm9 contra a decomp. Nada disso foi visto no jogo ainda.
+
 Publicado em github.com/GuilhermeDorazzi/pok_hub (privado por enquanto).
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)

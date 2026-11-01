@@ -8,8 +8,8 @@
     "en-US": "New event"
   },
   "intro": {
-    "pt-BR": "Cria um NPC completo sem mexer em scripts: você escolhe o mapa, clica onde ele fica, escolhe a aparência e o que ele faz. Funciona em HeartGold, SoulSilver e Platinum, com os modelos Falar, Dar item, Pokémon no mapa e Trocar Pokémon. Cada um pode ficar parado, olhar em volta ou andar.",
-    "en-US": "Creates a complete NPC without touching scripts: pick the map, click where it stands, pick its look and what it does. Works on HeartGold, SoulSilver and Platinum, with the Talk, Give item, Pokémon on the map and Trade Pokémon templates. Each can stand still, look around or walk."
+    "pt-BR": "Cria um NPC completo sem mexer em scripts: você escolhe o mapa, clica onde ele fica, escolhe a aparência e o que ele faz. Falar, Dar item, Pokémon no mapa e Trocar Pokémon funcionam em HeartGold, SoulSilver e Platinum. Missão, Vender Pokémon, Treinador e as condições são só de HeartGold e SoulSilver.",
+    "en-US": "Creates a complete NPC without touching scripts: pick the map, click where it stands, pick its look and what it does. Talk, Give item, Pokémon on the map and Trade Pokémon work on HeartGold, SoulSilver and Platinum. Quest, Sell Pokémon, Trainer and conditions are HeartGold and SoulSilver only."
   },
   "steps": [
     {
@@ -23,6 +23,18 @@
     {
       "pt-BR": "Escolha o sprite, a direção e o modelo, e escreva as falas. O hub quebra as linhas para caber na caixa do jogo.",
       "en-US": "Pick the sprite, direction and template, and write the lines. The hub wraps them to fit the game's text box."
+    },
+    {
+      "pt-BR": "Missão pede um item ou que o jogador mostre um Pokémon, e dá item, Pokémon ou dinheiro. Vender Pokémon cobra e entrega, uma vez ou sempre. Treinador luta ao falar ou chama de longe, some ou aceita revanche.",
+      "en-US": "Quest asks for an item or for the player to show a Pokémon, and gives an item, a Pokémon or money. Sell Pokémon charges and hands it over, once or always. Trainer battles when talked to or calls from afar, vanishes or accepts rematches."
+    },
+    {
+      "pt-BR": "Em Condições, tranque o NPC até vencer a Elite, ter insígnias, ter uma insígnia certa ou terminar outro NPC, para encadear missões. Enquanto trancado, ele diz a fala que você escrever.",
+      "en-US": "Under Conditions, lock the NPC until the Elite Four is beaten, a badge count or a specific badge is reached, or another NPC is finished, to chain quests. While locked, it says the line you write."
+    },
+    {
+      "pt-BR": "Dar a Enigma Stone como recompensa de Missão também grava a marca que libera Latias e Latios, como o presente oficial fazia.",
+      "en-US": "Giving the Enigma Stone as a Quest reward also writes the mark that unlocks Latias and Latios, as the official gift did."
     },
     {
       "pt-BR": "Criar grava tudo e salva uma versão antes e outra depois. Depois use Testar.",

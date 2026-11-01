@@ -10,6 +10,13 @@ namespace PokeHub.App.ViewModels;
 
 public sealed record NamedIndex(int Index, string Name);
 
+public sealed partial class BatchAiFlag(int bit, string name) : ObservableObject
+{
+    public int Bit { get; } = bit;
+    public string Name { get; } = name;
+    [ObservableProperty] private bool _isOn;
+}
+
 /// <summary>Operações em lote: regras para treinadores e encontros, prévia e aplicação com versão salva antes e depois.</summary>
 public sealed partial class BatchViewModel : ObservableObject
 {
@@ -30,11 +37,20 @@ public sealed partial class BatchViewModel : ObservableObject
         Catalog = new SpeciesCatalog(_trainers.Species, PokemonSprites.Load(_trainers.Game));
         Items = [new(0, Loc.T("batch.noItem")), .. _trainers.Items.Select((s, i) => new NamedIndex(i, s)).Where(s => s.Index > 0 && s.Name.Length > 0 && s.Name != "-----").OrderBy(s => s.Name)];
         SelectedClass = Classes[0];
+        BattleItem1 = BattleItem2 = BattleItem3 = BattleItem4 = Items[0];
+        CanEvolve = GameTables.Supports(_trainers.Game);
+        Regions = _trainers.Game.IsHgss
+            ? [new((int)EncounterRegion.All, Loc.T("batch.region.all")), new((int)EncounterRegion.First, Loc.T("batch.region.johto")), new((int)EncounterRegion.Second, Loc.T("batch.region.kanto"))]
+            : [new((int)EncounterRegion.All, Loc.T("batch.region.all"))];
+        SelectedRegion = Regions[0];
     }
 
     public IReadOnlyList<NamedIndex> Classes { get; }
     public SpeciesCatalog Catalog { get; }
     public IReadOnlyList<NamedIndex> Items { get; }
+    public IReadOnlyList<NamedIndex> Regions { get; }
+    /// <summary>Diamond e Pearl não têm a tabela de evoluções no hub.</summary>
+    public bool CanEvolve { get; }
 
     // treinadores
     [ObservableProperty] private bool _trainersEnabled = true;
@@ -49,6 +65,16 @@ public sealed partial class BatchViewModel : ObservableObject
     [ObservableProperty] private bool _trainerReplace;
     [ObservableProperty] private int _trainerFrom = -1;
     [ObservableProperty] private int _trainerTo = -1;
+    [ObservableProperty] private bool _setAi;
+    [ObservableProperty] private bool _setBattleItems;
+    [ObservableProperty] private NamedIndex? _battleItem1;
+    [ObservableProperty] private NamedIndex? _battleItem2;
+    [ObservableProperty] private NamedIndex? _battleItem3;
+    [ObservableProperty] private NamedIndex? _battleItem4;
+    [ObservableProperty] private bool _trainerEvolve;
+    [ObservableProperty] private int _trainerEvolveOtherAt = 40;
+    /// <summary>Uma caixa por opção de IA. Marcada liga a opção, desmarcada desliga; as opções só valem com "Definir a IA" ligado.</summary>
+    public IReadOnlyList<BatchAiFlag> AiFlags { get; } = Enumerable.Range(0, Trainer.AiFlagCount).Select(i => new BatchAiFlag(i, Loc.T($"tr.ai.{i}"))).ToList();
 
     // encontros
     [ObservableProperty] private bool _encountersEnabled;
@@ -59,6 +85,14 @@ public sealed partial class BatchViewModel : ObservableObject
     [ObservableProperty] private int _encounterLevelOffset;
     [ObservableProperty] private int _encounterMinLevel = 1;
     [ObservableProperty] private int _encounterMaxLevel = 100;
+    [ObservableProperty] private NamedIndex? _selectedRegion;
+    [ObservableProperty] private string _placeFilter = "";
+    [ObservableProperty] private bool _encounterEvolve;
+    [ObservableProperty] private int _encounterEvolveOtherAt = 40;
+
+    private EvolutionChart? _chart;
+    /// <summary>Lida uma vez e só se alguém pedir; a tabela não muda nesta janela.</summary>
+    private EvolutionChart Chart => _chart ??= EvolutionChart.Load(_project);
 
     public ObservableCollection<string> Preview { get; } = [];
     [ObservableProperty] private string _status = "";
@@ -73,13 +107,31 @@ public sealed partial class BatchViewModel : ObservableObject
         HeldItem = SetHeldItem && HeldItem is { } i ? (ushort)i.Index : null,
         ReplaceSpeciesFrom = TrainerReplace && TrainerFrom >= 0 ? (ushort)TrainerFrom : null,
         ReplaceSpeciesTo = TrainerReplace && TrainerTo >= 0 ? (ushort)TrainerTo : null,
+        AiFlagsOn = SetAi ? AiFlags.Where(f => f.IsOn).Aggregate(0u, (bits, f) => bits | 1u << f.Bit) : 0,
+        AiFlagsOff = SetAi ? AiFlags.Where(f => !f.IsOn).Aggregate(0u, (bits, f) => bits | 1u << f.Bit) : 0,
+        BattleItems = SetBattleItems ? [(ushort)(BattleItem1?.Index ?? 0), (ushort)(BattleItem2?.Index ?? 0), (ushort)(BattleItem3?.Index ?? 0), (ushort)(BattleItem4?.Index ?? 0)] : null,
+        Evolutions = TrainerEvolve ? Chart : null,
+        EvolveOtherAt = TrainerEvolveOtherAt,
     };
+
+    /// <summary>Receita para treinadores difíceis: as regras gerais de escolha de golpe, leitura de HP e o que combina com o time. Fica marcada para revisar antes da prévia.</summary>
+    [RelayCommand]
+    private void CompetitiveRecipe()
+    {
+        SetAi = true;
+        int[] recipe = [0, 1, 2, 3, 8, 9, 10];
+        foreach (var f in AiFlags) f.IsOn = recipe.Contains(f.Bit);
+    }
 
     private EncounterBatchOptions EncounterOptions() => new()
     {
         ReplaceSpeciesFrom = EncounterReplace && EncounterFrom >= 0 ? (ushort)EncounterFrom : null,
         ReplaceSpeciesTo = EncounterReplace && EncounterTo >= 0 ? (ushort)EncounterTo : null,
         LevelPercent = EncounterLevelPercent, LevelOffset = EncounterLevelOffset, MinLevel = EncounterMinLevel, MaxLevel = EncounterMaxLevel,
+        Region = (EncounterRegion)(SelectedRegion?.Index ?? 0),
+        PlaceFilter = PlaceFilter,
+        Evolutions = EncounterEvolve ? Chart : null,
+        EvolveOtherAt = EncounterEvolveOtherAt,
     };
 
     [RelayCommand]

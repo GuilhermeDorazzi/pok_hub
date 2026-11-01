@@ -75,6 +75,56 @@ public sealed partial class NewEventViewModel : ObservableObject
     [ObservableProperty] private bool _isItem;
     [ObservableProperty] private bool _isPokemon;
     [ObservableProperty] private bool _isTrade;
+    [ObservableProperty] private bool _isQuest;
+    [ObservableProperty] private bool _isSell;
+    [ObservableProperty] private bool _isTrainer;
+    // missão
+    [ObservableProperty] private bool _questAsksItem = true;
+    [ObservableProperty] private NewEventChoice? _questAskItem;
+    [ObservableProperty] private string _questAskQuantity = "1";
+    [ObservableProperty] private bool _questTakeItem = true;
+    [ObservableProperty] private NewEventChoice? _questAskSpecies;
+    [ObservableProperty] private bool _rewardIsItem = true;
+    [ObservableProperty] private bool _rewardIsPokemon;
+    [ObservableProperty] private bool _rewardIsMoney;
+    [ObservableProperty] private NewEventChoice? _rewardItem;
+    [ObservableProperty] private string _rewardQuantity = "1";
+    [ObservableProperty] private NewEventChoice? _rewardSpecies;
+    [ObservableProperty] private string _rewardLevel = "10";
+    [ObservableProperty] private string _rewardMoney = "1000";
+    [ObservableProperty] private string _questAskText = "";
+    [ObservableProperty] private string _questNotYetText = "";
+    [ObservableProperty] private string _questRewardText = "";
+    [ObservableProperty] private string _questDoneText = "";
+    [ObservableProperty] private string _questFullText = Loc.T("newev.quest.fullDefault");
+    // venda
+    [ObservableProperty] private NewEventChoice? _sellSpecies;
+    [ObservableProperty] private string _sellLevel = "10";
+    [ObservableProperty] private string _sellPrice = "5000";
+    [ObservableProperty] private bool _sellOnce = true;
+    [ObservableProperty] private string _sellOfferText = "";
+    [ObservableProperty] private string _sellThanksText = "";
+    [ObservableProperty] private string _sellNoMoneyText = Loc.T("newev.sell.noMoneyDefault");
+    [ObservableProperty] private string _sellDeclineText = Loc.T("newev.trade.declineDefault");
+    [ObservableProperty] private string _sellFullText = Loc.T("newev.quest.fullDefault");
+    [ObservableProperty] private string _sellSoldOutText = Loc.T("newev.sell.soldOutDefault");
+    // treinador
+    [ObservableProperty] private NewEventChoice? _trainerChoice;
+    [ObservableProperty] private bool _trainerSighted;
+    [ObservableProperty] private string _trainerSight = "3";
+    [ObservableProperty] private bool _trainerVanish;
+    [ObservableProperty] private NewEventChoice? _rematchMode;
+    [ObservableProperty] private NewEventChoice? _rematchTrainerChoice;
+    [ObservableProperty] private string _trainerChallengeText = "";
+    [ObservableProperty] private string _trainerBeatenText = "";
+    [ObservableProperty] private string _trainerAfterText = "";
+    [ObservableProperty] private string _trainerRematchText = "";
+    // condições
+    [ObservableProperty] private bool _condAfterElite;
+    [ObservableProperty] private string _condMinBadges = "0";
+    [ObservableProperty] private NewEventChoice? _condBadge;
+    [ObservableProperty] private NewEventChoice? _condAfterNpc;
+    [ObservableProperty] private string _condText = "";
     [ObservableProperty] private NewEventChoice? _selectedMovement;
     [ObservableProperty] private string _range = "2";
     [ObservableProperty] private NewEventChoice? _askSpecies;
@@ -104,6 +154,19 @@ public sealed partial class NewEventViewModel : ObservableObject
     public bool RealMapAvailable => _realMap.Available;
     /// <summary>Tile escolhido, em coordenadas da planta.</summary>
     public (int X, int Y)? Tile { get; private set; }
+    public IReadOnlyList<NewEventChoice> Trainers { get; }
+    public IReadOnlyList<NewEventChoice> RematchTrainers { get; }
+    public IReadOnlyList<NewEventChoice> RematchModes { get; } =
+    [
+        new((int)TrainerRematch.None, Loc.T("newev.rematch.none")), new((int)TrainerRematch.Always, Loc.T("newev.rematch.always")), new((int)TrainerRematch.AfterElite, Loc.T("newev.rematch.elite")),
+    ];
+    public IReadOnlyList<NewEventChoice> Badges { get; } =
+        new[] { Loc.T("newev.cond.noBadge"), "Zephyr", "Hive", "Plain", "Fog", "Storm", "Mineral", "Glacier", "Rising", "Boulder", "Cascade", "Thunder", "Rainbow", "Soul", "Marsh", "Volcano", "Earth" }
+            .Select((name, i) => new NewEventChoice(i - 1, name)).ToList();
+    public ObservableCollection<NewEventChoice> FinishedNpcs { get; } = [];
+    public bool UsesScriptTexts => !(IsTrainer && TrainerSighted);
+    public bool UsesRematchText => RematchMode?.Value is (int)TrainerRematch.Always or (int)TrainerRematch.AfterElite;
+    public bool QuestAsksPokemon => !QuestAsksItem;
     public IReadOnlyList<NewEventChoice> Species { get; }
     public IReadOnlyList<NewEventChoice> AllSpecies { get; }
     public bool UsesSpriteList => !IsPokemon;
@@ -138,6 +201,15 @@ public sealed partial class NewEventViewModel : ObservableObject
         int freeTrades = NewEventService.FreeTradeSlots(map.Game).Count;
         FreeTradeNote = freeTrades == 0 ? Loc.T("core.newev.noTradeSlot") : Loc.T("newev.trade.free", freeTrades);
         SelectedFacing = Facings[0];
+        QuestAskItem = RewardItem = Items.FirstOrDefault();
+        QuestAskSpecies = RewardSpecies = SellSpecies = AllSpecies.FirstOrDefault();
+        var trainers = Core.Gen4.TrainerRepository.Load(project);
+        Trainers = trainers.Trainers.Where(t => t.Id > 0).Select(t => new NewEventChoice(t.Id, $"{t.Id:D3} {trainers.ClassOf(t)} {trainers.NameOf(t)}")).ToList();
+        RematchTrainers = [new NewEventChoice(0, Loc.T("newev.rematch.same")), .. Trainers];
+        TrainerChoice = Trainers.FirstOrDefault();
+        RematchTrainerChoice = RematchTrainers[0];
+        RematchMode = RematchModes[0];
+        CondBadge = Badges[0];
         Sprites = map.Sprites is { } sprites
             ? sprites.Ids.Select(id => (id, image: sprites.Render(id))).Where(s => s.image is not null).Select(s => new NewEventSprite(s.id, s.image!.ToBitmap())).ToList()
             : [];
@@ -151,6 +223,10 @@ public sealed partial class NewEventViewModel : ObservableObject
 
     partial void OnMapFilterChanged(string value) => ApplyMapFilter();
     partial void OnIsPokemonChanged(bool value) => OnPropertyChanged(nameof(UsesSpriteList));
+    partial void OnIsTrainerChanged(bool value) => OnPropertyChanged(nameof(UsesScriptTexts));
+    partial void OnTrainerSightedChanged(bool value) => OnPropertyChanged(nameof(UsesScriptTexts));
+    partial void OnRematchModeChanged(NewEventChoice? value) => OnPropertyChanged(nameof(UsesRematchText));
+    partial void OnQuestAsksItemChanged(bool value) => OnPropertyChanged(nameof(QuestAsksPokemon));
     partial void OnSelectedMovementChanged(NewEventChoice? value)
     {
         OnPropertyChanged(nameof(UsesFacing));
@@ -213,6 +289,11 @@ public sealed partial class NewEventViewModel : ObservableObject
     private void LoadCreated()
     {
         Created.Clear();
+        FinishedNpcs.Clear();
+        FinishedNpcs.Add(new NewEventChoice(0, Loc.T("newev.cond.noNpc")));
+        foreach (var npc in NewEventLedger.Load(_project).Npcs.Where(n => n.Flag is not null && n.Kind is "quest" or "trade" or "trainer" or "item" or "sell"))
+            FinishedNpcs.Add(new NewEventChoice(npc.Flag!.Value, $"{Loc.T($"newev.kind.{npc.Kind}")} · {_map.MapTitle(npc.MapId)} · {npc.X}, {npc.Z}"));
+        CondAfterNpc = FinishedNpcs[0];
         if (SelectedMap is not { } map) return;
         foreach (var npc in NewEventLedger.Load(_project).Npcs.Where(n => n.MapId == map.Id))
             Created.Add(new NewEventCreated(npc, Loc.T($"newev.kind.{npc.Kind}") + $" · {npc.X}, {npc.Z}" + (npc.Texts.FirstOrDefault() is { } text ? " · " + Unwrap(text) : "")));
@@ -235,6 +316,14 @@ public sealed partial class NewEventViewModel : ObservableObject
         IsItem = npc.Kind == "item";
         IsPokemon = npc.Kind == "pokemon";
         IsTrade = npc.Kind == "trade";
+        IsQuest = npc.Kind == "quest";
+        IsSell = npc.Kind == "sell";
+        IsTrainer = npc.Kind == "trainer";
+        CondAfterElite = npc.ConditionAfterElite;
+        CondMinBadges = npc.ConditionMinBadges.ToString();
+        CondBadge = Badges.FirstOrDefault(b => b.Value == (npc.ConditionBadge ?? -1)) ?? Badges[0];
+        CondAfterNpc = FinishedNpcs.FirstOrDefault(f => f.Value == (npc.ConditionAfterFlag ?? 0)) ?? FinishedNpcs[0];
+        CondText = Unwrap(npc.ConditionText ?? "");
         switch (npc.ToBehavior())
         {
             case TalkBehavior t:
@@ -259,7 +348,51 @@ public sealed partial class NewEventViewModel : ObservableObject
                 AskText = Unwrap(t.AskText);
                 ThanksText = Unwrap(t.ThanksText);
                 WrongText = Unwrap(t.WrongText);
-                DeclineText = Unwrap(t.DeclineText);
+                DeclineText = Unwrap(t.DeclineText).Replace("{YESNO 0}", "").Trim();
+                break;
+            case QuestBehavior q:
+                QuestAsksItem = q.AskItem is not null;
+                if (q.AskItem is { } askItem) QuestAskItem = Items.FirstOrDefault(c => c.Value == askItem) ?? QuestAskItem;
+                if (q.AskSpecies is { } askSpecies) QuestAskSpecies = AllSpecies.FirstOrDefault(c => c.Value == askSpecies) ?? QuestAskSpecies;
+                QuestAskQuantity = Math.Max(1, q.AskQuantity).ToString();
+                QuestTakeItem = q.TakeItem;
+                RewardIsItem = q.RewardItem is not null;
+                RewardIsPokemon = q.RewardSpecies is not null;
+                RewardIsMoney = q.RewardItem is null && q.RewardSpecies is null;
+                if (q.RewardItem is { } rewardItem) RewardItem = Items.FirstOrDefault(c => c.Value == rewardItem) ?? RewardItem;
+                if (q.RewardSpecies is { } rewardSpecies) RewardSpecies = AllSpecies.FirstOrDefault(c => c.Value == rewardSpecies) ?? RewardSpecies;
+                RewardQuantity = Math.Max(1, q.RewardQuantity).ToString();
+                RewardLevel = q.RewardLevel.ToString();
+                RewardMoney = q.RewardMoney.ToString();
+                QuestAskText = Unwrap(q.AskText);
+                QuestNotYetText = Unwrap(q.NotYetText);
+                QuestRewardText = Unwrap(q.RewardText);
+                QuestDoneText = Unwrap(q.DoneText);
+                QuestFullText = Unwrap(q.FullText);
+                break;
+            case SellBehavior v:
+                SellSpecies = AllSpecies.FirstOrDefault(c => c.Value == v.Species) ?? SellSpecies;
+                SellLevel = v.Level.ToString();
+                SellPrice = v.Price.ToString();
+                SellOnce = v.Once;
+                SellOfferText = Unwrap(v.OfferText);
+                SellThanksText = Unwrap(v.ThanksText);
+                SellNoMoneyText = Unwrap(v.NoMoneyText);
+                SellDeclineText = Unwrap(v.DeclineText);
+                SellFullText = Unwrap(v.FullText);
+                SellSoldOutText = Unwrap(v.SoldOutText);
+                break;
+            case TrainerBehavior t:
+                TrainerChoice = Trainers.FirstOrDefault(c => c.Value == t.Trainer) ?? TrainerChoice;
+                TrainerSighted = t.Sight > 0;
+                TrainerSight = Math.Max(1, t.Sight).ToString();
+                TrainerVanish = t.Vanish;
+                RematchMode = RematchModes.FirstOrDefault(m => m.Value == (int)t.Rematch) ?? RematchModes[0];
+                RematchTrainerChoice = RematchTrainers.FirstOrDefault(c => c.Value == (t.RematchTrainer ?? 0)) ?? RematchTrainers[0];
+                TrainerChallengeText = Unwrap(t.ChallengeText);
+                TrainerBeatenText = Unwrap(t.BeatenText);
+                TrainerAfterText = Unwrap(t.AfterText);
+                TrainerRematchText = Unwrap(t.RematchText ?? "");
                 break;
         }
     }
@@ -268,7 +401,7 @@ public sealed partial class NewEventViewModel : ObservableObject
     private void NewNpc()
     {
         SelectedCreated = null;
-        TalkText = BeforeText = AfterText = PokemonText = AskText = ThanksText = Nickname = "";
+        ClearTexts();
         Status = "";
     }
 
@@ -291,6 +424,46 @@ public sealed partial class NewEventViewModel : ObservableObject
         {
             Status = Loc.T("common.saveError", ex.Message);
         }
+    }
+
+    private void ClearTexts()
+    {
+        TalkText = BeforeText = AfterText = PokemonText = AskText = ThanksText = Nickname = "";
+        QuestAskText = QuestNotYetText = QuestRewardText = QuestDoneText = "";
+        SellOfferText = SellThanksText = "";
+        TrainerChallengeText = TrainerBeatenText = TrainerAfterText = TrainerRematchText = "";
+        CondText = "";
+        CondAfterElite = false;
+        CondMinBadges = "0";
+        CondBadge = Badges[0];
+        CondAfterNpc = FinishedNpcs.FirstOrDefault();
+    }
+
+    /// <summary>null quando nenhuma condição foi escolhida. Texto vazio com condição escolhida é recusado pelo serviço, para o jogador nunca ver uma fala em branco.</summary>
+    private NpcCondition? BuildCondition()
+    {
+        int badges = int.TryParse(CondMinBadges, out var n) ? n : 0;
+        int? badge = CondBadge is { Value: >= 0 } b ? b.Value : null;
+        int? flag = CondAfterNpc is { Value: > 0 } f ? f.Value : null;
+        return !CondAfterElite && badges == 0 && badge is null && flag is null ? null : new NpcCondition(Prepare(CondText), CondAfterElite, badges, badge, flag);
+    }
+
+    private static bool Filled(params string[] texts) => texts.All(t => !string.IsNullOrWhiteSpace(t));
+
+    private NpcBehavior BuildQuest() => new QuestBehavior(
+        QuestAsksItem ? QuestAskItem?.Value : null, int.Parse(QuestAskQuantity), QuestTakeItem, QuestAsksItem ? null : QuestAskSpecies?.Value,
+        RewardIsItem ? RewardItem?.Value : null, int.Parse(RewardQuantity), RewardIsPokemon ? RewardSpecies?.Value : null, int.Parse(RewardLevel), RewardIsMoney ? int.Parse(RewardMoney) : 0,
+        Prepare(QuestAskText), Prepare(QuestNotYetText), Prepare(QuestRewardText), Prepare(QuestDoneText), Prepare(QuestFullText));
+
+    private NpcBehavior BuildSell() => new SellBehavior(SellSpecies!.Value, int.Parse(SellLevel), int.Parse(SellPrice), SellOnce,
+        Prepare(SellOfferText), Prepare(SellThanksText), Prepare(SellNoMoneyText), Prepare(SellDeclineText), Prepare(SellFullText), Prepare(SellSoldOutText));
+
+    private NpcBehavior BuildTrainer()
+    {
+        var rematch = (TrainerRematch)(RematchMode?.Value ?? 0);
+        return new TrainerBehavior(TrainerChoice!.Value, Prepare(TrainerChallengeText), Prepare(TrainerBeatenText), Prepare(TrainerAfterText),
+            TrainerSighted ? int.Parse(TrainerSight) : 0, TrainerVanish, rematch, RematchTrainerChoice is { Value: > 0 } r ? r.Value : null,
+            rematch == TrainerRematch.None ? null : Prepare(TrainerRematchText));
     }
 
     public void PickTile(int x, int y)
@@ -321,17 +494,28 @@ public sealed partial class NewEventViewModel : ObservableObject
         if (IsPokemon && (SelectedSpecies is null || !int.TryParse(Level, out _))) { Status = Loc.T("core.newev.badLevel"); return; }
         if (IsTrade && (AskSpecies is null || GiveSpecies is null)) { Status = Loc.T("core.newev.badSpecies"); return; }
         if (IsTrade && (string.IsNullOrWhiteSpace(AskText) || string.IsNullOrWhiteSpace(ThanksText) || string.IsNullOrWhiteSpace(WrongText) || string.IsNullOrWhiteSpace(DeclineText))) { Status = Loc.T("newev.needText"); return; }
+        if (IsQuest && !Filled(QuestAskText, QuestNotYetText, QuestRewardText, QuestDoneText, QuestFullText)) { Status = Loc.T("newev.needText"); return; }
+        if (IsQuest && !(int.TryParse(QuestAskQuantity, out _) && int.TryParse(RewardQuantity, out _))) { Status = Loc.T("core.newev.badQuantity"); return; }
+        if (IsQuest && !int.TryParse(RewardLevel, out _)) { Status = Loc.T("core.newev.badLevel"); return; }
+        if (IsQuest && !int.TryParse(RewardMoney, out _)) { Status = Loc.T("core.newev.badMoney", 999999); return; }
+        if (IsSell && !Filled(SellOfferText, SellThanksText, SellNoMoneyText, SellDeclineText, SellFullText, SellSoldOutText)) { Status = Loc.T("newev.needText"); return; }
+        if (IsSell && !int.TryParse(SellLevel, out _)) { Status = Loc.T("core.newev.badLevel"); return; }
+        if (IsSell && !int.TryParse(SellPrice, out _)) { Status = Loc.T("core.newev.badMoney", 999999); return; }
+        if (IsTrainer && TrainerChoice is null) { Status = Loc.T("newev.needTrainer"); return; }
+        if (IsTrainer && TrainerSighted && !int.TryParse(TrainerSight, out _)) { Status = Loc.T("core.newev.badSight", 15); return; }
+        if (IsTrainer && !TrainerSighted && !Filled(TrainerChallengeText, TrainerBeatenText, TrainerAfterText)) { Status = Loc.T("newev.needText"); return; }
+        if (!int.TryParse(CondMinBadges, out _)) { Status = Loc.T("core.newev.badBadges", 16); return; }
         int range = 1;
         if (UsesRange && !int.TryParse(Range, out range)) { Status = Loc.T("core.newev.badRange", 8); return; }
 
         try
         {
-            NpcBehavior behavior = IsTalk ? new TalkBehavior(Prepare(TalkText))
+            NpcBehavior behavior = IsQuest ? BuildQuest() : IsSell ? BuildSell() : IsTrainer ? BuildTrainer() : IsTalk ? new TalkBehavior(Prepare(TalkText))
                 : IsItem ? new GiveItemBehavior(SelectedItem!.Value, int.Parse(Quantity), Prepare(BeforeText), Prepare(AfterText))
                 : IsTrade ? new TradeBehavior(AskSpecies!.Value, GiveSpecies!.Value, string.IsNullOrWhiteSpace(Nickname) ? null : Nickname.Trim(), Prepare(AskText), Prepare(ThanksText), Prepare(WrongText), Prepare(DeclineText))
                 : new PokemonBehavior(SelectedSpecies!.Value, int.Parse(Level), Vanish, string.IsNullOrWhiteSpace(PokemonText) ? null : Prepare(PokemonText));
             await _snapshot(Loc.T("newev.snapshotBefore", map.Label));
-            var request = new NewNpc(map.Id, tile.X + Layout.OriginX, tile.Y + Layout.OriginY, sprite.Id, facing.Value, behavior, (NpcMovement)(SelectedMovement?.Value ?? 0), range);
+            var request = new NewNpc(map.Id, tile.X + Layout.OriginX, tile.Y + Layout.OriginY, sprite.Id, facing.Value, behavior, (NpcMovement)(SelectedMovement?.Value ?? 0), range, BuildCondition());
             bool editing = SelectedCreated is not null;
             var result = SelectedCreated?.Npc is { } existing ? NewEventService.Update(_project, _map, existing, request) : NewEventService.Create(_project, _map, request);
             await _snapshot(Loc.T("newev.snapshotAfter", map.Label));
@@ -340,7 +524,7 @@ public sealed partial class NewEventViewModel : ObservableObject
             SelectedCreated = null;
             Status = Loc.T(editing ? "newev.updated" : "newev.created", result.ScriptId) + (result.Warnings.Count > 0 ? " " + string.Join(" ", result.Warnings) : "");
             _log(Status);
-            TalkText = BeforeText = AfterText = PokemonText = AskText = ThanksText = Nickname = "";
+            ClearTexts();
         }
         catch (Exception ex) when (ex is ArgumentException or System.IO.InvalidDataException or NotSupportedException or System.IO.IOException or UnauthorizedAccessException or KeyNotFoundException)
         {

@@ -89,7 +89,7 @@ public partial class App : Application
                     }
                 }
                 catch (Exception ex) { Console.Error.WriteLine(ex); }
-                foreach (var (command, suffix) in new[] { ((System.Windows.Input.ICommand)vm.OpenStatsCommand, "stats"), (vm.OpenNarcBrowserCommand, "narcs"), (vm.OpenTablesCommand, "tables"), (vm.OpenScriptsCommand, "scripts"), (vm.OpenNewEventCommand, "newevent") })
+                foreach (var (command, suffix) in new[] { ((System.Windows.Input.ICommand)vm.OpenStatsCommand, "stats"), (vm.OpenNarcBrowserCommand, "narcs"), (vm.OpenTablesCommand, "tables"), (vm.OpenScriptsCommand, "scripts"), (vm.OpenNewEventCommand, "newevent"), (vm.OpenCatchCommand, "catch"), (vm.OpenPostEliteCommand, "postelite") })
                 {
                     try
                     {
@@ -113,10 +113,38 @@ public partial class App : Application
                         var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
                         enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
                         using (var fs = File.Create(Path.Combine(Path.GetDirectoryName(basePath)!, Path.GetFileNameWithoutExtension(basePath) + "-" + suffix + ".png"))) enc.Save(fs);
+                        if (win.DataContext is NewEventViewModel kinds)
+                            foreach (var (show, kind) in new (Action, string)[] { (() => kinds.IsQuest = true, "quest"), (() => kinds.IsSell = true, "sell"), (() => kinds.IsTrainer = true, "trainer") })
+                            {
+                                show();
+                                await Task.Delay(500);
+                                win.UpdateLayout();
+                                var shot = new System.Windows.Media.Imaging.RenderTargetBitmap((int)win.ActualWidth, (int)win.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                                shot.Render(win);
+                                var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                                png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(shot));
+                                using var kindFile = File.Create(Path.Combine(Path.GetDirectoryName(basePath)!, Path.GetFileNameWithoutExtension(basePath) + "-newevent-" + kind + ".png"));
+                                png.Save(kindFile);
+                            }
                         win.Close();
                     }
                     catch (Exception ex) { Console.Error.WriteLine(ex); }
                 }
+                try
+                {
+                    var batchVm = new BatchViewModel(project, _ => { }, (_, _) => Task.CompletedTask) { SetAi = true, SetBattleItems = true, EncountersEnabled = true, EncounterEvolve = true };
+                    var batch = new BatchWindow(batchVm) { Owner = window };
+                    batch.Show();
+                    await Task.Delay(800);
+                    batch.UpdateLayout();
+                    var shot = new System.Windows.Media.Imaging.RenderTargetBitmap((int)batch.ActualWidth, (int)batch.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                    shot.Render(batch);
+                    var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                    png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(shot));
+                    using (var fs = File.Create(Path.Combine(Path.GetDirectoryName(basePath)!, Path.GetFileNameWithoutExtension(basePath) + "-batch.png"))) png.Save(fs);
+                    batch.Close();
+                }
+                catch (Exception ex) { Console.Error.WriteLine(ex); }
             }
             Shutdown();
         }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);

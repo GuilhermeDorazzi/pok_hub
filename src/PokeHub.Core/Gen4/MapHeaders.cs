@@ -14,6 +14,8 @@ public sealed record MapHeaderInfo(int Id, string InternalName, int? EncounterFi
     public int MatrixId { get; init; } = -1;
     /// <summary>HGSS e Pt: área, que diz quais texturas o mapa usa.</summary>
     public int AreaId { get; init; } = -1;
+    /// <summary>HGSS: 0 Johto, 1 Kanto (regionNo do cabeçalho). Nos outros jogos, sempre 0.</summary>
+    public int Region { get; init; }
 }
 
 /// <summary>
@@ -51,6 +53,7 @@ public static class MapHeaders
                     EventsBank = BitConverter.ToUInt16(arm9, o + 16),
                     MatrixId = BitConverter.ToUInt16(arm9, o + 4),
                     AreaId = arm9[o + 1],
+                    Region = arm9[o + 0x14] & 1,
                 });
                 continue;
             }

@@ -139,6 +139,8 @@ public sealed partial class MainViewModel : ObservableObject
         OpenTablesCommand.NotifyCanExecuteChanged();
         OpenScriptsCommand.NotifyCanExecuteChanged();
         OpenNewEventCommand.NotifyCanExecuteChanged();
+        OpenCatchCommand.NotifyCanExecuteChanged();
+        OpenPostEliteCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(HasProject));
         OnPropertyChanged(nameof(ProjectTitle));
         OnPropertyChanged(nameof(ProjectSummary));
@@ -304,6 +306,27 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     // ----- operações em lote -----
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private void OpenPostElite()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
+        if (!Gen4Game.For(p).IsHgss) { Log(Loc.T("core.postElite.hgssOnly")); return; }
+        new PostEliteWindow(new PostEliteViewModel(p, _paths, Log, message => SnapshotForEditorAsync(p, message))) { Owner = Application.Current.MainWindow }.Show();
+    }
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private void OpenCatch()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
+        try
+        {
+            new CatchWindow(new CatchViewModel(CatchAudit.Build(p))) { Owner = Application.Current.MainWindow }.Show();
+        }
+        catch (Exception ex) { Log(Loc.T("vm.error", ex.Message)); }
+    }
 
     [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
     private void OpenBatch()
@@ -733,12 +756,14 @@ public sealed partial class MainViewModel : ObservableObject
             new("scripts", FeatureGroup.Maps, null, OpenScriptsCommand, Extracted, Open, NeedsProject),
             new("encounters", FeatureGroup.Maps, Tool("encounter-editor")),
             new("newmaps", FeatureGroup.Maps, Tool("pdsms")),
+            new("postelite", FeatureGroup.Maps, null, OpenPostEliteCommand, Extracted, Open, NeedsProject),
 
             new("stats", FeatureGroup.Pokemon, null, OpenStatsCommand, Extracted, Open, NeedsProject),
             new("trainers", FeatureGroup.Pokemon, Tool("trainer-editor")),
             new("tables", FeatureGroup.Pokemon, null, OpenTablesCommand, Extracted, Open, NeedsProject),
             new("pokedex", FeatureGroup.Pokemon, Tool("pokedex-area-editor")),
             new("pokemon", FeatureGroup.Pokemon, Tool("pokeditor")),
+            new("catch", FeatureGroup.Pokemon, null, OpenCatchCommand, Extracted, Open, NeedsProject),
 
             new("text", FeatureGroup.Media, Tool("text-editor")),
             new("graphics", FeatureGroup.Media, Tool("nitropaint")),

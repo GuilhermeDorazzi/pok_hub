@@ -17,12 +17,34 @@ public sealed record PokemonBehavior(int Species, int Level, bool Vanish, string
 /// <summary>Troca: o NPC pede uma espécie e dá outra, usando uma vaga livre da tabela de trocas do jogo.</summary>
 public sealed record TradeBehavior(int AskSpecies, int GiveSpecies, string? Nickname, string AskText, string ThanksText, string WrongText, string DeclineText) : NpcBehavior;
 
+/// <summary>
+/// Missão: pede um item ou mostrar um Pokémon e dá uma recompensa, uma vez só. O Pokémon pedido só é conferido no time, sem sair dele.
+/// Recompensa em item, Pokémon ou dinheiro, com o que for diferente de zero ou null.
+/// </summary>
+public sealed record QuestBehavior(int? AskItem, int AskQuantity, bool TakeItem, int? AskSpecies, int? RewardItem, int RewardQuantity, int? RewardSpecies, int RewardLevel, int RewardMoney,
+    string AskText, string NotYetText, string RewardText, string DoneText, string FullText) : NpcBehavior;
+
+/// <summary>Vende um Pokémon por dinheiro. Com Once, vende uma vez só.</summary>
+public sealed record SellBehavior(int Species, int Level, int Price, bool Once, string OfferText, string ThanksText, string NoMoneyText, string DeclineText, string FullText, string SoldOutText) : NpcBehavior;
+
+public enum TrainerRematch { None, Always, AfterElite }
+
+/// <summary>
+/// Treinador. Com Sight 0 ele não chama: a batalha começa ao falar com ele, com as falas daqui e uma flag própria, sem mexer na do treinador original.
+/// Com Sight maior que 0, ele chama de longe como os do jogo: usa o script padrão, as falas e a flag de vencido do próprio registro.
+/// </summary>
+public sealed record TrainerBehavior(int Trainer, string ChallengeText, string BeatenText, string AfterText, int Sight = 0, bool Vanish = false,
+    TrainerRematch Rematch = TrainerRematch.None, int? RematchTrainer = null, string? RematchText = null) : NpcBehavior;
+
+/// <summary>O que precisa ser verdade para o NPC fazer o que faz. Sem isso, ele só diz o Text. Vale tudo o que estiver preenchido, ao mesmo tempo.</summary>
+public sealed record NpcCondition(string Text, bool AfterElite = false, int MinBadges = 0, int? Badge = null, int? AfterFlag = null);
+
 /// <summary>Como o NPC se move. Os códigos são MOVEMENT_TYPE nas decomps; andar usa um alcance em tiles a partir da posição dele.</summary>
 public enum NpcMovement { Fixed, LookAround, Wander, UpDown, LeftRight }
 
 /// <param name="X">Tile na matriz inteira, como guardado no arquivo de eventos.</param>
 /// <param name="Facing">0 cima, 1 baixo, 2 esquerda, 3 direita.</param>
-public sealed record NewNpc(int MapId, int X, int Z, int SpriteId, int Facing, NpcBehavior Behavior, NpcMovement Movement = NpcMovement.Fixed, int Range = 1);
+public sealed record NewNpc(int MapId, int X, int Z, int SpriteId, int Facing, NpcBehavior Behavior, NpcMovement Movement = NpcMovement.Fixed, int Range = 1, NpcCondition? Condition = null);
 
 public sealed record NewNpcResult(int ObjectIndex, int ScriptId, int? Flag, IReadOnlyList<string> Warnings);
 
@@ -97,6 +119,15 @@ public static class NewEventService
     private const int PartyCancelled = 255, ConditionNotEqual = 5;
     private const int SelectSoundCommandSeen = 609, SpecialVar0 = 0x8004, SpecialVar1 = 0x8005, ResultVar = 0x800C;
     private const int GiveItemStd = 2033, BagFullStd = 2009, PlatinumGiveItem = 2016, PlatinumBagFull = 2017, ConditionEqual = 1, SelectSound = 1500, MaxSpecies = 493;
+    /// <summary>Comparação do GoToIf: abaixo do valor. Depois de CheckFlag, quer dizer flag desligada.</summary>
+    private const int ConditionLess = 0;
+    private const int MaxParty = 6, MaxBadges = 16, ReceiveFanfare = 1187, MoneyBoxX = 20, MoneyBoxY = 2;
+    /// <summary>FLAG_GAME_CLEAR, ligada ao terminar a Elite. O número 0x964 vem da decomp do HG/SS.</summary>
+    public const int GameClearFlag = 0x964;
+    private const int EnigmaStone = 536, EnigmaStoneVar = 0x4043, EnigmaStoneMark = 0x06F2;
+    /// <summary>Script padrão de treinador com visão: o jogo tira o número do treinador do número do script (std_trainer na decomp).</summary>
+    private const int TrainerStdScript = 3000, FirstTrainer = 1, MaxSight = 15;
+    private const string YesNoPrompt = " {YESNO 0}";
     /// <summary>Flags de treinador começam aqui e vão até o último treinador; as do sistema começam em 0x960.</summary>
     private const int TrainerFlagBase = 0x550, SystemFlagBase = 0x960;
 
@@ -187,8 +218,13 @@ public static class NewEventService
 
     private static void BuildTrade(ScriptBuilder s, int slot, int flag, IReadOnlyList<int> m, bool platinum)
     {
-        s.Emit("PlaySE", SelectSound).Emit("LockAll").Emit("FacePlayer")
-            .Emit("CheckFlag", flag).Emit("GoToIf", ConditionEqual, "done")
+        s.Emit("PlaySE", SelectSound).Emit("LockAll").Emit("FacePlayer");
+        BuildTradeBody(s, slot, flag, m, platinum);
+    }
+
+    private static void BuildTradeBody(ScriptBuilder s, int slot, int flag, IReadOnlyList<int> m, bool platinum)
+    {
+        s.Emit("CheckFlag", flag).Emit("GoToIf", ConditionEqual, "done")
             .Emit("NPCMsg", m[0]);
         if (platinum) s.Emit("ShowYesNoMenu", ResultVar);
         else s.Emit("TouchscreenMenuHide").Emit("GetMenuChoice", ResultVar).Emit("TouchscreenMenuShow");
@@ -216,36 +252,164 @@ public static class NewEventService
             .Emit("NPCMsg", m[3]).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
     }
 
-    public static byte[] BuildScript(ScriptCommandTable table, NpcBehavior behavior, IReadOnlyList<int> messages, int? flag, int objectId = 0, int tradeSlot = 0, int? engageFlag = null)
+    /// <summary>Script padrão do jogo para esse treinador, como nos NPCs com visão do próprio jogo.</summary>
+    public static int TrainerScriptOf(int trainer) => trainer - FirstTrainer + TrainerStdScript;
+
+    private static void EmitConditionChecks(ScriptBuilder s, NpcCondition? c)
+    {
+        if (c is null) return;
+        if (c.AfterElite) s.Emit("CheckFlag", GameClearFlag).Emit("GoToIf", ConditionLess, "locked");
+        if (c.AfterFlag is { } after) s.Emit("CheckFlag", after).Emit("GoToIf", ConditionLess, "locked");
+        if (c.Badge is { } badge) s.Emit("CheckBadge", badge, ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "locked");
+        if (c.MinBadges > 0) s.Emit("CountBadges", ResultVar).Emit("CompareVarToValue", ResultVar, c.MinBadges).Emit("GoToIf", ConditionLess, "locked");
+    }
+
+    private static ScriptBuilder Say(ScriptBuilder s, int message) =>
+        s.Emit("NPCMsg", message).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
+
+    private static ScriptBuilder AskYesNo(ScriptBuilder s, int message, string noLabel) =>
+        s.Emit("NPCMsg", message).Emit("TouchscreenMenuHide").Emit("GetMenuChoice", ResultVar).Emit("TouchscreenMenuShow")
+            .Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "yes").Emit("GoTo", noLabel).Label("yes");
+
+    private static ScriptBuilder EmitGiveMon(ScriptBuilder s, int species, int level) =>
+        s.Emit("PlayFanfare", ReceiveFanfare).Emit("WaitFanfare").Emit("GiveMon", species, level, 0, 0, 0, ResultVar);
+
+    /// <summary>Ordem pensada para ninguém perder nada: confere o pedido e o espaço da recompensa antes de tirar o item.</summary>
+    private static void BuildQuest(ScriptBuilder s, QuestBehavior q, IReadOnlyList<int> m, int flag)
+    {
+        s.Emit("CheckFlag", flag).Emit("GoToIf", ConditionEqual, "done");
+        if (q.AskItem is { } item) s.Emit("HasItem", item, q.AskQuantity, ResultVar);
+        else s.Emit("PlayerHasSpecies", ResultVar, q.AskSpecies!.Value);
+        s.Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "notYet");
+        s.Emit("NPCMsg", m[0]);
+        if (q.RewardItem is { } reward)
+            s.Emit("SetVar", SpecialVar0, reward).Emit("SetVar", SpecialVar1, q.RewardQuantity)
+                .Emit("HasSpaceForItem", SpecialVar0, SpecialVar1, ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "full");
+        if (q.RewardSpecies is not null)
+            s.Emit("GetPartyCount", ResultVar).Emit("CompareVarToValue", ResultVar, MaxParty).Emit("GoToIf", ConditionEqual, "full");
+        if (q.AskItem is { } taken && q.TakeItem) s.Emit("TakeItem", taken, q.AskQuantity, ResultVar);
+        s.Emit("SetFlag", flag);
+        s.Emit("NPCMsg", m[2]);
+        // a Enigma Stone só libera Latias e Latios com a marca que o Presente Misterioso grava junto (MGGive_Item, na decomp)
+        if (q.RewardItem == EnigmaStone) s.Emit("SetVar", EnigmaStoneVar, EnigmaStoneMark);
+        if (q.RewardItem is not null) s.Emit("CallStd", GiveItemStd);
+        if (q.RewardSpecies is { } species) EmitGiveMon(s, species, q.RewardLevel);
+        if (q.RewardMoney > 0) s.Emit("AddMoney", q.RewardMoney);
+        s.Label("done");
+        Say(s, m[3]);
+        s.Label("notYet");
+        Say(s, m[1]);
+        s.Label("full");
+        Say(s, m[4]);
+    }
+
+    private static void BuildSell(ScriptBuilder s, SellBehavior v, IReadOnlyList<int> m, int? flag)
+    {
+        if (v.Once) s.Emit("CheckFlag", flag!.Value).Emit("GoToIf", ConditionEqual, "soldOut");
+        s.Emit("ShowMoneyBox", MoneyBoxX, MoneyBoxY);
+        AskYesNo(s, m[0], "decline");
+        s.Emit("HasEnoughMoneyImmediate", ResultVar, v.Price).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "noMoney")
+            .Emit("GetPartyCount", ResultVar).Emit("CompareVarToValue", ResultVar, MaxParty).Emit("GoToIf", ConditionEqual, "full")
+            .Emit("SubMoneyImmediate", v.Price).Emit("UpdateMoneyBox");
+        if (v.Once) s.Emit("SetFlag", flag!.Value);
+        s.Emit("NPCMsg", m[1]);
+        EmitGiveMon(s, v.Species, v.Level);
+        s.Emit("WaitButton");
+        void End(string label, int message)
+        {
+            s.Label(label).Emit("NPCMsg", message).Emit("WaitButton");
+            s.Emit("CloseMsg").Emit("HideMoneyBox").Emit("ReleaseAll").Emit("End");
+        }
+        s.Emit("CloseMsg").Emit("HideMoneyBox").Emit("ReleaseAll").Emit("End");
+        End("decline", m[3]);
+        End("noMoney", m[2]);
+        End("full", m[4]);
+        if (v.Once)
+        {
+            s.Label("soldOut");
+            Say(s, m[5]);
+        }
+    }
+
+    private static void BuildTrainer(ScriptBuilder s, TrainerBehavior t, IReadOnlyList<int> m, int flag, int objectId)
+    {
+        s.Emit("CheckFlag", flag).Emit("GoToIf", ConditionEqual, "done");
+        // sem Pokémon para lutar, a batalha não pode começar
+        s.Emit("PartyCountNotEgg", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "after");
+        s.Emit("NPCMsg", m[0]).Emit("CloseMsg")
+            .Emit("TrainerBattle", t.Trainer, 0, 0, 0)
+            .Emit("CheckBattleWon", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "lost")
+            .Emit("SetFlag", flag)
+            .Emit("NPCMsg", m[1]).Emit("WaitButton").Emit("CloseMsg");
+        if (t.Vanish) s.Emit("HidePerson", objectId);
+        s.Emit("ReleaseAll").Emit("End");
+        s.Label("lost").Emit("WhiteOut").Emit("ReleaseAll").Emit("End");
+        s.Label("done");
+        if (!t.Vanish && t.Rematch != TrainerRematch.None)
+        {
+            if (t.Rematch == TrainerRematch.AfterElite) s.Emit("CheckFlag", GameClearFlag).Emit("GoToIf", ConditionLess, "after");
+            s.Emit("PartyCountNotEgg", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "after");
+            AskYesNo(s, m[3], "after");
+            s.Emit("CloseMsg").Emit("TrainerBattle", t.RematchTrainer ?? t.Trainer, 0, 0, 0)
+                .Emit("CheckBattleWon", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "lost")
+                .Emit("NPCMsg", m[1]).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
+        }
+        s.Label("after");
+        Say(s, m[2]);
+    }
+
+    private static bool IsNewKind(NpcBehavior b) => b is QuestBehavior or SellBehavior or TrainerBehavior;
+
+    public static byte[] BuildScript(ScriptCommandTable table, NpcBehavior behavior, IReadOnlyList<int> messages, int? flag, int objectId = 0, int tradeSlot = 0, int? engageFlag = null, NpcCondition? condition = null)
     {
         var s = NewBuilder(table);
         bool platinum = IsPlatinum(table);
+        if (IsNewKind(behavior) || condition is not null)
+        {
+            s.Emit("PlaySE", SelectSound).Emit("LockAll").Emit("FacePlayer");
+            EmitConditionChecks(s, condition);
+            switch (behavior)
+            {
+                case QuestBehavior q: BuildQuest(s, q, messages, flag!.Value); break;
+                case SellBehavior v: BuildSell(s, v, messages, flag); break;
+                case TrainerBehavior t: BuildTrainer(s, t, messages, flag!.Value, objectId); break;
+                case TalkBehavior: Say(s, messages[0]); break;
+                case GiveItemBehavior item:
+                    s.Emit("CheckFlag", flag!.Value).Emit("GoToIf", ConditionEqual, "after")
+                        .Emit("NPCMsg", messages[0])
+                        .Emit("SetVar", SpecialVar0, item.Item).Emit("SetVar", SpecialVar1, item.Quantity)
+                        .Emit("HasSpaceForItem", SpecialVar0, SpecialVar1, ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "full")
+                        .Emit("CallStd", GiveItemStd).Emit("SetFlag", flag.Value)
+                        .Label("after");
+                    Say(s, messages[1]);
+                    s.Label("full").Emit("CallStd", BagFullStd).Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
+                    break;
+                case TradeBehavior:
+                    BuildTradeBody(s, tradeSlot, flag!.Value, messages, platinum);
+                    break;
+                case PokemonBehavior mon:
+                    EmitPokemonBody(s, mon, messages, flag, engageFlag, platinum);
+                    break;
+                default:
+                    throw new ArgumentException(behavior.GetType().Name);
+            }
+            if (condition is not null)
+            {
+                s.Label("locked");
+                Say(s, messages[^1]);
+            }
+            return s.Build();
+        }
         if (behavior is TradeBehavior)
         {
             BuildTrade(s, tradeSlot, flag!.Value, messages, platinum);
             return s.Build();
         }
-        if (behavior is PokemonBehavior mon)
+        if (behavior is PokemonBehavior wild)
         {
-            s.Emit("PlaySE", SelectSound).Emit("LockAll").Emit("FacePlayer").Emit("PlayCry", mon.Species, 0);
-            if (messages.Count > 0) s.Emit("NPCMsg", messages[0]);
-            s.Emit("WaitCry");
-            if (messages.Count > 0) s.Emit("CloseMsg");
-            // sem Pokémon para lutar, a batalha não pode começar: o jogador só ouve o grito
-            s.Emit("PartyCountNotEgg", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "noTeam");
-            // a flag de encontro avisa o script de retorno, que esconde o Pokémon antes de a tela voltar
-            if (engageFlag is { } engage) s.Emit("SetFlag", engage);
-            if (platinum) s.Emit("StartWildBattle", mon.Species, mon.Level);
-            else s.Emit("WildBattle", mon.Species, mon.Level, 0);
-            if (engageFlag is { } clear) s.Emit("ClearFlag", clear);
-            s.Emit("CheckBattleWon", ResultVar)
-                .Emit("CompareVarToValue", ResultVar, 0)
-                .Emit("GoToIf", ConditionEqual, "lost");
-            if (flag is { } hide) s.Emit("SetFlag", hide);
-            return s.Emit("ReleaseAll").Emit("End")
-                .Label("lost").Emit("WhiteOut").Emit("ReleaseAll").Emit("End")
-                .Label("noTeam").Emit("ReleaseAll").Emit("End")
-                .Build();
+            s.Emit("PlaySE", SelectSound).Emit("LockAll").Emit("FacePlayer");
+            EmitPokemonBody(s, wild, messages, flag, engageFlag, platinum);
+            return s.Build();
         }
         if (platinum) s.Emit("PlaySE", SelectSound);
         else s.Emit($"ScrCmd_{SelectSoundCommandSeen}");
@@ -277,6 +441,29 @@ public static class NewEventService
         return s.Build();
     }
 
+    private static void EmitPokemonBody(ScriptBuilder s, PokemonBehavior mon, IReadOnlyList<int> messages, int? flag, int? engageFlag, bool platinum)
+    {
+        s.Emit("PlayCry", mon.Species, 0);
+        bool talks = messages.Count > 0 && !string.IsNullOrEmpty(mon.Text);
+        if (talks) s.Emit("NPCMsg", messages[0]);
+        s.Emit("WaitCry");
+        if (talks) s.Emit("CloseMsg");
+        // sem Pokémon para lutar, a batalha não pode começar: o jogador só ouve o grito
+        s.Emit("PartyCountNotEgg", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "noTeam");
+        // a flag de encontro avisa o script de retorno, que esconde o Pokémon antes de a tela voltar
+        if (engageFlag is { } engage) s.Emit("SetFlag", engage);
+        if (platinum) s.Emit("StartWildBattle", mon.Species, mon.Level);
+        else s.Emit("WildBattle", mon.Species, mon.Level, 0);
+        if (engageFlag is { } clear) s.Emit("ClearFlag", clear);
+        s.Emit("CheckBattleWon", ResultVar)
+            .Emit("CompareVarToValue", ResultVar, 0)
+            .Emit("GoToIf", ConditionEqual, "lost");
+        if (flag is { } hide) s.Emit("SetFlag", hide);
+        s.Emit("ReleaseAll").Emit("End")
+            .Label("lost").Emit("WhiteOut").Emit("ReleaseAll").Emit("End")
+            .Label("noTeam").Emit("ReleaseAll").Emit("End");
+    }
+
     /// <summary>Valida tudo antes de gravar. Avisos não impedem a criação; erros viram exceção.</summary>
     public static NewNpcResult Create(Project project, EventMap map, NewNpc npc) => Apply(project, map, npc, null);
 
@@ -298,7 +485,8 @@ public static class NewEventService
         var events = new EventFile(eventsNarc.Files[header.EventsBank]);
         if (events.Objects.All(o => o.Id != existing.ObjectId)) throw new InvalidDataException(Loc.T("core.newev.notFound"));
 
-        editor.ReplaceEntry(existing.ScriptId, NewBuilder(table).Emit("End").Build());
+        // treinador com visão usa o script padrão do jogo: não há script próprio para esvaziar
+        if (existing.ScriptId < TrainerStdScript) editor.ReplaceEntry(existing.ScriptId, NewBuilder(table).Emit("End").Build());
         if (existing.LevelScriptId is { } level) WriteLevelScript(editor, table, level, null, 0, existing.ChainScriptId);
         scriptsNarc.Files[header.ScriptsBank] = editor.Raw;
         eventsNarc.Files[header.EventsBank] = EventFile.RemoveObject(eventsNarc.Files[header.EventsBank], existing.ObjectId);
@@ -372,6 +560,8 @@ public static class NewEventService
         if (npc.Behavior is PokemonBehavior mon && SpriteForSpecies(mon.Species, game.IsPlatinum) is null) throw new ArgumentException(Loc.T("core.newev.noFieldSprite"));
         if (npc.Behavior is TradeBehavior { AskSpecies: < 1 or > MaxSpecies } or TradeBehavior { GiveSpecies: < 1 or > MaxSpecies }) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
         if (npc.Range is < 1 or > MaxRange) throw new ArgumentException(Loc.T("core.newev.badRange", MaxRange));
+        if ((IsNewKind(npc.Behavior) || npc.Condition is not null) && !game.IsHgss) throw new NotSupportedException(Loc.T("core.newev.newKindsHgss"));
+        ValidateNewKinds(npc);
 
         var ledger = NewEventLedger.Load(project);
         int? tradeSlot = existing?.TradeSlot;
@@ -398,7 +588,12 @@ public static class NewEventService
             if (lx >= 0 && ly >= 0 && lx < layout.Width && ly < layout.Height && layout.IsBlocked(lx, ly)) warnings.Add(Loc.T("core.newev.blocked"));
         }
 
-        bool needsFlag = npc.Behavior is GiveItemBehavior or TradeBehavior or PokemonBehavior { Vanish: true };
+        var sighted = npc.Behavior as TrainerBehavior is { Sight: > 0 } seeing ? seeing : null;
+        int trainerCount = Narc.Read(File.ReadAllBytes(game.TrainerDataPath)).Files.Count;
+        foreach (var id in TrainersOf(npc.Behavior))
+            if (id < 1 || id >= trainerCount) throw new ArgumentException(Loc.T("core.newev.badTrainer", id, trainerCount - 1));
+        if (sighted is not null && events.Objects.Any(o => o.Id != current?.Id && o.ScriptId == TrainerScriptOf(sighted.Trainer))) warnings.Add(Loc.T("core.newev.sharedTrainer"));
+        bool needsFlag = sighted is null && npc.Behavior is GiveItemBehavior or TradeBehavior or PokemonBehavior { Vanish: true } or QuestBehavior or SellBehavior { Once: true } or TrainerBehavior;
         bool vanishes = npc.Behavior is PokemonBehavior { Vanish: true };
         var taken = new HashSet<int>(ledger.RetiredFlags);
         int trainers = Narc.Read(File.ReadAllBytes(game.TrainerDataPath)).Files.Count;
@@ -418,9 +613,17 @@ public static class NewEventService
             TalkBehavior t => [t.Text],
             GiveItemBehavior i => [EndWithWait(i.BeforeText), i.AfterText],
             PokemonBehavior { Text: { Length: > 0 } text } => [EndWithWait(text)],
-            TradeBehavior t => [t.AskText, t.ThanksText, t.WrongText, t.DeclineText],
+            // sem o {YESNO 0} na fala, o HG/SS não abre o menu de Sim e Não; o Platinum tem comando próprio
+            TradeBehavior t => [game.IsHgss ? WithYesNo(t.AskText) : t.AskText, t.ThanksText, t.WrongText, t.DeclineText],
+            QuestBehavior q => [EndWithWait(q.AskText), q.NotYetText, EndWithWait(q.RewardText), q.DoneText, q.FullText],
+            SellBehavior v => [WithYesNo(v.OfferText), v.ThanksText, v.NoMoneyText, v.DeclineText, v.FullText, v.SoldOutText],
+            TrainerBehavior { Sight: > 0 } => [],
+            TrainerBehavior t => t.Rematch != TrainerRematch.None && !t.Vanish
+                ? [EndWithWait(t.ChallengeText), t.BeatenText, t.AfterText, WithYesNo(t.RematchText ?? "")]
+                : [EndWithWait(t.ChallengeText), t.BeatenText, t.AfterText],
             _ => [],
         };
+        if (npc.Condition is { } condition && sighted is null) lines = [.. lines, condition.Text];
         var messages = new List<int>();
         for (int i = 0; i < lines.Length; i++)
         {
@@ -434,7 +637,7 @@ public static class NewEventService
 
         var table = TableOf(game);
         int objectId = current?.Id ?? (events.Objects.Count == 0 ? 0 : events.Objects.Max(o => o.Id) + 1);
-        var code = BuildScript(table, npc.Behavior, messages, flag, objectId, tradeSlot ?? 0, engage);
+        var code = sighted is null ? BuildScript(table, npc.Behavior, messages, flag, objectId, tradeSlot ?? 0, engage, npc.Condition) : [];
 
         byte[]? tradeNarc = null;
         if (npc.Behavior is TradeBehavior trade)
@@ -461,7 +664,8 @@ public static class NewEventService
 
         var editor = new ScriptEditor(scriptsNarc.Files[header.ScriptsBank], table);
         int scriptId = existing?.ScriptId ?? 0;
-        if (existing is null) scriptId = editor.AddEntry(code);
+        if (sighted is not null) scriptId = TrainerScriptOf(sighted.Trainer);
+        else if (existing is null || scriptId >= TrainerStdScript) scriptId = editor.AddEntry(code);
         else editor.ReplaceEntry(scriptId, code);
 
         int? levelScript = existing?.LevelScriptId, chain = existing?.ChainScriptId;
@@ -488,16 +692,17 @@ public static class NewEventService
                 NpcMovement.LeftRight => MovementWander + 2,
                 _ => FixedFacingMovement + npc.Facing,
             },
-            Type: 0,
+            Type: sighted is not null ? 1 : 0,
             // a flag do Pokémon que some esconde o objeto; a do item só marca a entrega, e o NPC continua lá
-            EventFlag: vanishes ? flag!.Value : 0,
+            EventFlag: vanishes || npc.Behavior is TrainerBehavior { Vanish: true, Sight: 0 } ? flag!.Value : 0,
             ScriptId: scriptId,
             Facing: npc.Facing,
             X: npc.X,
             Z: npc.Z,
             Y: current is not null && current.X == npc.X && current.Z == npc.Z ? current.Y : HeightFor(events, npc.X, npc.Z),
             XRange: npc.Movement is NpcMovement.Wander or NpcMovement.LeftRight ? npc.Range : 0,
-            ZRange: npc.Movement is NpcMovement.Wander or NpcMovement.UpDown ? npc.Range : 0);
+            ZRange: npc.Movement is NpcMovement.Wander or NpcMovement.UpDown ? npc.Range : 0,
+            Sight: sighted?.Sight ?? 0);
         eventsNarc.Files[header.EventsBank] = current is null
             ? EventFile.AddObject(eventsNarc.Files[header.EventsBank], updated)
             : EventFile.ReplaceObject(eventsNarc.Files[header.EventsBank], updated);
@@ -522,6 +727,51 @@ public static class NewEventService
     private const int ReturnScriptKind = 4;
     private const int JumpSize = 6;
     private const string TradesRelativePath = @"a\1\1\2", PlatinumTradesRelativePath = @"fielddata\pokemon_trade\fld_trade.narc";
+
+    private static string WithYesNo(string text) => text.Contains("{YESNO", StringComparison.Ordinal) ? text : text + YesNoPrompt;
+
+    private static IEnumerable<int> TrainersOf(NpcBehavior b)
+    {
+        if (b is not TrainerBehavior t) yield break;
+        yield return t.Trainer;
+        if (t.RematchTrainer is { } rematch) yield return rematch;
+    }
+
+    private static void ValidateNewKinds(NewNpc npc)
+    {
+        static bool Species(int? s) => s is >= 1 and <= MaxSpecies;
+        switch (npc.Behavior)
+        {
+            case QuestBehavior q:
+                if ((q.AskItem is null) == (q.AskSpecies is null)) throw new ArgumentException(Loc.T("core.newev.questAsk"));
+                if (q.AskItem is not null && q.AskQuantity is < 1 or > 99) throw new ArgumentException(Loc.T("core.newev.badQuantity"));
+                if (q.AskSpecies is not null && !Species(q.AskSpecies)) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
+                if (q.RewardItem is null && q.RewardSpecies is null && q.RewardMoney <= 0) throw new ArgumentException(Loc.T("core.newev.questReward"));
+                if (q.RewardItem is not null && q.RewardQuantity is < 1 or > 99) throw new ArgumentException(Loc.T("core.newev.badQuantity"));
+                if (q.RewardSpecies is not null && (!Species(q.RewardSpecies) || q.RewardLevel is < 1 or > 100)) throw new ArgumentException(Loc.T("core.newev.badLevel"));
+                if (q.RewardMoney is < 0 or > MaxMoney) throw new ArgumentException(Loc.T("core.newev.badMoney", MaxMoney));
+                break;
+            case SellBehavior v:
+                if (!Species(v.Species)) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
+                if (v.Level is < 1 or > 100) throw new ArgumentException(Loc.T("core.newev.badLevel"));
+                if (v.Price is < 1 or > MaxMoney) throw new ArgumentException(Loc.T("core.newev.badMoney", MaxMoney));
+                break;
+            case TrainerBehavior t:
+                if (t.Sight is < 0 or > MaxSight) throw new ArgumentException(Loc.T("core.newev.badSight", MaxSight));
+                if (t.Sight > 0 && npc.Condition is not null) throw new ArgumentException(Loc.T("core.newev.sightCondition"));
+                if (t.Rematch != TrainerRematch.None && !t.Vanish && t.Sight == 0 && string.IsNullOrWhiteSpace(t.RematchText)) throw new ArgumentException(Loc.T("core.newev.rematchText"));
+                break;
+        }
+        if (npc.Condition is { } c)
+        {
+            if (string.IsNullOrWhiteSpace(c.Text)) throw new ArgumentException(Loc.T("core.newev.conditionText"));
+            if (c.MinBadges is < 0 or > MaxBadges) throw new ArgumentException(Loc.T("core.newev.badBadges", MaxBadges));
+            if (c.Badge is < 0 or >= MaxBadges) throw new ArgumentException(Loc.T("core.newev.badBadges", MaxBadges));
+        }
+    }
+
+    /// <summary>O dinheiro do jogador vai até 999.999.</summary>
+    private const int MaxMoney = 999999;
 
     /// <summary>Sem esperar o botão, o próximo comando apagaria a fala antes de dar para ler.</summary>
     private static string EndWithWait(string text) => text.EndsWith("\\r", StringComparison.Ordinal) ? text : text + "\\r";
@@ -562,16 +812,42 @@ public sealed class CreatedNpc
     public int AskSpecies { get; set; }
     public int GiveSpecies { get; set; }
     public string? Nickname { get; set; }
+    public int AskItem { get; set; }
+    public int AskQuantity { get; set; }
+    public bool TakeItem { get; set; }
+    public int RewardItem { get; set; }
+    public int RewardQuantity { get; set; }
+    public int RewardSpecies { get; set; }
+    public int RewardLevel { get; set; }
+    public int RewardMoney { get; set; }
+    public int Price { get; set; }
+    public bool Once { get; set; }
+    public int Trainer { get; set; }
+    public int RematchTrainer { get; set; }
+    public TrainerRematch Rematch { get; set; }
+    public int Sight { get; set; }
+    public bool ConditionAfterElite { get; set; }
+    public int ConditionMinBadges { get; set; }
+    public int? ConditionBadge { get; set; }
+    public int? ConditionAfterFlag { get; set; }
+    public string? ConditionText { get; set; }
 
     public NpcBehavior ToBehavior() => Kind switch
     {
         "item" => new GiveItemBehavior(Item, Quantity, Texts[0], Texts[1]),
         "pokemon" => new PokemonBehavior(Species, Level, Vanish, Texts.FirstOrDefault()),
         "trade" => new TradeBehavior(AskSpecies, GiveSpecies, Nickname, Texts[0], Texts[1], Texts[2], Texts[3]),
+        "quest" => new QuestBehavior(AskItem > 0 ? AskItem : null, AskQuantity, TakeItem, AskSpecies > 0 ? AskSpecies : null, RewardItem > 0 ? RewardItem : null, RewardQuantity,
+            RewardSpecies > 0 ? RewardSpecies : null, RewardLevel, RewardMoney, Texts[0], Texts[1], Texts[2], Texts[3], Texts[4]),
+        "sell" => new SellBehavior(Species, Level, Price, Once, Texts[0], Texts[1], Texts[2], Texts[3], Texts[4], Texts[5]),
+        "trainer" => new TrainerBehavior(Trainer, Texts.ElementAtOrDefault(0) ?? "", Texts.ElementAtOrDefault(1) ?? "", Texts.ElementAtOrDefault(2) ?? "", Sight, Vanish, Rematch,
+            RematchTrainer > 0 ? RematchTrainer : null, Texts.ElementAtOrDefault(3)),
         _ => new TalkBehavior(Texts[0]),
     };
 
-    public NewNpc ToNewNpc() => new(MapId, X, Z, SpriteId, Facing, ToBehavior(), Movement, Range);
+    public NpcCondition? ToCondition() => ConditionText is { Length: > 0 } text ? new NpcCondition(text, ConditionAfterElite, ConditionMinBadges, ConditionBadge, ConditionAfterFlag) : null;
+
+    public NewNpc ToNewNpc() => new(MapId, X, Z, SpriteId, Facing, ToBehavior(), Movement, Range, ToCondition());
 
     internal static CreatedNpc From(NewNpc npc, int objectId, int scriptId, List<int> messages, int? flag, int? engage, int? level, int? chain, int? slot)
     {
@@ -586,6 +862,24 @@ public sealed class CreatedNpc
             case GiveItemBehavior i: c.Kind = "item"; c.Item = i.Item; c.Quantity = i.Quantity; c.Texts = [i.BeforeText, i.AfterText]; break;
             case PokemonBehavior p: c.Kind = "pokemon"; c.Species = p.Species; c.Level = p.Level; c.Vanish = p.Vanish; c.Texts = p.Text is { Length: > 0 } text ? [text] : []; break;
             case TradeBehavior t: c.Kind = "trade"; c.AskSpecies = t.AskSpecies; c.GiveSpecies = t.GiveSpecies; c.Nickname = t.Nickname; c.Texts = [t.AskText, t.ThanksText, t.WrongText, t.DeclineText]; break;
+            case QuestBehavior q:
+                c.Kind = "quest"; c.AskItem = q.AskItem ?? 0; c.AskQuantity = q.AskQuantity; c.TakeItem = q.TakeItem; c.AskSpecies = q.AskSpecies ?? 0;
+                c.RewardItem = q.RewardItem ?? 0; c.RewardQuantity = q.RewardQuantity; c.RewardSpecies = q.RewardSpecies ?? 0; c.RewardLevel = q.RewardLevel; c.RewardMoney = q.RewardMoney;
+                c.Texts = [q.AskText, q.NotYetText, q.RewardText, q.DoneText, q.FullText];
+                break;
+            case SellBehavior v:
+                c.Kind = "sell"; c.Species = v.Species; c.Level = v.Level; c.Price = v.Price; c.Once = v.Once;
+                c.Texts = [v.OfferText, v.ThanksText, v.NoMoneyText, v.DeclineText, v.FullText, v.SoldOutText];
+                break;
+            case TrainerBehavior t:
+                c.Kind = "trainer"; c.Trainer = t.Trainer; c.Sight = t.Sight; c.Vanish = t.Vanish; c.Rematch = t.Rematch; c.RematchTrainer = t.RematchTrainer ?? 0;
+                c.Texts = t.Rematch != TrainerRematch.None && !t.Vanish ? [t.ChallengeText, t.BeatenText, t.AfterText, t.RematchText ?? ""] : [t.ChallengeText, t.BeatenText, t.AfterText];
+                break;
+        }
+        if (npc.Condition is { } condition)
+        {
+            c.ConditionText = condition.Text; c.ConditionAfterElite = condition.AfterElite; c.ConditionMinBadges = condition.MinBadges;
+            c.ConditionBadge = condition.Badge; c.ConditionAfterFlag = condition.AfterFlag;
         }
         return c;
     }

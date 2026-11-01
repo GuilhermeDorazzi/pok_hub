@@ -1,0 +1,34 @@
+{
+  "id": "post-elite",
+  "group": "edit",
+  "feature": "postelite",
+  "tools": [],
+  "title": {
+    "pt-BR": "Depois da Elite",
+    "en-US": "After the Elite Four"
+  },
+  "intro": {
+    "pt-BR": "Três opções independentes para o fim do jogo em HeartGold e SoulSilver: liberar os treinadores para lutarem de novo, subir o nível dos times e abrir o evento do Giovanni com qualquer Celebi.",
+    "en-US": "Three independent options for the endgame on HeartGold and SoulSilver: let trainers battle again, raise team levels and open the Giovanni event with any Celebi."
+  },
+  "steps": [
+    {
+      "pt-BR": "Abra o card Depois da Elite, marque o que quer e clique em Aplicar. Uma versão é salva antes e outra depois.",
+      "en-US": "Open the After the Elite Four card, check what you want and click Apply. A version is saved before and after."
+    },
+    {
+      "pt-BR": "Liberar os treinadores vale em ds-rom e ndstool. Deixe de fora os que não devem voltar, pelo número do editor, como 1, 2, 701-705.",
+      "en-US": "Letting trainers battle again works on ds-rom and ndstool. Leave out those who should not return, by editor number, such as 1, 2, 701-705."
+    },
+    {
+      "pt-BR": "Subir o nível precisa de SoulSilver US em ds-rom e do MSYS2. O nível muda só na batalha, depois do fim do jogo, com limite em 100. Use o nível mínimo para os treinadores do início.",
+      "en-US": "Raising levels needs SoulSilver US on ds-rom and MSYS2. The level changes only in battle, after the game ends, capped at 100. Use the minimum level for early trainers."
+    },
+    {
+      "pt-BR": "O evento do Giovanni pede um Celebi na frente do time. O jogo não traz nenhum: dê um numa Missão do Novo evento.",
+      "en-US": "The Giovanni event needs a Celebi leading the party. The game has none: give one with a New event Quest."
+    }
+  ],
+  "tips": [],
+  "links": []
+}

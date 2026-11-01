@@ -1,0 +1,53 @@
+<Window x:Class="PokeHub.App.Views.PostEliteWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:PokeHub.App"
+        Title="{loc:T postElite.title}" Width="620" SizeToContent="Height" MinWidth="520"
+        WindowStartupLocation="CenterOwner" FontSize="13">
+    <StackPanel Margin="12">
+        <TextBlock Text="{loc:T postElite.intro}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,10" />
+
+        <GroupBox Padding="8" Margin="0,0,0,10">
+            <GroupBox.Header><CheckBox Content="{loc:T postElite.reset}" IsChecked="{Binding ResetTrainers}" FontWeight="Bold" /></GroupBox.Header>
+            <StackPanel IsEnabled="{Binding ResetTrainers}">
+                <TextBlock Text="{loc:T postElite.reset.hint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,6" />
+                <DockPanel>
+                    <TextBlock Text="{loc:T postElite.skip}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBox Text="{Binding ResetSkip, UpdateSourceTrigger=PropertyChanged}" ToolTip="{loc:T postElite.skipTip}" />
+                </DockPanel>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Padding="8" Margin="0,0,0,10">
+            <GroupBox.Header><CheckBox Content="{loc:T postElite.levels}" IsChecked="{Binding ScaleLevels}" IsEnabled="{Binding CanScaleLevels}" FontWeight="Bold" /></GroupBox.Header>
+            <StackPanel>
+                <TextBlock Text="{Binding LevelsHint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,6" />
+                <StackPanel IsEnabled="{Binding ScaleLevels}">
+                    <WrapPanel Margin="0,0,0,6">
+                        <TextBlock Text="{loc:T postElite.percent}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox Width="60" Text="{Binding LevelPercent}" Margin="0,0,16,0" />
+                        <TextBlock Text="{loc:T postElite.floor}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox Width="60" Text="{Binding LevelFloor}" ToolTip="{loc:T postElite.floorTip}" />
+                    </WrapPanel>
+                    <DockPanel>
+                        <TextBlock Text="{loc:T postElite.skip}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox Text="{Binding LevelSkip, UpdateSourceTrigger=PropertyChanged}" ToolTip="{loc:T postElite.skipTip}" />
+                    </DockPanel>
+                </StackPanel>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Padding="8" Margin="0,0,0,10">
+            <GroupBox.Header><CheckBox Content="{loc:T postElite.ilex}" IsChecked="{Binding OpenIlexShrine}" FontWeight="Bold" /></GroupBox.Header>
+            <TextBlock Text="{loc:T postElite.ilex.hint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" />
+        </GroupBox>
+
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="{loc:T batch.apply}" Command="{Binding ApplyCommand}" FontWeight="Bold" Padding="14,4" />
+                <Button Content="{loc:T common.close}" IsCancel="True" />
+            </StackPanel>
+            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,12,0" />
+        </DockPanel>
+    </StackPanel>
+</Window>

@@ -18,6 +18,20 @@ public static class GameDataTools
 
     private static string Name(IReadOnlyList<string> table, int index) => index >= 0 && index < table.Count ? table[index] : $"#{index}";
 
+    [McpServerTool(Name = "catch_report"), Description("HG/SS: o que dá para obter no jogo, cruzando encontros, scripts, trocas e evoluções. status: Found, Family (por evolução ou filhote), Known (lista fixa, não confirmada), Missing.")]
+    public static object CatchReport(HubContext hub, string project, [Description("Só as que faltam")] bool onlyMissing = false)
+    {
+        var rows = CatchAudit.Build(Extracted(hub, project));
+        return new
+        {
+            found = rows.Count(r => r.Status == CatchStatus.Found),
+            family = rows.Count(r => r.Status == CatchStatus.Family),
+            known = rows.Count(r => r.Status == CatchStatus.Known),
+            missing = rows.Count(r => r.Status == CatchStatus.Missing),
+            rows = rows.Where(r => !onlyMissing || r.Status == CatchStatus.Missing).Select(r => new { r.Species, r.Name, status = r.Status.ToString(), r.Where, r.Note }),
+        };
+    }
+
     [McpServerTool(Name = "list_trainers"), Description("Lista treinadores do projeto: id, classe, nome e resumo do time. Filtro opcional por texto no nome ou na classe.")]
     public static object ListTrainers(HubContext hub, string project, [Description("Texto para filtrar (nome ou classe), sem distinção de maiúsculas")] string? filter = null,
         [Description("Máximo de resultados")] int limit = 100)

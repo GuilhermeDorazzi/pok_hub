@@ -216,6 +216,19 @@ public sealed partial class TrainerEditorViewModel : ObservableObject
         MarkDirty();
     }
 
+    /// <summary>Registro novo no fim da lista, com o mesmo time: o original continua servindo às batalhas do jogo.</summary>
+    [RelayCommand]
+    private void Duplicate()
+    {
+        if (Current is null) return;
+        var item = new TrainerListItem(_repo.AddCopy(Current, _repo.NameOf(Current)), _repo);
+        AllTrainers.Add(item);
+        Filter = "";
+        ApplyFilter();
+        Selected = item;
+        MarkDirty();
+    }
+
     [RelayCommand]
     private async Task SaveAsync()
     {

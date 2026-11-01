@@ -60,6 +60,21 @@ public sealed class TrainerRepository
             Narc.Read(File.ReadAllBytes(game.TextArchivePath)));
     }
 
+    /// <summary>
+    /// Treinador novo, copiado de outro, no fim da lista. Serve para batalhas iniciadas por script, que só leem os dois arquivos e o nome.
+    /// Falas de treinador com visão ficam noutra tabela e não são copiadas. A cópia só existe em disco depois de Save.
+    /// </summary>
+    public Trainer AddCopy(Trainer source, string name)
+    {
+        var (data, party) = source.BytesToWrite(_game.HasBallSeal);
+        var copy = Trainer.Parse(Trainers.Count, data.ToArray(), party.ToArray(), _game.HasBallSeal);
+        Trainers.Add(copy);
+        while (Names.Count < copy.Id) Names.Add("");
+        if (Names.Count == copy.Id) Names.Add(name);
+        else Names[copy.Id] = name;
+        return copy;
+    }
+
     public string NameOf(Trainer t) => t.Id < Names.Count ? Names[t.Id] : $"#{t.Id}";
     public string ClassOf(Trainer t) => t.Class < Classes.Count ? Classes[t.Class] : Loc.T("tr.classN", t.Class);
 
@@ -86,6 +101,7 @@ public sealed class TrainerRepository
             for (int i = 0; i < Names.Count; i++)
             {
                 if (i < _originalNames.Count && Names[i] == _originalNames[i]) continue;
+                // a lista só cresce pelo fim: nome novo vazio não existe, mas o espaço reservado continua válido
                 _names.Messages[i].SetCodes(Gen4TextArchive.Encode(Names[i]));
             }
             _text.Files[_game.TrainerNamesBank] = _names.Write();
