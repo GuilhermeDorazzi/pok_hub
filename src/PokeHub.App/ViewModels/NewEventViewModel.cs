@@ -21,8 +21,25 @@ public sealed record NewEventCreated(CreatedNpc Npc, string Label)
     public override string ToString() => Label;
 }
 
-public sealed record NewEventChoice(int Value, string Label)
+public sealed record NewEventChoice(int Value, string Label, Func<int, BitmapSource?>? IconOf = null)
 {
+    private BitmapSource? _icon;
+    private bool _iconLoaded;
+
+    /// <summary>Lido só quando a linha aparece: as listas têm centenas de opções.</summary>
+    public BitmapSource? Icon
+    {
+        get
+        {
+            if (!_iconLoaded) { _icon = IconOf?.Invoke(Value); _iconLoaded = true; }
+            return _icon;
+        }
+    }
+
+    // só valor e rótulo: o ícone carrega depois, e um hash que muda faz a lista perder a opção selecionada
+    public bool Equals(NewEventChoice? other) => other is not null && Value == other.Value && Label == other.Label;
+    public override int GetHashCode() => HashCode.Combine(Value, Label);
+
     public override string ToString() => Label;
 }
 
@@ -35,6 +52,8 @@ public sealed partial class NewEventViewModel : ObservableObject
     private readonly Gen4Font? _font;
     private EventMap _map;
     private readonly List<NewEventMap> _allMaps;
+    private readonly RealMapImages _realMap;
+    private int _imageRequest;
 
     public ObservableCollection<NewEventMap> Maps { get; } = [];
     public ObservableCollection<NewEventCreated> Created { get; } = [];
@@ -49,6 +68,7 @@ public sealed partial class NewEventViewModel : ObservableObject
     [ObservableProperty] private string _mapFilter = "";
     [ObservableProperty] private NewEventMap? _selectedMap;
     [ObservableProperty] private BitmapSource? _layoutImage;
+    [ObservableProperty] private bool _showRealMap = true;
     [ObservableProperty] private NewEventSprite? _selectedSprite;
     [ObservableProperty] private NewEventChoice? _selectedFacing;
     [ObservableProperty] private bool _isTalk = true;
@@ -79,6 +99,9 @@ public sealed partial class NewEventViewModel : ObservableObject
     [ObservableProperty] private NewEventCreated? _selectedCreated;
 
     public MapLayout? Layout { get; private set; }
+    /// <summary>Pixels por tile da imagem na tela: o mapa real é desenhado com mais detalhe que a planta.</summary>
+    public int TileScale { get; private set; } = 8;
+    public bool RealMapAvailable => _realMap.Available;
     /// <summary>Tile escolhido, em coordenadas da planta.</summary>
     public (int X, int Y)? Tile { get; private set; }
     public IReadOnlyList<NewEventChoice> Species { get; }
@@ -99,12 +122,16 @@ public sealed partial class NewEventViewModel : ObservableObject
     {
         _project = project; _map = map; _log = log; _snapshot = snapshot;
         _font = Gen4Font.Load(map.Game);
-        Items = items.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}")).Skip(1).ToList();
+        _realMap = new RealMapImages(map.Game);
+        var icons = GameIcons.TryLoad(map.Game);
+        Func<int, BitmapSource?>? itemIcon = icons is null ? null : id => icons.Item(id)?.ToBitmap();
+        Func<int, BitmapSource?>? speciesIcon = icons is null ? null : id => icons.Species(id)?.ToBitmap();
+        Items = items.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}", itemIcon)).Skip(1).ToList();
         SelectedItem = Items.FirstOrDefault();
-        Species = species.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}")).Where(s => NewEventService.SpriteForSpecies(s.Value, map.Game.IsPlatinum) is not null).ToList();
+        Species = species.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}", speciesIcon)).Where(s => NewEventService.SpriteForSpecies(s.Value, map.Game.IsPlatinum) is not null).ToList();
         SelectedSpecies = Species.FirstOrDefault();
         // a troca aceita qualquer espécie: o que precisa de sprite de campo é só o Pokémon no mapa
-        AllSpecies = species.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}")).Where(s => s.Value is >= 1 and <= 493).ToList();
+        AllSpecies = species.Select((name, i) => new NewEventChoice(i, $"{i:D3} {name}", speciesIcon)).Where(s => s.Value is >= 1 and <= 493).ToList();
         AskSpecies = AllSpecies.FirstOrDefault();
         GiveSpecies = AllSpecies.FirstOrDefault();
         SelectedMovement = Movements[0];
@@ -118,7 +145,8 @@ public sealed partial class NewEventViewModel : ObservableObject
         _allMaps = map.Headers.Where(h => h.ScriptsBank >= 0 && h.EventsBank >= 0 && h.MsgBank >= 0)
             .Select(h => new NewEventMap(h.Id, $"{h.InternalName}  {(h.LocationNameIndex >= 0 && h.LocationNameIndex < map.LocationNames.Count ? map.LocationNames[h.LocationNameIndex] : "")}".Trim())).ToList();
         ApplyMapFilter();
-        SelectedMap = Maps.FirstOrDefault();
+        // os primeiros da lista podem ser mapas sem célula própria, que só existem como planta do mundo inteiro
+        SelectedMap = Maps.FirstOrDefault(m => map.LayoutOf(m.Id) is { } layout && RealMapRenderer.CanRender(layout)) ?? Maps.FirstOrDefault();
     }
 
     partial void OnMapFilterChanged(string value) => ApplyMapFilter();
@@ -146,8 +174,39 @@ public sealed partial class NewEventViewModel : ObservableObject
         Tile = null;
         Position = Loc.T("newev.clickMap");
         Layout = SelectedMap is { } m ? _map.LayoutOf(m.Id) : null;
-        LayoutImage = Layout?.Render().ToBitmap();
         LoadCreated();
+        _ = ShowLayoutImageAsync();
+    }
+
+    partial void OnShowRealMapChanged(bool value) => _ = ShowLayoutImageAsync();
+
+    /// <summary>A planta aparece na hora; o mapa real é desenhado fora da tela e entra quando fica pronto, se o mapa ainda for o mesmo.</summary>
+    private async Task ShowLayoutImageAsync()
+    {
+        int request = ++_imageRequest;
+        var layout = Layout;
+        var map = SelectedMap;
+        var failed = Loc.T("newev.realMap.failed");
+        if (Status == failed) Status = "";
+        bool wantsReal = ShowRealMap && _realMap.Available && layout is not null && map is not null;
+        if (wantsReal && _realMap.Known(map!.Id) is { } known)
+        {
+            SetLayoutImage(known, RealMapRenderer.PixelsPerTile);
+            return;
+        }
+        SetLayoutImage(layout?.Render().ToBitmap(), 8);
+        if (!wantsReal) return;
+
+        var image = await _realMap.GetAsync(layout!, map!.Id, _map.Headers.First(h => h.Id == map.Id).AreaId);
+        if (request != _imageRequest) return;
+        if (image is null) Status = failed;
+        else SetLayoutImage(image, RealMapRenderer.PixelsPerTile);
+    }
+
+    private void SetLayoutImage(BitmapSource? image, int scale)
+    {
+        LayoutImage = image;
+        TileScale = scale;
         LayoutChanged?.Invoke();
     }
 

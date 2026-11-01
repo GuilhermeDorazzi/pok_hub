@@ -55,7 +55,7 @@ public class NewEventPlatinumTests
         var projectDir = Path.GetDirectoryName(ws.TrimEnd('\\', '/'))!;
         var project = new Project { Paths = new ProjectPaths(projectDir), Config = ProjectConfig.Load(Path.Combine(projectDir, "project.json")) };
         var game = Gen4Game.For(project);
-        string[] paths = [game.EventsPath, game.ScriptsPath, game.TextArchivePath];
+        string[] paths = [game.EventsPath, game.ScriptsPath, game.TextArchivePath, NewEventService.TradesPathOf(game)];
         var saved = paths.Select(File.ReadAllBytes).ToList();
         var ledgerPath = Path.Combine(ws, "pokehub-events.json");
         var savedLedger = File.Exists(ledgerPath) ? File.ReadAllText(ledgerPath) : null;
@@ -66,7 +66,7 @@ public class NewEventPlatinumTests
             foreach (var species in new[] { 25, 35, 39, 54, 129, 396, 387, 390, 393, 483, 484 })
                 Assert.NotNull(sprites.Render(NewEventService.SpriteForSpecies(species, platinum: true)!.Value));
             Assert.Null(NewEventService.SpriteForSpecies(1, platinum: true)); // Bulbasaur não tem sprite de campo aqui
-            Assert.Empty(NewEventService.FreeTradeSlots(game));
+            Assert.Equal(8, NewEventService.FreeTradeSlots(game)[0]); // as 4 originais estão em uso
 
             var header = map.Headers.First(h => h.InternalName == "C01");
             var before = new EventFile(Narc.Read(File.ReadAllBytes(game.EventsPath)).Files[header.EventsBank]);
@@ -76,13 +76,26 @@ public class NewEventPlatinumTests
             Assert.InRange(item.Flag!.Value, 0x8F0, 0x95F);
             var mon = NewEventService.Create(project, EventMap.Load(project), new NewNpc(header.Id, at.X + 3, at.Z, 0, 1, new PokemonBehavior(25, 7, true, null), NpcMovement.LookAround));
             Assert.Throws<ArgumentException>(() => NewEventService.Create(project, EventMap.Load(project), new NewNpc(header.Id, at.X + 4, at.Z, 0, 1, new PokemonBehavior(1, 7, true, null))));
-            Assert.Throws<InvalidDataException>(() => NewEventService.Create(project, EventMap.Load(project), new NewNpc(header.Id, at.X + 4, at.Z, 0, 1, new TradeBehavior(16, 1, null, "a", "b", "c", "d"))));
+
+            var originalNames = TextRepository.Load(project).Bank(NewEventService.PlatinumTradeNamesBank).Texts.ToList();
+            Assert.Equal("Kazza", originalNames[0], ignoreCase: true);
+            NewEventService.Create(project, EventMap.Load(project), new NewNpc(header.Id, at.X + 4, at.Z, 0, 1, new TradeBehavior(16, 1, "HUBBY", "Troca?", "Valeu!", "Esse nao!", "Tudo bem.")));
+            var trades = Narc.Read(File.ReadAllBytes(NewEventService.TradesPathOf(game)));
+            Assert.Equal(9, trades.Files.Count);
+            Assert.Equal(1, BitConverter.ToInt32(trades.Files[8], 0));
+            Assert.Equal(16, BitConverter.ToInt32(trades.Files[8], 0x4C));
+            Assert.Equal(0, BitConverter.ToInt32(trades.Files[8], 60));
+            var names = TextRepository.Load(project).Bank(NewEventService.PlatinumTradeNamesBank).Texts;
+            Assert.Equal(originalNames, names.Take(originalNames.Count));
+            Assert.Equal("HUBBY", names[8]);
+            Assert.Equal(originalNames[4], names[12]);
+            Assert.Equal(9, NewEventService.FreeTradeSlots(game)[0]);
 
             var after = EventMap.Load(project);
             var created = after.Events.Where(e => e.MapId == header.Id && e.Kind == EventKind.Npc).ToList();
-            Assert.Equal(before.Objects.Count + 3, created.Count);
-            Assert.Contains(created[^2].Messages, m => m.Contains("Toma"));
-            Assert.Contains(created[^2].Flags, f => f.Id == item.Flag);
+            Assert.Equal(before.Objects.Count + 4, created.Count);
+            Assert.Contains(created[^3].Messages, m => m.Contains("Toma"));
+            Assert.Contains(created[^3].Flags, f => f.Id == item.Flag);
             var finalObject = new EventFile(Narc.Read(File.ReadAllBytes(game.EventsPath)).Files[header.EventsBank]).Objects[mon.ObjectIndex];
             Assert.Equal(NewEventService.SpriteForSpecies(25, platinum: true), finalObject.SpriteId);
             Assert.Equal(2, finalObject.Movement);

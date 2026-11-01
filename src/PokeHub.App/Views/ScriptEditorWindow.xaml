@@ -27,11 +27,24 @@
         <DataGrid Grid.Column="1" ItemsSource="{Binding Lines}" SelectedItem="{Binding SelectedLine}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
                   HeadersVisibility="Column" SelectionMode="Single" GridLinesVisibility="Horizontal" EnableRowVirtualization="True">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="{loc:T scr.col.entry}" Binding="{Binding Entry}" Width="70" />
+                <DataGridTextColumn Header="{loc:T scr.col.entry}" Binding="{Binding Entry}" Width="60" />
+                <DataGridTextColumn Header="{loc:T scr.col.line}" Binding="{Binding Line}" Width="50" />
                 <DataGridTextColumn Header="{loc:T scr.col.position}" Binding="{Binding Position}" Width="55" />
-                <DataGridTextColumn Header="{loc:T scr.col.command}" Binding="{Binding Command}" Width="190" />
-                <DataGridTextColumn Header="{loc:T scr.col.args}" Binding="{Binding Args}" Width="190" />
-                <DataGridTextColumn Header="{loc:T scr.col.note}" Binding="{Binding Note}" Width="*" />
+                <DataGridTextColumn Header="{loc:T scr.col.command}" Binding="{Binding Command}" Width="150" />
+                <DataGridTextColumn Header="{loc:T scr.col.args}" Binding="{Binding Args}" Width="240">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextWrapping" Value="Wrap" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="{loc:T scr.col.note}" Binding="{Binding Note}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextWrapping" Value="Wrap" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
 
@@ -42,10 +55,13 @@
                 <ItemsControl ItemsSource="{Binding Inputs}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <DockPanel Margin="0,0,0,4">
-                                <TextBlock Text="{Binding Type}" Width="90" VerticalAlignment="Center" />
-                                <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" />
-                            </DockPanel>
+                            <StackPanel Margin="0,0,0,4">
+                                <DockPanel>
+                                    <TextBlock Text="{Binding Type}" Width="90" VerticalAlignment="Center" />
+                                    <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" />
+                                </DockPanel>
+                                <TextBlock Text="{Binding Meaning}" Visibility="{Binding HasMeaning, Converter={StaticResource BoolToVis}}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" FontSize="11" Margin="90,2,0,0" />
+                            </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

@@ -24,6 +24,8 @@ public sealed class MapLayout
     public int OriginX { get; private set; }
     public int OriginY { get; private set; }
     public List<LayoutMarker> Markers { get; } = [];
+    /// <summary>Células desenhadas: arquivo de terreno e canto, em tiles a partir do canto da planta.</summary>
+    public List<(int Land, int Left, int Top)> Cells { get; } = [];
     private readonly byte[] _types, _collisions;
     private readonly bool[] _hasTile;
 
@@ -75,8 +77,11 @@ public sealed class MapLayout
         int minY = cells.Min(c => c / width), maxY = cells.Max(c => c / width);
         var layout = new MapLayout((maxX - minX + 1) * CellTiles, (maxY - minY + 1) * CellTiles);
         foreach (var cell in cells)
+        {
+            layout.Cells.Add((land[cell], (cell % width - minX) * CellTiles, (cell / width - minY) * CellTiles));
             if (landFile(land[cell]) is { } file)
                 layout.ReadCell(file, (cell % width - minX) * CellTiles, (cell / width - minY) * CellTiles, hasSoundSection);
+        }
 
         int ox = minX * CellTiles, oy = minY * CellTiles;
         layout.OriginX = ox;

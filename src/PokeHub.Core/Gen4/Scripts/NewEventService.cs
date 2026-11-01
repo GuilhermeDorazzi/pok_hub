@@ -88,10 +88,12 @@ public static class NewEventService
 {
     /// <summary>O mapa mais cheio do SoulSilver tem 51 NPCs. Passar disso é terreno não testado.</summary>
     public const int NpcWarningCount = 51;
-    /// <summary>Banco com apelidos (vaga) e nomes de treinador (vaga + 13) das trocas.</summary>
-    public const int TradeNamesBank = 200;
+    /// <summary>Banco com apelidos (vaga) e nomes de treinador (vaga + total original de vagas) das trocas.</summary>
+    public const int TradeNamesBank = 200, PlatinumTradeNamesBank = 370;
     private const int TradeSlots = 13, PlatinumTradeSlots = 4, MaxRange = 8;
-    private const int TradeGiveOffset = 0, TradeAbilityOffset = 28, TradeAskOffset = 0x4C;
+    /// <summary>O comando de script guarda a vaga em um byte.</summary>
+    private const int MaxTradeSlot = 255;
+    private const int TradeGiveOffset = 0, TradeAbilityOffset = 28, TradeHeldItemOffset = 60, TradeAskOffset = 0x4C;
     private const int PartyCancelled = 255, ConditionNotEqual = 5;
     private const int SelectSoundCommandSeen = 609, SpecialVar0 = 0x8004, SpecialVar1 = 0x8005, ResultVar = 0x800C;
     private const int GiveItemStd = 2033, BagFullStd = 2009, PlatinumGiveItem = 2016, PlatinumBagFull = 2017, ConditionEqual = 1, SelectSound = 1500, MaxSpecies = 493;
@@ -148,7 +150,21 @@ public static class NewEventService
     public static int? SpriteForSpecies(int species, bool platinum = false) =>
         (platinum ? PlatinumSprites : Followers).Value.TryGetValue(species, out var sprite) ? sprite : null;
 
-    /// <summary>Vagas de troca que nenhum script carrega. Trocar uma delas não afeta nenhum NPC do jogo.</summary>
+    public static int TradeNamesBankOf(Gen4Game game) => game.IsPlatinum ? PlatinumTradeNamesBank : TradeNamesBank;
+    public static string TradesPathOf(Gen4Game game) => Path.Combine(game.FilesRoot, game.IsPlatinum ? PlatinumTradesRelativePath : TradesRelativePath);
+
+    /// <summary>
+    /// Vagas além das originais. O jogo não confere o limite (o GF_ASSERT não existe na versão final) e lê a vaga direto do arquivo de trocas.
+    /// O que pede cuidado são os nomes: apelido em n e treinador em n + total. Por isso as vagas vêm em blocos alternados, a partir de 2 x total,
+    /// para que o apelido de uma nunca caia no treinador de outra.
+    /// </summary>
+    public static IEnumerable<int> ExtraTradeSlots(int originalSlots)
+    {
+        for (int slot = originalSlots * 2; slot <= MaxTradeSlot; slot++)
+            if (slot / originalSlots % 2 == 0) yield return slot;
+    }
+
+    /// <summary>Vagas de troca que nenhum script carrega: primeiro as originais sem uso, depois as novas. Usar uma delas não afeta nenhum NPC do jogo.</summary>
     public static List<int> FreeTradeSlots(Gen4Game game)
     {
         var used = new HashSet<long>();
@@ -161,7 +177,8 @@ public static class NewEventService
                 foreach (var i in script.Routine(id)!.Instructions)
                     if (i.Name == load) used.Add(i.Args[0].Value);
         }
-        return Enumerable.Range(0, game.IsPlatinum ? PlatinumTradeSlots : TradeSlots).Where(slot => !used.Contains(slot)).ToList();
+        int original = game.IsPlatinum ? PlatinumTradeSlots : TradeSlots;
+        return Enumerable.Range(0, original).Concat(ExtraTradeSlots(original)).Where(slot => !used.Contains(slot)).ToList();
     }
 
     private static void BuildTrade(ScriptBuilder s, int slot, int flag, IReadOnlyList<int> m, bool platinum)
@@ -418,17 +435,24 @@ public static class NewEventService
         byte[]? tradeNarc = null;
         if (npc.Behavior is TradeBehavior trade)
         {
-            // só HG/SS chega aqui hoje: as 4 vagas do Platinum estão todas em uso, e o FreeTradeSlots já recusou
-            var path = Path.Combine(game.FilesRoot, TradesRelativePath);
-            var trades = Narc.Read(File.ReadAllBytes(path));
-            var record = trades.Files[tradeSlot!.Value];
+            int original = game.IsPlatinum ? PlatinumTradeSlots : TradeSlots;
+            var trades = Narc.Read(File.ReadAllBytes(TradesPathOf(game)));
+            // o arquivo precisa chegar até a vaga: as de permeio são cópias que nenhum script carrega
+            while (trades.Files.Count <= tradeSlot!.Value) trades.Files.Add((byte[])trades.Files[0].Clone());
+            var record = trades.Files[tradeSlot.Value];
+            if (tradeSlot.Value >= original) BitConverter.TryWriteBytes(record.AsSpan(TradeHeldItemOffset), 0); // a cópia não leva o item da troca original
             BitConverter.TryWriteBytes(record.AsSpan(TradeGiveOffset), trade.GiveSpecies);
             BitConverter.TryWriteBytes(record.AsSpan(TradeAskOffset), trade.AskSpecies);
             // a habilidade guardada precisa ser uma que a espécie nova tenha
             var personal = PersonalRepository.Load(project).Get(trade.GiveSpecies);
             if (personal is not null) BitConverter.TryWriteBytes(record.AsSpan(TradeAbilityOffset), (int)personal.Ability1);
             tradeNarc = trades.Write();
-            texts.SetText(TradeNamesBank, tradeSlot.Value, string.IsNullOrWhiteSpace(trade.Nickname) ? texts.Species(trade.GiveSpecies) : trade.Nickname);
+            int namesBank = TradeNamesBankOf(game);
+            var names = texts.Bank(namesBank);
+            while (names.Texts.Count <= tradeSlot.Value + original) texts.AddText(namesBank, "");
+            texts.SetText(namesBank, tradeSlot.Value, string.IsNullOrWhiteSpace(trade.Nickname) ? texts.Species(trade.GiveSpecies) : trade.Nickname);
+            // vaga nova nasce sem treinador: usa o nome do treinador da primeira troca do jogo
+            if (tradeSlot.Value >= original) texts.SetText(namesBank, tradeSlot.Value + original, names.Texts[original]);
         }
 
         var editor = new ScriptEditor(scriptsNarc.Files[header.ScriptsBank], table);
@@ -483,7 +507,7 @@ public static class NewEventService
         texts.Save();
         WriteAtomic(game.ScriptsPath, scriptsNarc.Write());
         WriteAtomic(game.EventsPath, eventsNarc.Write());
-        if (tradeNarc is not null) WriteAtomic(Path.Combine(game.FilesRoot, TradesRelativePath), tradeNarc);
+        if (tradeNarc is not null) WriteAtomic(TradesPathOf(game), tradeNarc);
         ledger.Save(project);
         return new NewNpcResult(updated.Index, scriptId, flag, warnings);
     }
@@ -493,7 +517,7 @@ public static class NewEventService
     /// <summary>Tipo de entrada do cabeçalho do mapa que os encontros parados do jogo usam, nos dois jogos.</summary>
     private const int ReturnScriptKind = 4;
     private const int JumpSize = 6;
-    private const string TradesRelativePath = @"a\1\1\2";
+    private const string TradesRelativePath = @"a\1\1\2", PlatinumTradesRelativePath = @"fielddata\pokemon_trade\fld_trade.narc";
 
     /// <summary>Sem esperar o botão, o próximo comando apagaria a fala antes de dar para ler.</summary>
     private static string EndWithWait(string text) => text.EndsWith("\\r", StringComparison.Ordinal) ? text : text + "\\r";

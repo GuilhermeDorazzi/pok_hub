@@ -65,7 +65,7 @@ public static class NewEventTools
         return new { removed = objectId, mapId };
     }
 
-    [McpServerTool(Name = "create_trade_npc"), Description("Cria um NPC que troca Pokémon (HG/SS), usando uma vaga de troca que nenhum script usa. Falha se não houver vaga livre. Salva versão antes e depois.")]
+    [McpServerTool(Name = "create_trade_npc"), Description("Cria um NPC que troca Pokémon (HG/SS e Platinum), usando uma vaga de troca que nenhum script usa; passadas as originais, cria vagas novas no arquivo de trocas. Falha se não houver vaga livre. Salva versão antes e depois.")]
     public static async Task<object> CreateTradeNpc(HubContext hub, string project, int mapId, int x, int z, int sprite, int askSpecies, int giveSpecies,
         string askText, string thanksText, string wrongText, string declineText, string? nickname = null, int facing = 1,
         [Description("fixed, look, wander, updown ou leftright")] string movement = "fixed", int range = 1)

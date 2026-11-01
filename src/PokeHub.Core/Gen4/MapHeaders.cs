@@ -12,6 +12,8 @@ public sealed record MapHeaderInfo(int Id, string InternalName, int? EncounterFi
     public int EventsBank { get; init; } = -1;
     /// <summary>HGSS e Pt: matriz do mapa.</summary>
     public int MatrixId { get; init; } = -1;
+    /// <summary>HGSS e Pt: área, que diz quais texturas o mapa usa.</summary>
+    public int AreaId { get; init; } = -1;
 }
 
 /// <summary>
@@ -48,6 +50,7 @@ public static class MapHeaders
                     MsgBank = BitConverter.ToUInt16(arm9, o + 10),
                     EventsBank = BitConverter.ToUInt16(arm9, o + 16),
                     MatrixId = BitConverter.ToUInt16(arm9, o + 4),
+                    AreaId = arm9[o + 1],
                 });
                 continue;
             }
@@ -62,6 +65,7 @@ public static class MapHeaders
                 ? new MapHeaderInfo(i, name, enc, loc)
                 {
                     MatrixId = BitConverter.ToUInt16(arm9, o + 2),
+                    AreaId = arm9[o],
                     ScriptsBank = BitConverter.ToUInt16(arm9, o + 4),
                     ScriptHeaderBank = BitConverter.ToUInt16(arm9, o + 6),
                     MsgBank = BitConverter.ToUInt16(arm9, o + 8),

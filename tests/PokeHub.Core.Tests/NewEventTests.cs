@@ -87,6 +87,23 @@ public class NewEventTests
         Assert.True(stays.Length < code.Length);
     }
 
+    [Theory]
+    [InlineData(13, 26, 117)]
+    [InlineData(4, 8, 124)]
+    public void New_trade_slots_never_share_a_name_with_another_slot(int original, int first, int count)
+    {
+        var slots = NewEventService.ExtraTradeSlots(original).ToList();
+        Assert.Equal(first, slots[0]);
+        Assert.Equal(count, slots.Count);
+        Assert.True(slots.Max() <= 255);
+        var used = new HashSet<int>(Enumerable.Range(0, original * 2));
+        foreach (var slot in slots)
+        {
+            Assert.True(used.Add(slot), $"apelido da vaga {slot}");
+            Assert.True(used.Add(slot + original), $"treinador da vaga {slot}");
+        }
+    }
+
     [Fact]
     public void Trade_script_matches_the_games_own_npcs()
     {
@@ -353,6 +370,29 @@ public class NewEventTests
             Assert.Equal(16, BitConverter.ToInt32(record, 0x4C));
             Assert.Equal("HUBBY", TextRepository.Load(project).Bank(NewEventService.TradeNamesBank).Texts[freeBefore[0]]);
             Assert.DoesNotContain(freeBefore[0], NewEventService.FreeTradeSlots(game));
+
+            // acabadas as livres do jogo, a próxima troca abre a vaga 26 sem mexer nas originais
+            var originalNames = TextRepository.Load(project).Bank(NewEventService.TradeNamesBank).Texts.ToList();
+            var originalRecords = Narc.Read(File.ReadAllBytes(NewEventService.TradesPathOf(game))).Files.Select(f => f.ToArray()).ToList();
+            foreach (var _ in freeBefore.Where(slot => slot < 13).Skip(1))
+                NewEventService.Create(project, EventMap.Load(project), new NewNpc(header.Id, at.X + 6, at.Z, at.SpriteId, 1, new TradeBehavior(16, 1, null, "a", "b", "c", "d")));
+            Assert.Equal(26, NewEventService.FreeTradeSlots(game)[0]);
+            var keptNames = TextRepository.Load(project).Bank(NewEventService.TradeNamesBank).Texts.ToList();
+            NewEventService.Create(project, EventMap.Load(project), new NewNpc(header.Id, at.X + 7, at.Z, at.SpriteId, 1, new TradeBehavior(25, 133, "NOVA", "Troca?", "Valeu!", "Esse nao!", "Tudo bem.")));
+            var grown = Narc.Read(File.ReadAllBytes(NewEventService.TradesPathOf(game)));
+            Assert.Equal(27, grown.Files.Count);
+            Assert.Equal(133, BitConverter.ToInt32(grown.Files[26], 0));
+            Assert.Equal(25, BitConverter.ToInt32(grown.Files[26], 0x4C));
+            Assert.Equal(0, BitConverter.ToInt32(grown.Files[26], 60));
+            Assert.Equal(13, originalRecords.Count);
+            for (int slot = 0; slot < 13; slot++)
+                if (!freeBefore.Contains(slot)) Assert.Equal(originalRecords[slot], grown.Files[slot]);
+            var grownNames = TextRepository.Load(project).Bank(NewEventService.TradeNamesBank).Texts;
+            Assert.Equal(keptNames, grownNames.Take(keptNames.Count));
+            Assert.Equal("NOVA", grownNames[26]);
+            Assert.Equal(originalNames[13], grownNames[39]);
+            var newScript = new ScriptFile(Narc.Read(File.ReadAllBytes(game.ScriptsPath)).Files[header.ScriptsBank], ScriptCommandTable.Hgss);
+            Assert.Equal(26, newScript.Routine(newScript.EntryOffsets.Count)!.Instructions.First(i => i.Name == "LoadNPCTrade").Args[0].Value);
 
             var script = new ScriptFile(Narc.Read(File.ReadAllBytes(game.ScriptsPath)).Files[header.ScriptsBank], ScriptCommandTable.Hgss);
             for (int id = 1; id <= oldScript.EntryOffsets.Count; id++)

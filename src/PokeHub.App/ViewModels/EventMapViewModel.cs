@@ -15,6 +15,8 @@ public sealed record MapRow(int Id, string Name, string Location, int Count)
 public sealed record SlotRow(int Id, string? Name, int UsesCount, string Where, bool IsFree)
 {
     public string IdHex => $"0x{Id:X}";
+    public bool Matches(string search) =>
+        IdHex.Contains(search, StringComparison.OrdinalIgnoreCase) || Id.ToString().Contains(search) || (Name?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false) || Where.Contains(search, StringComparison.OrdinalIgnoreCase);
     public string NameOrDash => Name ?? "-";
     public string Status => IsFree ? Loc.T("ev.free") : UsesCount == 0 ? Loc.T("ev.namedOnly") : Loc.T("ev.usedBy", UsesCount);
 }
@@ -26,21 +28,26 @@ public sealed record SlotFilterOption(SlotFilter Filter) { public string Name =>
 public sealed partial class EventMapViewModel : ObservableObject
 {
     private readonly EventMap _map;
+    private readonly RealMapImages _realMap;
+    private int _imageRequest;
 
     public EventMapViewModel(EventMap map)
     {
         _map = map;
+        _realMap = new RealMapImages(map.Game);
         AllMaps = map.Events.GroupBy(e => e.MapId).Select(g => new MapRow(g.Key, g.First().MapName, g.First().LocationName, g.Count())).OrderBy(m => m.Id).ToList();
         Filters = [new(SlotFilter.All), new(SlotFilter.Used), new(SlotFilter.Free)];
         SelectedFlagFilter = Filters[2];
         SelectedVarFilter = Filters[2];
-        FreeFlagsText = Loc.T("ev.freeRanges", map.FreeFlags().Sum(r => r.Count), string.Join(", ", map.FreeFlags().OrderByDescending(r => r.Count).Take(8).Select(r => r.Count == 1 ? $"0x{r.From:X}" : $"0x{r.From:X}–0x{r.To:X} ({r.Count})")));
-        FreeVarsText = Loc.T("ev.freeRanges", map.FreeVars().Sum(r => r.Count), string.Join(", ", map.FreeVars().OrderByDescending(r => r.Count).Take(8).Select(r => r.Count == 1 ? $"0x{r.From:X}" : $"0x{r.From:X}–0x{r.To:X} ({r.Count})")));
+        FreeFlagsText = Loc.T("ev.freeRanges", map.FreeFlags().Sum(r => r.Count), string.Join(", ", map.FreeFlags().OrderByDescending(r => r.Count).Take(8).Select(Range)));
+        FreeVarsText = Loc.T("ev.freeRanges", map.FreeVars().Sum(r => r.Count), string.Join(", ", map.FreeVars().OrderByDescending(r => r.Count).Take(8).Select(Range)));
         Summary = Loc.T("ev.summary", map.MapsWithEvents, map.Events.Count, map.FlagUsages.Count, map.Names.NumFlags - 1, map.VarUsages.Count, map.Names.NumVars);
         ApplyMapFilter();
         RebuildFlags();
         RebuildVars();
     }
+
+    private static string Range(FreeRange r) => r.Count == 1 ? $"{r.From}" : $"{r.From}–{r.To} ({r.Count})";
 
     public string Summary { get; }
     public string FreeFlagsText { get; }
@@ -58,7 +65,7 @@ public sealed partial class EventMapViewModel : ObservableObject
 
     partial void OnMapSearchChanged(string value) => ApplyMapFilter();
 
-    /// <summary>Filtra mapas por nome/local; um texto que parece flag/variável (0x...) ou uma frase busca dentro dos eventos.</summary>
+    /// <summary>Filtra mapas por nome/local; um número (decimal ou 0x...) acha flag ou variável, e uma frase busca dentro dos eventos.</summary>
     private void ApplyMapFilter()
     {
         var q = MapSearch.Trim();
@@ -67,25 +74,32 @@ public sealed partial class EventMapViewModel : ObservableObject
         if (q.Length > 0)
         {
             HashSet<int> mapIds;
-            if (q.StartsWith("0x", StringComparison.OrdinalIgnoreCase) && int.TryParse(q[2..], System.Globalization.NumberStyles.HexNumber, null, out var id))
+            if (FlagNames.ParseId(q) is { } id)
                 mapIds = _map.Events.Where(e => e.Flags.Any(f => f.Id == id) || e.HideFlag == id || e.Vars.Any(v => v.Id == id) || e.ConditionVar == id).Select(e => e.MapId).ToHashSet();
             else
                 mapIds = _map.Events.Where(e => e.Messages.Any(m => m.Contains(q, StringComparison.OrdinalIgnoreCase)) || e.Actions.Any(a => a.Contains(q, StringComparison.OrdinalIgnoreCase))).Select(e => e.MapId).ToHashSet();
             rows = rows.Where(m => mapIds.Contains(m.Id) || m.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || m.Location.Contains(q, StringComparison.OrdinalIgnoreCase));
         }
         foreach (var r in rows) Maps.Add(r);
-        if (SelectedMap is null || !Maps.Contains(SelectedMap)) SelectedMap = Maps.FirstOrDefault();
+        // os primeiros da lista podem ser mapas sem célula própria, que só existem como planta do mundo inteiro
+        if (SelectedMap is null || !Maps.Contains(SelectedMap))
+            SelectedMap = Maps.FirstOrDefault(m => _map.LayoutOf(m.Id) is { } layout && RealMapRenderer.CanRender(layout)) ?? Maps.FirstOrDefault();
     }
 
     partial void OnSelectedMapChanged(MapRow? value)
     {
         Events.Clear();
-        if (value is null) return;
+        if (value is null)
+        {
+            // busca sem resultado: não deixa na tela o mapa anterior
+            Layout = null;
+            _ = ShowLayoutImageAsync();
+            return;
+        }
         foreach (var e in _map.Events.Where(e => e.MapId == value.Id)) Events.Add(e);
         Layout = _map.LayoutOf(value.Id);
-        LayoutImage = Layout?.Render().ToBitmap();
         LayoutStatus = Layout is null ? Loc.T("ev.layout.none") : "";
-        LayoutChanged?.Invoke();
+        _ = ShowLayoutImageAsync();
         SelectedEvent = Events.FirstOrDefault();
     }
 
@@ -96,9 +110,45 @@ public sealed partial class EventMapViewModel : ObservableObject
     }
 
     // ----- planta do mapa -----
-    /// <summary>Tiles por lado em pixels na tela.</summary>
-    public const int TileScale = 8;
+    /// <summary>Tiles por lado em pixels na tela: o mapa real é desenhado com mais detalhe que a planta.</summary>
+    public int TileScale { get; private set; } = 8;
     public event Action? LayoutChanged;
+    [ObservableProperty] private bool _showRealMap = true;
+    [ObservableProperty] private bool _showsPlan = true;
+    public bool RealMapAvailable => _realMap.Available;
+
+    partial void OnShowRealMapChanged(bool value) => _ = ShowLayoutImageAsync();
+
+    /// <summary>A planta aparece na hora; o mapa real é desenhado fora da tela e entra quando fica pronto, se o mapa ainda for o mesmo.</summary>
+    private async Task ShowLayoutImageAsync()
+    {
+        int request = ++_imageRequest;
+        var layout = Layout;
+        var map = SelectedMap;
+        var failed = Loc.T("newev.realMap.failed");
+        if (LayoutStatus == failed) LayoutStatus = "";
+        bool wantsReal = ShowRealMap && _realMap.Available && layout is not null && map is not null;
+        if (wantsReal && _realMap.Known(map!.Id) is { } known)
+        {
+            SetLayoutImage(known, RealMapRenderer.PixelsPerTile);
+            return;
+        }
+        SetLayoutImage(layout?.Render().ToBitmap(), 8);
+        if (!wantsReal) return;
+
+        var image = await _realMap.GetAsync(layout!, map!.Id, _map.Headers.First(h => h.Id == map.Id).AreaId);
+        if (request != _imageRequest) return;
+        if (image is null) LayoutStatus = failed;
+        else SetLayoutImage(image, RealMapRenderer.PixelsPerTile);
+    }
+
+    private void SetLayoutImage(BitmapSource? image, int scale)
+    {
+        LayoutImage = image;
+        TileScale = scale;
+        ShowsPlan = scale != RealMapRenderer.PixelsPerTile;
+        LayoutChanged?.Invoke();
+    }
     public MapLayout? Layout { get; private set; }
 
     private Dictionary<int, System.Windows.Media.Imaging.BitmapSource?> _npcSprites = [];
@@ -142,17 +192,17 @@ public sealed partial class EventMapViewModel : ObservableObject
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"{e.Title} · {Loc.T("ev.script", e.ScriptId)}{(e.IsStandardScript ? " " + Loc.T("ev.standard") : "")}");
         if (e.Kind is EventKind.Npc or EventKind.Trigger or EventKind.Sign) sb.AppendLine(Loc.T("ev.position", e.X, e.Y));
-        if (e.HideFlag is { } hf) sb.AppendLine(Loc.T("ev.hideFlag", $"0x{hf:X}", _map.Names.Flag(hf) ?? "-"));
-        if (e.ConditionVar is { } cv) sb.AppendLine(Loc.T("ev.condition", $"0x{cv:X}", _map.Names.Var(cv) ?? "-", e.ConditionValue));
+        if (e.HideFlag is { } hf) sb.AppendLine(Loc.T("ev.hideFlag", FlagNames.Label(hf, _map.Names.Flag(hf))));
+        if (e.ConditionVar is { } cv) sb.AppendLine(Loc.T("ev.condition", FlagNames.Label(cv, _map.Names.Var(cv)), e.ConditionValue));
         if (e.Flags.Count > 0)
         {
             sb.AppendLine(); sb.AppendLine(Loc.T("ev.flagsTitle"));
-            foreach (var f in e.Flags) sb.AppendLine($"  {Loc.T("ev.action." + f.Action)}  0x{f.Id:X}  {_map.Names.Flag(f.Id) ?? ""}");
+            foreach (var f in e.Flags) sb.AppendLine($"  {Loc.T("ev.action." + f.Action)}  {FlagNames.Label(f.Id, _map.Names.Flag(f.Id))}");
         }
         if (e.Vars.Count > 0)
         {
             sb.AppendLine(); sb.AppendLine(Loc.T("ev.varsTitle"));
-            foreach (var v in e.Vars) sb.AppendLine($"  {Loc.T("ev.action." + v.Action)}  0x{v.Id:X}{(v.Value is { } val ? " " + (v.Action == "compare" ? "?" : "=") + " " + val : "")}  {_map.Names.Var(v.Id) ?? ""}");
+            foreach (var v in e.Vars) sb.AppendLine($"  {Loc.T("ev.action." + v.Action)}  {FlagNames.Label(v.Id, _map.Names.Var(v.Id))}{(v.Value is { } val ? " " + (v.Action == "compare" ? "?" : "=") + " " + val : "")}");
         }
         if (e.Actions.Count > 0)
         {
@@ -193,7 +243,7 @@ public sealed partial class EventMapViewModel : ObservableObject
             bool free = u is null && names.IsUnidentified(name);
             if (!Pass(SelectedFlagFilter.Filter, u is not null, free)) continue;
             var row = new SlotRow(id, name, u?.Uses.Count ?? 0, Where(u), free);
-            if (FlagSearch.Length > 0 && !row.IdHex.Contains(FlagSearch, StringComparison.OrdinalIgnoreCase) && !(name?.Contains(FlagSearch, StringComparison.OrdinalIgnoreCase) ?? false) && !row.Where.Contains(FlagSearch, StringComparison.OrdinalIgnoreCase)) continue;
+            if (FlagSearch.Length > 0 && !row.Matches(FlagSearch)) continue;
             FlagRows.Add(row);
         }
     }
@@ -208,7 +258,7 @@ public sealed partial class EventMapViewModel : ObservableObject
             bool free = u is null && names.IsUnidentified(name);
             if (!Pass(SelectedVarFilter.Filter, u is not null, free)) continue;
             var row = new SlotRow(id, name, u?.Uses.Count ?? 0, Where(u), free);
-            if (VarSearch.Length > 0 && !row.IdHex.Contains(VarSearch, StringComparison.OrdinalIgnoreCase) && !(name?.Contains(VarSearch, StringComparison.OrdinalIgnoreCase) ?? false) && !row.Where.Contains(VarSearch, StringComparison.OrdinalIgnoreCase)) continue;
+            if (VarSearch.Length > 0 && !row.Matches(VarSearch)) continue;
             VarRows.Add(row);
         }
     }

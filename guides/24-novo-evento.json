@@ -17,8 +17,8 @@
       "en-US": "Open the New event card and pick the map in the list."
     },
     {
-      "pt-BR": "Clique na planta onde o NPC deve ficar, em um tile livre.",
-      "en-US": "Click on the plan where the NPC should stand, on a free tile."
+      "pt-BR": "Clique na planta onde o NPC deve ficar, em um tile livre. Marque Mapa real para ver o mapa como é no jogo, visto de cima; o clique funciona igual.",
+      "en-US": "Click on the plan where the NPC should stand, on a free tile. Check Real map to see the map as it is in the game, seen from above; clicking works the same."
     },
     {
       "pt-BR": "Escolha o sprite, a direção e o modelo, e escreva as falas. O hub quebra as linhas para caber na caixa do jogo.",
@@ -39,8 +39,8 @@
       "en-US": "On Platinum, the Pokémon on the map template only lists the 35 species with a field sprite in that game."
     },
     {
-      "pt-BR": "O SoulSilver tem 3 vagas de troca livres, e o Platinum nenhuma. O modelo Trocar Pokémon usa só as que nenhum script usa, então não estraga as trocas originais; quando acabarem, ele avisa. O nível do Pokémon recebido segue o do que você entregou.",
-      "en-US": "SoulSilver has 3 free trade slots, and Platinum none. The Trade Pokémon template only uses those no script uses, so it does not break the original trades; when they run out, it says so. The received Pokémon's level follows the one you gave."
+      "pt-BR": "O modelo Trocar Pokémon usa só vagas que nenhum script usa, então não estraga as trocas originais. Primeiro usa as livres do jogo e depois cria vagas novas, que passam de cem. Em vaga nova, o treinador original do Pokémon recebido tem o nome do treinador da primeira troca do jogo. O nível do Pokémon recebido segue o do que você entregou.",
+      "en-US": "The Trade Pokémon template only uses slots no script uses, so it does not break the original trades. It takes the game's free slots first and then creates new ones, over a hundred of them. In a new slot, the received Pokémon's original trainer has the name of the trainer from the game's first trade. The received Pokémon's level follows the one you gave."
     },
     {
       "pt-BR": "O save guarda os objetos do mapa onde foi feito. Se você salvou no mesmo mapa do NPC novo, saia do mapa e volte para ele aparecer. Em jogo novo isso não acontece.",

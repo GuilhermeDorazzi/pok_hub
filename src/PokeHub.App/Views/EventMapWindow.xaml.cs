@@ -45,7 +45,7 @@ public partial class EventMapWindow : Window
     {
         foreach (var old in LayoutCanvas.Children.OfType<FrameworkElement>().Where(c => c != LayoutImageView).ToList()) LayoutCanvas.Children.Remove(old);
         var layout = _vm.Layout;
-        int scale = EventMapViewModel.TileScale;
+        int scale = _vm.TileScale;
         LayoutImageView.Width = LayoutCanvas.Width = (layout?.Width ?? 0) * scale;
         LayoutImageView.Height = LayoutCanvas.Height = (layout?.Height ?? 0) * scale;
         if (layout is null) return;
@@ -57,12 +57,15 @@ public partial class EventMapWindow : Window
             bool isSelected = _vm.IsSelected(m);
             // o selecionado cresce para fora do tile: num marcador de 8 px, a borda cobriria a cor toda
             int grow = isSelected ? 5 : 0;
+            var sprite = _vm.NpcSprite(m);
+            // no mapa real o NPC já aparece pelo sprite: o quadrado colorido só esconderia o chão
+            bool spriteOnly = !_vm.ShowsPlan && sprite is not null;
             var mark = new Rectangle
             {
                 Width = m.Width * scale + grow * 2,
                 Height = m.Height * scale + grow * 2,
-                Fill = Colors[m.Kind],
-                Stroke = isSelected ? SelectedStroke : Brushes.Black,
+                Fill = spriteOnly ? Brushes.Transparent : Colors[m.Kind],
+                Stroke = isSelected ? SelectedStroke : spriteOnly ? Brushes.Transparent : Brushes.Black,
                 StrokeThickness = isSelected ? 3 : 1,
                 ToolTip = _vm.MarkerTip(m),
                 Cursor = Cursors.Hand,
@@ -71,7 +74,7 @@ public partial class EventMapWindow : Window
             Canvas.SetLeft(mark, m.X * scale - grow);
             Canvas.SetTop(mark, m.Y * scale - grow);
             LayoutCanvas.Children.Add(mark);
-            if (_vm.NpcSprite(m) is { } sprite)
+            if (sprite is not null)
             {
                 // o sprite tem o dobro do tile e fica de pé sobre ele, como no jogo
                 var image = new Image { Source = sprite, Width = scale * 2, Height = scale * 2, ToolTip = mark.ToolTip, Cursor = Cursors.Hand };

@@ -10,8 +10,8 @@ namespace PokeHub.App.Views;
 
 public partial class NewEventWindow : Window
 {
-    private const int Scale = 8;
     private readonly NewEventViewModel _vm;
+    private int Scale => _vm.TileScale;
 
     public NewEventWindow(NewEventViewModel vm)
     {

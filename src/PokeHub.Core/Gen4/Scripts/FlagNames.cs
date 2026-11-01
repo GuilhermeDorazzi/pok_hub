@@ -42,6 +42,18 @@ public sealed class FlagNames
     public static FlagNames Hgss => _hgss.Value;
     public static FlagNames Platinum => _platinum.Value;
 
+    /// <summary>Como flags e variáveis aparecem nas telas: o nome primeiro, e o número nas duas formas, para comparar com a decomp e com tutoriais.</summary>
+    public static string Label(int id, string? name) => name is null ? $"{id} (0x{id:X})" : $"{name} ({id}, 0x{id:X})";
+
+    /// <summary>Número digitado em busca: decimal ou 0x. null se for outro texto.</summary>
+    public static int? ParseId(string text)
+    {
+        var t = text.Trim();
+        if (t.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            return int.TryParse(t.AsSpan(2), System.Globalization.NumberStyles.HexNumber, null, out var hex) ? hex : null;
+        return int.TryParse(t, out var number) && number >= 0 ? number : null;
+    }
+
     public string? Flag(int id) => _flags.GetValueOrDefault(id);
     public string? Var(int id) => _vars.GetValueOrDefault(id);
     public bool IsSavedFlag(int id) => id > 0 && id < NumFlags;

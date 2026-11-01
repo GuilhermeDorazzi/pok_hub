@@ -68,14 +68,17 @@
                         </ListView>
                         <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="{DynamicResource BorderBrush}" />
                         <DockPanel Grid.Column="2">
+                            <CheckBox DockPanel.Dock="Top" Content="{loc:T newev.realMap}" ToolTip="{loc:T ev.realMap.tip}" IsChecked="{Binding ShowRealMap}" IsEnabled="{Binding RealMapAvailable}" Margin="0,0,0,4" />
                             <WrapPanel DockPanel.Dock="Bottom" Margin="0,4,0,0" TextElement.FontSize="11">
                                 <Border Width="10" Height="10" Background="#E0403A" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.npc}" Margin="0,0,8,0" />
                                 <Border Width="10" Height="10" Background="#E8B820" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.trigger}" Margin="0,0,8,0" />
                                 <Border Width="10" Height="10" Background="#3070E0" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.sign}" Margin="0,0,8,0" />
                                 <Border Width="10" Height="10" Background="#A040C0" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.warp}" Margin="0,0,8,0" />
-                                <Border Width="10" Height="10" Background="#60686E" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.blocked}" Margin="0,0,8,0" />
-                                <Border Width="10" Height="10" Background="#7ABE64" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.grass}" Margin="0,0,8,0" />
-                                <Border Width="10" Height="10" Background="#68A5E1" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.water}" />
+                                <StackPanel Orientation="Horizontal" Visibility="{Binding ShowsPlan, Converter={StaticResource BoolToVis}}">
+                                    <Border Width="10" Height="10" Background="#60686E" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.blocked}" Margin="0,0,8,0" />
+                                    <Border Width="10" Height="10" Background="#7ABE64" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.grass}" Margin="0,0,8,0" />
+                                    <Border Width="10" Height="10" Background="#68A5E1" Margin="0,0,3,0" /><TextBlock Text="{loc:T ev.layout.water}" />
+                                </StackPanel>
                             </WrapPanel>
                             <TextBlock DockPanel.Dock="Bottom" Text="{Binding LayoutStatus}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" />
                             <ScrollViewer x:Name="LayoutScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="#2A2E32">
@@ -103,7 +106,8 @@
                     <ListView ItemsSource="{Binding FlagRows}" VirtualizingPanel.IsVirtualizing="True">
                         <ListView.View>
                             <GridView>
-                                <GridViewColumn Header="Id" Width="70" DisplayMemberBinding="{Binding IdHex}" />
+                                <GridViewColumn Header="{loc:T ev.col.number}" Width="70" DisplayMemberBinding="{Binding Id}" />
+                                <GridViewColumn Header="Hex" Width="70" DisplayMemberBinding="{Binding IdHex}" />
                                 <GridViewColumn Header="{loc:T ev.col.name}" Width="300" DisplayMemberBinding="{Binding NameOrDash}" />
                                 <GridViewColumn Header="{loc:T ev.col.status}" Width="150" DisplayMemberBinding="{Binding Status}" />
                                 <GridViewColumn Header="{loc:T ev.col.where}" Width="600" DisplayMemberBinding="{Binding Where}" />
@@ -124,7 +128,8 @@
                     <ListView ItemsSource="{Binding VarRows}" VirtualizingPanel.IsVirtualizing="True">
                         <ListView.View>
                             <GridView>
-                                <GridViewColumn Header="Id" Width="70" DisplayMemberBinding="{Binding IdHex}" />
+                                <GridViewColumn Header="{loc:T ev.col.number}" Width="70" DisplayMemberBinding="{Binding Id}" />
+                                <GridViewColumn Header="Hex" Width="70" DisplayMemberBinding="{Binding IdHex}" />
                                 <GridViewColumn Header="{loc:T ev.col.name}" Width="300" DisplayMemberBinding="{Binding NameOrDash}" />
                                 <GridViewColumn Header="{loc:T ev.col.status}" Width="150" DisplayMemberBinding="{Binding Status}" />
                                 <GridViewColumn Header="{loc:T ev.col.where}" Width="600" DisplayMemberBinding="{Binding Where}" />

@@ -8,6 +8,17 @@
         mc:Ignorable="d" d:DataContext="{d:DesignInstance vm:NewEventViewModel}"
         Title="{loc:T newev.title}" Width="1240" Height="780" MinWidth="980" MinHeight="560"
         WindowStartupLocation="CenterOwner" FontSize="13">
+    <Window.Resources>
+        <DataTemplate x:Key="ChoiceWithIcon" DataType="{x:Type vm:NewEventChoice}">
+            <StackPanel Orientation="Horizontal">
+                <Image Source="{Binding Icon}" Width="32" Height="32" Margin="0,-4,6,-4" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+            </StackPanel>
+        </DataTemplate>
+        <ItemsPanelTemplate x:Key="LongListPanel">
+            <VirtualizingStackPanel />
+        </ItemsPanelTemplate>
+    </Window.Resources>
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="220" />
@@ -36,6 +47,7 @@
         <DockPanel Grid.Column="1">
             <TextBlock DockPanel.Dock="Top" Text="{loc:T newev.step.place}" FontWeight="Bold" Margin="0,0,0,6" />
             <TextBlock DockPanel.Dock="Top" Text="{Binding Position}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,6" />
+            <CheckBox DockPanel.Dock="Top" Content="{loc:T newev.realMap}" ToolTip="{loc:T newev.realMap.tip}" IsChecked="{Binding ShowRealMap}" IsEnabled="{Binding RealMapAvailable}" Margin="0,0,0,6" />
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                 <Canvas x:Name="LayoutCanvas" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent" MouseLeftButtonDown="LayoutCanvas_Click" Cursor="Cross">
                     <Image x:Name="LayoutImageView" Source="{Binding LayoutImage}" RenderOptions.BitmapScalingMode="NearestNeighbor" />
@@ -86,7 +98,7 @@
                     <DockPanel Margin="0,0,0,8">
                         <TextBlock Text="{loc:T newev.itemName}" VerticalAlignment="Center" Margin="0,0,8,0" />
                         <TextBox DockPanel.Dock="Right" Text="{Binding Quantity}" Width="44" Margin="8,0,0,0" ToolTip="{loc:T newev.quantity}" />
-                        <ComboBox ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" />
+                        <ComboBox ItemTemplate="{StaticResource ChoiceWithIcon}" ItemsPanel="{StaticResource LongListPanel}" TextSearch.TextPath="Label" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" />
                     </DockPanel>
                     <TextBlock Text="{loc:T newev.afterText}" Margin="0,0,0,4" />
                     <TextBox Text="{Binding AfterText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="60" />
@@ -96,7 +108,7 @@
                     <DockPanel Margin="0,0,0,8">
                         <Image DockPanel.Dock="Right" Source="{Binding PokemonSprite}" Width="32" Height="32" Margin="8,0,0,0" RenderOptions.BitmapScalingMode="NearestNeighbor" />
                         <TextBlock Text="{loc:T newev.species}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <ComboBox ItemsSource="{Binding Species}" SelectedItem="{Binding SelectedSpecies}" />
+                        <ComboBox ItemTemplate="{StaticResource ChoiceWithIcon}" ItemsPanel="{StaticResource LongListPanel}" TextSearch.TextPath="Label" ItemsSource="{Binding Species}" SelectedItem="{Binding SelectedSpecies}" />
                     </DockPanel>
                     <DockPanel Margin="0,0,0,8">
                         <TextBlock Text="{loc:T newev.level}" VerticalAlignment="Center" Margin="0,0,8,0" />
@@ -112,11 +124,11 @@
                     <TextBlock Text="{Binding FreeTradeNote}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,6" />
                     <DockPanel Margin="0,0,0,6">
                         <TextBlock Text="{loc:T newev.trade.ask}" Width="70" VerticalAlignment="Center" />
-                        <ComboBox ItemsSource="{Binding AllSpecies}" SelectedItem="{Binding AskSpecies}" />
+                        <ComboBox ItemTemplate="{StaticResource ChoiceWithIcon}" ItemsPanel="{StaticResource LongListPanel}" TextSearch.TextPath="Label" ItemsSource="{Binding AllSpecies}" SelectedItem="{Binding AskSpecies}" />
                     </DockPanel>
                     <DockPanel Margin="0,0,0,6">
                         <TextBlock Text="{loc:T newev.trade.give}" Width="70" VerticalAlignment="Center" />
-                        <ComboBox ItemsSource="{Binding AllSpecies}" SelectedItem="{Binding GiveSpecies}" />
+                        <ComboBox ItemTemplate="{StaticResource ChoiceWithIcon}" ItemsPanel="{StaticResource LongListPanel}" TextSearch.TextPath="Label" ItemsSource="{Binding AllSpecies}" SelectedItem="{Binding GiveSpecies}" />
                     </DockPanel>
                     <DockPanel Margin="0,0,0,6">
                         <TextBlock Text="{loc:T newev.trade.nickname}" Width="70" VerticalAlignment="Center" />
