@@ -18,7 +18,7 @@ Esforço, em tamanho relativo: **pequeno** (estende algo que já existe), **méd
 | Etapa | Situação | Conferido no jogo? |
 |---|---|---|
 | 1. Missão, condições, vender Pokémon | Pronta | Sim: missões encadeadas, 3 Potions, dinheiro, trava da Elite e venda com Sim e Não, em cópia do `Pokemon SS` |
-| 1B. Eventos especiais | Enigma Stone liberada por Missão. Missão também pode dar o Pokémon em si, mas isso não abre os eventos de Celebi, Arceus e Pichu de orelha espigada | Só por teste de script; a sala de Latias e Latios não foi visitada no jogo |
+| 1B. Eventos especiais | Enigma Stone liberada por Missão. Celebi, Arceus e Pichu de orelha espigada abrem pela espécie, no card Depois da Elite | Celebi testado pelo usuário no jogo. Arceus e Pichu só por teste de script; a sala de Latias e Latios não foi visitada no jogo |
 | 2. Treinador | Pronta, com "Duplicar como novo" no editor | Parcial: visão e batalha sim. Revanche, derrota do jogador, sumir e a fala de desafio corrigida, não |
 | 3. IA em lote | Pronta | Tela conferida; batalha com IA competitiva, não |
 | 4. O que falta capturar | Pronta: 65 espécies faltando na base do SoulSilver | Tela conferida; a lista fixa continua não confirmada |
@@ -30,7 +30,7 @@ Esforço, em tamanho relativo: **pequeno** (estende algo que já existe), **méd
 
 **Enigma Stone.** A leitura anterior estava errada: `ScrCmd_546` modo 0 não quer dizer "ainda não leu". Ele compara a variável `0x4043` com `0x06F2`, e quem grava esse valor é o Presente Misterioso ao entregar a pedra. Uma Missão com a Enigma Stone como recompensa grava os dois.
 
-**Celebi, Arceus e Pichu de orelha espigada.** O jogo só abre esses eventos se o Pokémon que segue o jogador tiver os dados de um Pokémon de evento (`ScrCmd_FollowerPokeIsEventTrigger`, `MonMetadataMatchesEvent`). O `GiveMon` não aceita esses dados, então um Celebi dado por Missão serve para a Pokédex, mas não abre o evento. Para abrir, seria preciso editar os scripts desses eventos, o que ainda não foi testado. Detalhes em `05-lacunas-da-historia.md`.
+**Celebi, Arceus e Pichu de orelha espigada.** O jogo só abre esses eventos se o Pokémon que segue o jogador tiver os dados de um Pokémon de evento (`ScrCmd_FollowerPokeIsEventTrigger`, `MonMetadataMatchesEvent`). O `GiveMon` não aceita esses dados, então o hub troca essa checagem por uma que confere só a espécie. A do Arceus de outro jogo (tipo 1) fica como está e segue negando, que é o caminho normal de quem tem o Arceus de distribuição. Detalhes em `05-lacunas-da-historia.md`.
 
 **Evolução paga: um caminho sem injeção.** O menu de item evolui quando o item tem o atributo de evolução e a espécie tem método 7 com esse item (`GetMonEvolution`, `EVOCTX_ITEM_USE`). A tabela de evoluções do hub já muda o método e funciona no `Pokemon SS`. Então "pague e evolua" pode ser: trocar o método das 17 evoluções por pedra e vender a pedra por um preço alto. Mantém apelido, IVs e treinador, e não exige converter para ds-rom. A diferença é que o jogador usa o item em vez de entregar o Pokémon. A troca de método não chegou a ser vista no jogo: o teste parou antes. Uma pedra nova exigiria editar o atributo de evolução, que a tabela de itens ainda não mostra; com as pedras existentes, funciona já pelo código lido.
 
@@ -501,6 +501,8 @@ Surfe e pesca pelo ambiente (mar, água doce e caverna), com níveis da área: a
 Mais Pokémon fecham passagem, como o Sudowoodo, com nível da área e tema do lugar: Slugma no Burned Tower (22), Baltoy nas Ruins of Alph (22), Graveler na entrada oeste do Mt. Mortar (28), Exeggutor e Tangela na Rota 44 (34), Tangela no Ginásio de Celadon (34), Golduck na Rota 25 (33), dois Clefairy na Rota 3 (26) e Drowzee na Rota 16 (30). Só saem se vencidos ou capturados, então não travam o jogo. Quatro ficam em caminho da história: Burned Tower, Mt. Mortar e os dois da Rota 44.
 
 Safari Zone: as 12 áreas têm um raro de assinatura na grama desde a primeira visita, de dia e à noite, e um raro de surfe e um de Supervara, cada um em 10% dos encontros. O bônus mais difícil de liberar com os objetos virou o grande prêmio da área, um Pokémon totalmente evoluído de nível 50 a 55. Níveis da grama foram de 15 a 17 para 28 a 33. Só PHIONE segue sem captura.
+
+Eventos de Arceus e Pichu, ainda sem jogar. Com o Arceus da missão de Pallet na frente do time, passar diante da porta do centro de pesquisa das Ruins of Alph (tile 441,286) leva às Sinjoh Ruins. Lá a Cynthia pede que só o Arceus suba no Mystri Stage, e o jogador escolhe Dialga com Adamant Orb, Palkia com Lustrous Orb ou Giratina Origin com Griseous Orb, no nível 60 em vez de 1. Vale um por jogo: a segunda visita com o mesmo Arceus cai na fala de que ele não responde mais. Com Pichu, Pikachu ou Raichu na frente do time, depois do evento do Giovanni (flag 376), o santuário de Ilex entrega o Pichu de orelha espigada, de presente e sem batalha; com o time cheio, o personagem pede para abrir espaço. Pistas: uma estudiosa em Pallet e um guarda em Ilex.
 
 Falta: paletas e música da cara nova e evolução paga (parada por decisão). Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
