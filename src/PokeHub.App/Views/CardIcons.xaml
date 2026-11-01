@@ -50,6 +50,17 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!-- Cara do jogo: moldura com estrela -->
+    <DrawingImage x:Key="icon.face">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <StaticResource ResourceKey="Frame" />
+                <GeometryDrawing Brush="{StaticResource B}" Geometry="M3,5 H21 V19 H3 Z" />
+                <GeometryDrawing Brush="{StaticResource W}" Geometry="M12,7 L13.8,10.6 L17.8,11.2 L14.9,14 L15.6,18 L12,16.1 L8.4,18 L9.1,14 L6.2,11.2 L10.2,10.6 Z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
     <!-- Treinadores por local: pessoa e marcador -->
     <DrawingImage x:Key="icon.census">
         <DrawingImage.Drawing>

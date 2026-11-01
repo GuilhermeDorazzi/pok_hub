@@ -1,0 +1,41 @@
+<Window x:Class="PokeHub.App.Views.GameFaceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:PokeHub.App"
+        Title="{loc:T face.title}" Width="620" SizeToContent="Height" MinWidth="520"
+        WindowStartupLocation="CenterOwner" FontSize="13">
+    <StackPanel Margin="12">
+        <TextBlock Text="{loc:T face.intro}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,10" />
+
+        <GroupBox Header="{loc:T face.logo}" Padding="8" Margin="0,0,0,10" IsEnabled="{Binding CanEditLogo}">
+            <StackPanel>
+                <TextBlock Text="{loc:T face.logo.hint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,6" />
+                <Border Background="#222" HorizontalAlignment="Left" Margin="0,0,0,6">
+                    <Image Source="{Binding Logo}" Width="256" Height="120" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                </Border>
+                <Button Content="{loc:T face.importLogo}" Command="{Binding ImportLogoCommand}" HorizontalAlignment="Left" Padding="10,4" />
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Header="{loc:T face.banner}" Padding="8" Margin="0,0,0,10" IsEnabled="{Binding CanEditBanner}">
+            <StackPanel>
+                <TextBlock Text="{loc:T face.banner.hint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,6" />
+                <DockPanel Margin="0,0,0,6">
+                    <Border Background="#222" DockPanel.Dock="Left" Margin="0,0,10,0" VerticalAlignment="Top">
+                        <Image Source="{Binding Icon}" Width="64" Height="64" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                    </Border>
+                    <Button Content="{loc:T face.importIcon}" Command="{Binding ImportIconCommand}" HorizontalAlignment="Left" VerticalAlignment="Top" Padding="10,4" />
+                </DockPanel>
+                <TextBlock Text="{loc:T face.name}" Margin="0,0,0,2" />
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                <TextBlock Text="{loc:T face.subtitle}" Margin="0,0,0,2" />
+                <TextBox Text="{Binding Subtitle, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                <TextBlock Text="{loc:T face.romTitle}" Margin="0,0,0,2" />
+                <TextBox Text="{Binding RomTitle, UpdateSourceTrigger=PropertyChanged}" MaxLength="12" Width="160" HorizontalAlignment="Left" Margin="0,0,0,8" />
+                <Button Content="{loc:T face.saveBanner}" Command="{Binding SaveBannerCommand}" HorizontalAlignment="Left" Padding="10,4" />
+            </StackPanel>
+        </GroupBox>
+
+        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+    </StackPanel>
+</Window>

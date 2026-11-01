@@ -142,6 +142,7 @@ public sealed partial class MainViewModel : ObservableObject
         OpenCatchCommand.NotifyCanExecuteChanged();
         OpenTrainerCensusCommand.NotifyCanExecuteChanged();
         OpenPostEliteCommand.NotifyCanExecuteChanged();
+        OpenGameFaceCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(HasProject));
         OnPropertyChanged(nameof(ProjectTitle));
         OnPropertyChanged(nameof(ProjectSummary));
@@ -307,6 +308,14 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     // ----- operações em lote -----
+
+    [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
+    private void OpenGameFace()
+    {
+        var p = CurrentProject!;
+        if (!WorkspaceService.IsExtracted(p)) { Log(Loc.T("vm.wsEmptyExtract")); return; }
+        new GameFaceWindow(new GameFaceViewModel(p, Log, message => SnapshotForEditorAsync(p, message))) { Owner = Application.Current.MainWindow }.Show();
+    }
 
     [RelayCommand(CanExecute = nameof(HasProjectAndIdle))]
     private void OpenPostElite()
@@ -781,6 +790,7 @@ public sealed partial class MainViewModel : ObservableObject
 
             new("text", FeatureGroup.Media, Tool("text-editor")),
             new("graphics", FeatureGroup.Media, Tool("nitropaint")),
+            new("face", FeatureGroup.Media, null, OpenGameFaceCommand, Extracted, Open, NeedsProject),
             new("narcs", FeatureGroup.Media, null, OpenNarcBrowserCommand, Extracted, Open, NeedsProject),
             new("audio", FeatureGroup.Media, Tool("nitrostudio2")),
             new("models", FeatureGroup.Media, Tool("apicula")),
