@@ -26,7 +26,7 @@ Esforço, em tamanho relativo: **pequeno** (estende algo que já existe), **méd
 | Depois da Elite: liberar treinadores, × nível, santuário de Ilex | Pronto, card próprio | Sim, em ds-rom, com o fim da Elite simulado por um NPC: treinadores voltam, níveis × 1,3 e evento do Giovanni com Celebi de Missão. Falta o comando real no Hall da Fama |
 | Enigma Stone por Missão, revanche, sumir, fala de desafio e derrota do jogador | Prontos | Sim, em ds-rom, testados pelo usuário em 01/11/2026 |
 | 5. Evolução paga | Pesquisada, sem código; parada por decisão do usuário | Não |
-| 6. Cara nova | Card Cara do jogo: logo, nome e ícone. Falta a arte e o nome | Só em cópia: a ROM montada traz nome e ícone novos. O logo não foi visto no jogo |
+| 6. Cara nova | Card Cara do jogo: logo, nome e ícone. O nome fica como Pokémon SoulSilver, só com a versão no fim (V1, V2...), por decisão do usuário | Nome confirmado lendo a ROM oficial. Logo e ícone só em cópia, e o logo não foi visto no jogo |
 
 **Enigma Stone.** A leitura anterior estava errada: `ScrCmd_546` modo 0 não quer dizer "ainda não leu". Ele compara a variável `0x4043` com `0x06F2`, e quem grava esse valor é o Presente Misterioso ao entregar a pedra. Uma Missão com a Enigma Stone como recompensa grava os dois.
 
@@ -353,7 +353,7 @@ A GS Ball não existe em HG/SS: é do Crystal. A ideia vira uma missão pós-Eli
 
 **O que definir quando a etapa começar (nada disso está pendente agora):**
 
-- [ ] Nome do jogo.
+- [x] Nome do jogo: continua Pokémon SoulSilver, com V1 a Vn no fim para indicar a versão.
 - [ ] Logo e tela de título: traz a arte ou pede sugestão?
 - [ ] Banner e ícone da ROM.
 - [ ] O que muda de aparência: paletas de personagens, Pokémon, menus?
