@@ -484,7 +484,9 @@ Escolhas feitas sem aprovação, para rever jogando: piso 40 no × 1,3; falas e 
 
 Snorlax que fecham caminho, com a opção Bloquear o caminho: só saem se vencidos ou capturados. Dois de nível 45 fecham a parte da Dark Cave ligada às Rotas 31 e 46, que também abre pela Rota 45 com Surf. Um de nível 60 fecha a porta do meio do Mt. Mortar na Rota 42, a única para o fundo da caverna. Um de nível 70 fecha o Mt. Moon na Rota 3, e com ele a Rota 4. Nenhum fica em caminho da história. Os outros Pokémon parados seguem a regra dos lendários do jogo: só somem de vez se capturados; nocauteados ou deixados para trás, voltam quando o mapa recarrega. Nas portas e faixas estreitas de rota obrigatória não dá para pôr bloqueio sem travar o jogo, e as rotas opcionais largas pediriam vários Snorlax lado a lado.
 
-Falta: cara nova, evolução paga (parada por decisão) e novas histórias com cena, que pedem o editor de scripts. Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
+Primeira história com cena, feita com o tipo Cena do Novo evento: os quatro executivos da Rocket, depois da Elite, nesta ordem: Petrel em Celadon, Proton em Lavender, Ariana em Saffron e Archer em Viridian. Cada um fala, luta, conta onde está o próximo, sai andando e some. Um guia em Saffron acompanha e, no fim, aponta para o santuário de Ilex. Os níveis são fixos, de 58 a 66. Usam o sprite comum da Rocket, porque não há sprite próprio identificado na decomp. Cena só move o próprio NPC: mover o jogador e a câmera ainda não existe.
+
+Falta: paletas e música da cara nova, evolução paga (parada por decisão) e mais histórias, como a continuação do Silver e o fim depois do Red. Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
 ### Mais conteúdo pedido (01/11/2026)
 

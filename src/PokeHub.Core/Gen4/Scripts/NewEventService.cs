@@ -811,6 +811,17 @@ public static class NewEventService
 
         // falas do próprio registro: com visão, são as que o jogo mostra; sem visão, a de derrota aparece no fim da batalha e não pode ficar vazia
         TrainerMessages? trainerMessages = null;
+        // a fala de derrota aparece no fim da batalha e não pode ficar vazia: a cena usa a fala seguinte
+        if (npc.Behavior is SceneBehavior scenic && game.IsHgss && !game.Japanese && scenic.Steps.Any(step => step.Action == SceneAction.Battle))
+        {
+            trainerMessages = TrainerMessages.Load(project);
+            for (int i = 0; i < scenic.Steps.Count; i++)
+            {
+                if (scenic.Steps[i].Action != SceneAction.Battle || trainerMessages.Has(scenic.Steps[i].Value, TrainerMessages.Lose)) continue;
+                var next = scenic.Steps.Skip(i + 1).FirstOrDefault(step => step.Action == SceneAction.Say)?.Text ?? scenic.Steps.Take(i).LastOrDefault(step => step.Action == SceneAction.Say)?.Text ?? "...";
+                trainerMessages.Set(texts, scenic.Steps[i].Value, new Dictionary<int, string> { [TrainerMessages.Lose] = next });
+            }
+        }
         if (npc.Behavior is TrainerBehavior spoken && game.IsHgss && !game.Japanese)
         {
             trainerMessages = TrainerMessages.Load(project);
