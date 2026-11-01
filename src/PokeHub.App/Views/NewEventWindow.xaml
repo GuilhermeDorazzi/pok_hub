@@ -90,7 +90,13 @@
                 <RadioButton Content="{loc:T newev.sell}" IsChecked="{Binding IsSell}" Margin="0,0,0,4" />
                 <RadioButton Content="{loc:T newev.trainer}" IsChecked="{Binding IsTrainer}" Margin="0,0,0,4" />
                 <RadioButton Content="{loc:T newev.ground}" IsChecked="{Binding IsGround}" Margin="0,0,0,4" />
-                <RadioButton Content="{loc:T newev.guide}" IsChecked="{Binding IsGuide}" Margin="0,0,0,8" />
+                <RadioButton Content="{loc:T newev.guide}" IsChecked="{Binding IsGuide}" Margin="0,0,0,4" />
+                <RadioButton Content="{loc:T newev.scene}" IsChecked="{Binding IsScene}" Margin="0,0,0,8" />
+
+                <StackPanel Visibility="{Binding IsScene, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{loc:T newev.scene.hint}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding SceneText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="120" />
+                </StackPanel>
 
                 <StackPanel Visibility="{Binding IsGround, Converter={StaticResource BoolToVis}}">
                     <DockPanel Margin="0,0,0,6">

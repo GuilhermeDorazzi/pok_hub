@@ -68,13 +68,14 @@ public sealed class ScriptEditor
         const int EntrySize = 4;
         int count = File.EntryOffsets.Count;
         int tableEnd = count * EntrySize;
-        var output = new byte[Raw.Length + EntrySize + code.Length];
+        int start = AlignedStart(Raw.Length + EntrySize);
+        var output = new byte[start + code.Length];
         Buffer.BlockCopy(Raw, 0, output, 0, tableEnd);
         Buffer.BlockCopy(Raw, tableEnd, output, tableEnd + EntrySize, Raw.Length - tableEnd);
-        code.CopyTo(output, Raw.Length + EntrySize);
+        code.CopyTo(output, start);
         for (int i = 0; i < count; i++)
             BitConverter.TryWriteBytes(output.AsSpan(i * EntrySize), BitConverter.ToInt32(Raw, i * EntrySize) + EntrySize);
-        BitConverter.TryWriteBytes(output.AsSpan(tableEnd), Raw.Length + EntrySize - (tableEnd + EntrySize));
+        BitConverter.TryWriteBytes(output.AsSpan(tableEnd), start - (tableEnd + EntrySize));
         Raw = output;
         File = new ScriptFile(output, Table);
         return count + 1;
@@ -84,14 +85,18 @@ public sealed class ScriptEditor
     public void ReplaceEntry(int id, byte[] code)
     {
         const int EntrySize = 4;
-        var output = new byte[Raw.Length + code.Length];
+        int start = AlignedStart(Raw.Length);
+        var output = new byte[start + code.Length];
         Raw.CopyTo(output, 0);
-        code.CopyTo(output, Raw.Length);
+        code.CopyTo(output, start);
         int entry = (id - 1) * EntrySize;
-        BitConverter.TryWriteBytes(output.AsSpan(entry), Raw.Length - (entry + EntrySize));
+        BitConverter.TryWriteBytes(output.AsSpan(entry), start - (entry + EntrySize));
         Raw = output;
         File = new ScriptFile(output, Table);
     }
+
+    /// <summary>O jogo lê os passos de uma cena de 2 em 2 bytes: fora do alinhamento, leria outra coisa.</summary>
+    private static int AlignedStart(int position) => (position + 3) & ~3;
 
     /// <summary>Grava bytes por cima de um trecho, sem mudar o tamanho do arquivo.</summary>
     public void Overwrite(int at, byte[] bytes)

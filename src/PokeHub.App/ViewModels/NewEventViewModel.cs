@@ -87,6 +87,8 @@ public sealed partial class NewEventViewModel : ObservableObject
     // missão
     [ObservableProperty] private bool _isGround;
     [ObservableProperty] private bool _isGuide;
+    [ObservableProperty] private bool _isScene;
+    [ObservableProperty] private string _sceneText = "";
     [ObservableProperty] private NewEventChoice? _groundItem;
     [ObservableProperty] private string _groundQuantity = "1";
     [ObservableProperty] private bool _groundHidden;
@@ -324,7 +326,7 @@ public sealed partial class NewEventViewModel : ObservableObject
         Created.Clear();
         FinishedNpcs.Clear();
         FinishedNpcs.Add(new NewEventChoice(0, Loc.T("newev.cond.noNpc")));
-        foreach (var npc in NewEventLedger.Load(_project).Npcs.Where(n => n.Flag is not null && n.Kind is "quest" or "trade" or "trainer" or "item" or "sell"))
+        foreach (var npc in NewEventLedger.Load(_project).Npcs.Where(n => n.Flag is not null && n.Kind is "quest" or "trade" or "trainer" or "item" or "sell" or "scene"))
             FinishedNpcs.Add(new NewEventChoice(npc.Flag!.Value, $"{Loc.T($"newev.kind.{npc.Kind}")} · {_map.MapTitle(npc.MapId)} · {npc.X}, {npc.Z}"));
         CondAfterNpc = FinishedNpcs[0];
         if (SelectedMap is not { } map) return;
@@ -351,6 +353,7 @@ public sealed partial class NewEventViewModel : ObservableObject
         IsTrade = npc.Kind == "trade";
         IsGround = npc.Kind == "ground";
         IsGuide = npc.Kind == "guide";
+        IsScene = npc.Kind == "scene";
         IsQuest = npc.Kind == "quest";
         IsSell = npc.Kind == "sell";
         IsTrainer = npc.Kind == "trainer";
@@ -382,6 +385,9 @@ public sealed partial class NewEventViewModel : ObservableObject
                 GroundItem = Items.FirstOrDefault(c => c.Value == g.Item) ?? GroundItem;
                 GroundQuantity = g.Quantity.ToString();
                 GroundHidden = g.Hidden;
+                break;
+            case SceneBehavior scene:
+                SceneText = NewEventService.FormatScene(scene.Steps, Unwrap);
                 break;
             case GuideBehavior guide:
                 for (int i = 0; i < GuideSteps.Count; i++)
@@ -572,7 +578,8 @@ public sealed partial class NewEventViewModel : ObservableObject
 
         try
         {
-            NpcBehavior behavior = IsGround ? new GroundItemBehavior(GroundItem!.Value, int.Parse(GroundQuantity), GroundHidden) : IsGuide ? new GuideBehavior(BuildGuideSteps(), Prepare(GuideFinalText)) : IsQuest ? BuildQuest() : IsSell ? BuildSell() : IsTrainer ? BuildTrainer() : IsTalk ? new TalkBehavior(Prepare(TalkText))
+            NpcBehavior behavior = IsScene ? new SceneBehavior(NewEventService.ParseScene(SceneText).Select(step => step.Action == SceneAction.Say ? step with { Text = Prepare(step.Text!) } : step).ToList())
+                : IsGround ? new GroundItemBehavior(GroundItem!.Value, int.Parse(GroundQuantity), GroundHidden) : IsGuide ? new GuideBehavior(BuildGuideSteps(), Prepare(GuideFinalText)) : IsQuest ? BuildQuest() : IsSell ? BuildSell() : IsTrainer ? BuildTrainer() : IsTalk ? new TalkBehavior(Prepare(TalkText))
                 : IsItem ? new GiveItemBehavior(SelectedItem!.Value, int.Parse(Quantity), Prepare(BeforeText), Prepare(AfterText))
                 : IsTrade ? new TradeBehavior(AskSpecies!.Value, GiveSpecies!.Value, string.IsNullOrWhiteSpace(Nickname) ? null : Nickname.Trim(), Prepare(AskText), Prepare(ThanksText), Prepare(WrongText), Prepare(DeclineText), int.Parse(TradeMinLevel), Prepare(TradeTooLowText))
                 : new PokemonBehavior(SelectedSpecies!.Value, int.Parse(Level), Vanish, string.IsNullOrWhiteSpace(PokemonText) ? null : Prepare(PokemonText), Vanish && Blocks);

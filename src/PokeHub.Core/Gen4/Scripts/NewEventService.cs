@@ -48,6 +48,17 @@ public sealed record GuideBehavior(IReadOnlyList<GuideStep> Steps, string FinalT
 public sealed record TrainerBehavior(int Trainer, string ChallengeText, string BeatenText, string AfterText, int Sight = 0, bool Vanish = false,
     TrainerRematch Rematch = TrainerRematch.None, int? RematchTrainer = null, string? RematchText = null) : NpcBehavior;
 
+public enum SceneAction { Say, Walk, Wait, Face, Battle, Hide }
+
+/// <summary>Um passo de uma cena. Value é o número do treinador, os quadros da espera ou os passos da caminhada; Direction vale para a caminhada: 0 cima, 1 baixo, 2 esquerda, 3 direita.</summary>
+public sealed record SceneStep(SceneAction Action, string? Text = null, int Value = 0, int Direction = 0);
+
+/// <summary>
+/// Cena com o próprio NPC: fala, anda, espera, luta e some, na ordem dada, uma vez só. Perder a batalha recomeça a cena.
+/// Sem sumir, ao falar de novo ele repete a última fala.
+/// </summary>
+public sealed record SceneBehavior(IReadOnlyList<SceneStep> Steps) : NpcBehavior;
+
 /// <summary>O que precisa ser verdade para o NPC fazer o que faz. Sem isso, ele só diz o Text. Vale tudo o que estiver preenchido, ao mesmo tempo.</summary>
 public sealed record NpcCondition(string Text, bool AfterElite = false, int MinBadges = 0, int? Badge = null, int? AfterFlag = null, int MaxPartyLevel = 0);
 
@@ -102,6 +113,15 @@ public sealed class ScriptBuilder(ScriptCommandTable table, IReadOnlyDictionary<
     public ScriptBuilder Label(string name)
     {
         _labels[name] = (int)_code.Length;
+        return this;
+    }
+
+    /// <summary>Dados que não são comandos, como os passos de uma caminhada, alinhados de 4 em 4 bytes.</summary>
+    public ScriptBuilder Data(string label, params ushort[] values)
+    {
+        while (_code.Length % 4 != 0) _code.WriteByte(0);
+        _labels[label] = (int)_code.Length;
+        foreach (var value in values) _code.Write(BitConverter.GetBytes(value));
         return this;
     }
 
@@ -403,7 +423,94 @@ public static class NewEventService
         }
     }
 
-    private static bool IsNewKind(NpcBehavior b) => b is QuestBehavior or SellBehavior or TrainerBehavior or GroundItemBehavior or GuideBehavior;
+    private static bool IsNewKind(NpcBehavior b) => b is QuestBehavior or SellBehavior or TrainerBehavior or GroundItemBehavior or GuideBehavior or SceneBehavior;
+
+    private const int FirstWalkMovement = 12, MovementEnd = 254, MaxSceneSteps = 32, MaxWalk = 32, MaxSceneWait = 600;
+
+    private static void BuildScene(ScriptBuilder s, SceneBehavior scene, IReadOnlyList<int> m, int flag, int objectId)
+    {
+        bool hides = scene.Steps.Any(step => step.Action == SceneAction.Hide);
+        bool fights = scene.Steps.Any(step => step.Action == SceneAction.Battle);
+        s.Emit("CheckFlag", flag).Emit("GoToIf", ConditionEqual, "done");
+        // sem Pokémon para lutar, a batalha não pode começar
+        if (fights) s.Emit("PartyCountNotEgg", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "done");
+        var walks = new List<SceneStep>();
+        int said = 0;
+        foreach (var step in scene.Steps)
+            switch (step.Action)
+            {
+                case SceneAction.Say:
+                    s.Emit("NPCMsg", m[said++]).Emit("WaitButton").Emit("CloseMsg");
+                    break;
+                case SceneAction.Walk:
+                    s.Emit("ApplyMovement", objectId, $"walk{walks.Count}").Emit("WaitMovement");
+                    walks.Add(step);
+                    break;
+                case SceneAction.Wait:
+                    s.Emit("Wait", step.Value, ResultVar);
+                    break;
+                case SceneAction.Face:
+                    s.Emit("FacePlayer");
+                    break;
+                case SceneAction.Battle:
+                    s.Emit("TrainerBattle", step.Value, 0, 0, 0)
+                        .Emit("CheckBattleWon", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "lost");
+                    break;
+            }
+        s.Emit("SetFlag", flag);
+        if (hides) s.Emit("HidePerson", objectId);
+        s.Emit("ReleaseAll").Emit("End");
+        s.Label("lost").Emit("WhiteOut").Emit("ReleaseAll").Emit("End");
+        s.Label("done");
+        if (!hides && said > 0) s.Emit("NPCMsg", m[said - 1]).Emit("WaitButton").Emit("CloseMsg");
+        s.Emit("ReleaseAll").Emit("End");
+        for (int i = 0; i < walks.Count; i++)
+            s.Data($"walk{i}", (ushort)(FirstWalkMovement + walks[i].Direction), (ushort)walks[i].Value, MovementEnd, 0);
+    }
+
+    /// <summary>Lê uma cena escrita uma ação por linha: say: fala, walk: down 3, wait: 30, face, battle: 760 e hide.</summary>
+    public static List<SceneStep> ParseScene(string text)
+    {
+        var steps = new List<SceneStep>();
+        foreach (var raw in text.Split('\n'))
+        {
+            var line = raw.Trim();
+            if (line.Length == 0) continue;
+            int colon = line.IndexOf(':');
+            var verb = (colon < 0 ? line : line[..colon]).Trim().ToLowerInvariant();
+            var rest = colon < 0 ? "" : line[(colon + 1)..].Trim();
+            steps.Add(verb switch
+            {
+                "say" when rest.Length > 0 => new SceneStep(SceneAction.Say, rest),
+                "walk" => ParseWalk(rest, line),
+                "wait" when int.TryParse(rest, out int frames) => new SceneStep(SceneAction.Wait, Value: frames),
+                "face" => new SceneStep(SceneAction.Face),
+                "battle" when int.TryParse(rest, out int trainer) => new SceneStep(SceneAction.Battle, Value: trainer),
+                "hide" => new SceneStep(SceneAction.Hide),
+                _ => throw new ArgumentException(Loc.T("core.newev.badSceneLine", line)),
+            });
+        }
+        return steps;
+    }
+
+    private static SceneStep ParseWalk(string rest, string line)
+    {
+        var parts = rest.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        int direction = parts.FirstOrDefault()?.ToLowerInvariant() switch { "up" => 0, "down" => 1, "left" => 2, "right" => 3, _ => -1 };
+        if (direction < 0 || parts.Length != 2 || !int.TryParse(parts[1], out int count)) throw new ArgumentException(Loc.T("core.newev.badSceneLine", line));
+        return new SceneStep(SceneAction.Walk, Value: count, Direction: direction);
+    }
+
+    /// <summary>O caminho de volta: a cena como texto, para mostrar na janela.</summary>
+    public static string FormatScene(IEnumerable<SceneStep> steps, Func<string, string> unwrap) => string.Join("\n", steps.Select(step => step.Action switch
+    {
+        SceneAction.Say => $"say: {unwrap(step.Text ?? "")}",
+        SceneAction.Walk => $"walk: {new[] { "up", "down", "left", "right" }[step.Direction]} {step.Value}",
+        SceneAction.Wait => $"wait: {step.Value}",
+        SceneAction.Face => "face",
+        SceneAction.Battle => $"battle: {step.Value}",
+        _ => "hide",
+    }));
 
     public static byte[] BuildScript(ScriptCommandTable table, NpcBehavior behavior, IReadOnlyList<int> messages, int? flag, int objectId = 0, int tradeSlot = 0, int? engageFlag = null, NpcCondition? condition = null)
     {
@@ -420,6 +527,7 @@ public static class NewEventService
                 case TrainerBehavior t: BuildTrainer(s, t, messages, flag!.Value, objectId); break;
                 case GroundItemBehavior g: BuildGroundItem(s, g, flag!.Value, objectId); break;
                 case GuideBehavior guide: BuildGuide(s, guide, messages); break;
+                case SceneBehavior scene: BuildScene(s, scene, messages, flag!.Value, objectId); break;
                 case TalkBehavior: Say(s, messages[0]); break;
                 case GiveItemBehavior item:
                     s.Emit("CheckFlag", flag!.Value).Emit("GoToIf", ConditionEqual, "after")
@@ -615,6 +723,7 @@ public static class NewEventService
         if (npc.Facing is < 0 or > 3) throw new ArgumentException(Loc.T("core.newev.badFacing"));
         if (npc.Behavior is GiveItemBehavior { Quantity: < 1 or > 99 }) throw new ArgumentException(Loc.T("core.newev.badQuantity"));
         if (npc.Behavior is PokemonBehavior { Level: < 1 or > 100 }) throw new ArgumentException(Loc.T("core.newev.badLevel"));
+        if (npc.Behavior is SceneBehavior && game.IsPlatinum) throw new ArgumentException(Loc.T("core.newev.badScene", MaxSceneSteps));
         if (npc.Behavior is PokemonBehavior { Blocks: true } && (game.IsPlatinum || npc.Behavior is PokemonBehavior { Vanish: false })) throw new ArgumentException(Loc.T("core.newev.badBlocks"));
         if (npc.Behavior is PokemonBehavior { Species: < 1 or > MaxSpecies }) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
         if (npc.Behavior is PokemonBehavior mon && SpriteForSpecies(mon.Species, game.IsPlatinum) is null) throw new ArgumentException(Loc.T("core.newev.noFieldSprite"));
@@ -655,7 +764,7 @@ public static class NewEventService
         foreach (var id in TrainersOf(npc.Behavior))
             if (id < 1 || id >= trainerCount) throw new ArgumentException(Loc.T("core.newev.badTrainer", id, trainerCount - 1));
         if (sighted is not null && events.Objects.Any(o => o.Id != current?.Id && o.ScriptId == TrainerScriptOf(sighted.Trainer))) warnings.Add(Loc.T("core.newev.sharedTrainer"));
-        bool needsFlag = sighted is null && npc.Behavior is GiveItemBehavior or TradeBehavior or PokemonBehavior { Vanish: true } or QuestBehavior or SellBehavior { Once: true } or TrainerBehavior or GroundItemBehavior;
+        bool needsFlag = sighted is null && npc.Behavior is GiveItemBehavior or TradeBehavior or PokemonBehavior { Vanish: true } or QuestBehavior or SellBehavior { Once: true } or TrainerBehavior or GroundItemBehavior or SceneBehavior;
         bool vanishes = npc.Behavior is PokemonBehavior { Vanish: true, Blocks: false };
         var taken = new HashSet<int>(ledger.RetiredFlags);
         int trainers = Narc.Read(File.ReadAllBytes(game.TrainerDataPath)).Files.Count;
@@ -679,6 +788,7 @@ public static class NewEventService
             TradeBehavior { MinLevel: > 0 } t => [WithYesNo(t.AskText), t.ThanksText, t.WrongText, t.DeclineText, t.TooLowText ?? ""],
             TradeBehavior t => [game.IsHgss ? WithYesNo(t.AskText) : t.AskText, t.ThanksText, t.WrongText, t.DeclineText],
             GuideBehavior g => [.. g.Steps.Select(step => step.Text), g.FinalText],
+            SceneBehavior scene => [.. scene.Steps.Where(step => step.Action == SceneAction.Say).Select(step => step.Text ?? "")],
             QuestBehavior q => [EndWithWait(q.AskText), q.NotYetText, EndWithWait(q.RewardText), q.DoneText, q.FullText],
             SellBehavior v => [WithYesNo(v.OfferText), v.ThanksText, v.NoMoneyText, v.DeclineText, v.FullText, v.SoldOutText],
             TrainerBehavior { Sight: > 0 } => [],
@@ -776,7 +886,7 @@ public static class NewEventService
             },
             Type: sighted is not null ? 1 : 0,
             // a flag do Pokémon que some esconde o objeto; a do item só marca a entrega, e o NPC continua lá
-            EventFlag: npc.Behavior is PokemonBehavior { Vanish: true } or TrainerBehavior { Vanish: true, Sight: 0 } or GroundItemBehavior ? flag!.Value : 0,
+            EventFlag: npc.Behavior is PokemonBehavior { Vanish: true } or TrainerBehavior { Vanish: true, Sight: 0 } or GroundItemBehavior || (npc.Behavior is SceneBehavior played && played.Steps.Any(step => step.Action == SceneAction.Hide)) ? flag!.Value : 0,
             ScriptId: scriptId,
             Facing: npc.Facing,
             X: npc.X,
@@ -825,6 +935,11 @@ public static class NewEventService
 
     private static IEnumerable<int> TrainersOf(NpcBehavior b)
     {
+        if (b is SceneBehavior scene)
+        {
+            foreach (var step in scene.Steps.Where(step => step.Action == SceneAction.Battle)) yield return step.Value;
+            yield break;
+        }
         if (b is not TrainerBehavior t) yield break;
         yield return t.Trainer;
         if (t.RematchTrainer is { } rematch) yield return rematch;
@@ -854,6 +969,13 @@ public static class NewEventService
                 if (q.RewardItem is not null && q.RewardQuantity is < 1 or > 99) throw new ArgumentException(Loc.T("core.newev.badQuantity"));
                 if (q.RewardSpecies is not null && (!Species(q.RewardSpecies) || q.RewardLevel is < 1 or > 100)) throw new ArgumentException(Loc.T("core.newev.badLevel"));
                 if (q.RewardMoney is < 0 or > MaxMoney) throw new ArgumentException(Loc.T("core.newev.badMoney", MaxMoney));
+                break;
+            case SceneBehavior scene:
+                if (scene.Steps.Count is 0 or > MaxSceneSteps || scene.Steps.Any(step =>
+                        (step.Action == SceneAction.Say && string.IsNullOrWhiteSpace(step.Text))
+                        || (step.Action == SceneAction.Walk && (step.Value is < 1 or > MaxWalk || step.Direction is < 0 or > 3))
+                        || (step.Action == SceneAction.Wait && step.Value is < 1 or > MaxSceneWait)))
+                    throw new ArgumentException(Loc.T("core.newev.badScene", MaxSceneSteps));
                 break;
             case SellBehavior v:
                 if (!Species(v.Species)) throw new ArgumentException(Loc.T("core.newev.badSpecies"));
@@ -939,6 +1061,7 @@ public sealed class CreatedNpc
     public int MinLevel { get; set; }
     public bool Hidden { get; set; }
     public List<int> GuideFlags { get; set; } = [];
+    public List<SceneStep> Scene { get; set; } = [];
     public string? ConditionText { get; set; }
 
     public NpcBehavior ToBehavior() => Kind switch
@@ -948,6 +1071,7 @@ public sealed class CreatedNpc
         "trade" => new TradeBehavior(AskSpecies, GiveSpecies, Nickname, Texts[0], Texts[1], Texts[2], Texts[3], MinLevel, Texts.ElementAtOrDefault(4)),
         "ground" => new GroundItemBehavior(Item, Quantity, Hidden),
         "guide" => new GuideBehavior(GuideFlags.Select((flag, i) => new GuideStep(flag, Texts[i])).ToList(), Texts[^1]),
+        "scene" => new SceneBehavior(Scene),
         "quest" => new QuestBehavior(AskItem > 0 ? AskItem : null, AskQuantity, TakeItem, AskSpecies > 0 ? AskSpecies : null, RewardItem > 0 ? RewardItem : null, RewardQuantity,
             RewardSpecies > 0 ? RewardSpecies : null, RewardLevel, RewardMoney, Texts[0], Texts[1], Texts[2], Texts[3], Texts[4]),
         "sell" => new SellBehavior(Species, Level, Price, Once, Texts[0], Texts[1], Texts[2], Texts[3], Texts[4], Texts[5]),
@@ -973,6 +1097,7 @@ public sealed class CreatedNpc
             case GiveItemBehavior i: c.Kind = "item"; c.Item = i.Item; c.Quantity = i.Quantity; c.Texts = [i.BeforeText, i.AfterText]; break;
             case PokemonBehavior p: c.Kind = "pokemon"; c.Species = p.Species; c.Level = p.Level; c.Vanish = p.Vanish; c.Blocks = p.Blocks; c.Texts = p.Text is { Length: > 0 } text ? [text] : []; break;
             case GroundItemBehavior g: c.Kind = "ground"; c.Item = g.Item; c.Quantity = g.Quantity; c.Hidden = g.Hidden; c.Texts = []; break;
+            case SceneBehavior scene: c.Kind = "scene"; c.Scene = [.. scene.Steps]; c.Texts = [.. scene.Steps.Where(step => step.Action == SceneAction.Say).Select(step => step.Text ?? "")]; break;
             case GuideBehavior guide: c.Kind = "guide"; c.GuideFlags = guide.Steps.Select(step => step.Flag).ToList(); c.Texts = [.. guide.Steps.Select(step => step.Text), guide.FinalText]; break;
             case TradeBehavior { MinLevel: > 0 } t: c.Kind = "trade"; c.AskSpecies = t.AskSpecies; c.GiveSpecies = t.GiveSpecies; c.Nickname = t.Nickname; c.MinLevel = t.MinLevel; c.Texts = [t.AskText, t.ThanksText, t.WrongText, t.DeclineText, t.TooLowText ?? ""]; break;
             case TradeBehavior t: c.Kind = "trade"; c.AskSpecies = t.AskSpecies; c.GiveSpecies = t.GiveSpecies; c.Nickname = t.Nickname; c.Texts = [t.AskText, t.ThanksText, t.WrongText, t.DeclineText]; break;

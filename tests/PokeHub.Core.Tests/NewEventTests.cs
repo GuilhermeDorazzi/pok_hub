@@ -91,6 +91,46 @@ public class NewEventTests
     }
 
     [Fact]
+    public void Scene_runs_its_steps_in_order_with_walk_data_aligned()
+    {
+        var table = ScriptCommandTable.Hgss;
+        var scene = new SceneBehavior(NewEventService.ParseScene("say: Hello\nwalk: right 3\nwait: 30\nface\nbattle: 760\nsay: Bye\nwalk: down 2\nhide"));
+        var code = NewEventService.BuildScript(table, scene, [7, 8], 0x95F, 12);
+        var file = new byte[8 + code.Length];
+        BitConverter.TryWriteBytes(file.AsSpan(0), 4);
+        BitConverter.TryWriteBytes(file.AsSpan(4), (ushort)0xFD13);
+        code.CopyTo(file, 8);
+        var ordered = new ScriptFile(file, table).Routine(1)!.Instructions.OrderBy(i => i.Offset).ToList();
+        var names = ordered.Select(i => i.Name).ToList();
+        int battle = names.IndexOf("TrainerBattle");
+        Assert.Equal(760, ordered[battle].Args[0].Value);
+        Assert.True(names.IndexOf("ApplyMovement") < names.IndexOf("Wait"));
+        Assert.True(names.IndexOf("Wait") < battle);
+        Assert.Equal(12, ordered[names.IndexOf("ApplyMovement")].Args[0].Value);
+        // o alvo da caminhada está alinhado e é passo para a direita, 3 vezes, com o fim
+        int walk = (int)ordered[names.IndexOf("ApplyMovement")].Args[1].Value;
+        Assert.Equal(0, walk % 4);
+        Assert.Equal(new ushort[] { 15, 3, 254, 0 }, Enumerable.Range(0, 4).Select(i => BitConverter.ToUInt16(file, walk + i * 2)));
+        Assert.True(names.LastIndexOf("SetFlag") < names.IndexOf("HidePerson"));
+    }
+
+    [Theory]
+    [InlineData("say:")]
+    [InlineData("walk: north 2")]
+    [InlineData("walk: up")]
+    [InlineData("dance")]
+    [InlineData("battle: x")]
+    public void Scene_rejects_what_it_cannot_read(string line) =>
+        Assert.Throws<ArgumentException>(() => NewEventService.ParseScene(line));
+
+    [Fact]
+    public void Scene_text_round_trips()
+    {
+        const string text = "say: Hello\nwalk: left 2\nwait: 10\nface\nbattle: 5\nhide";
+        Assert.Equal(text, NewEventService.FormatScene(NewEventService.ParseScene(text), s => s));
+    }
+
+    [Fact]
     public void Blocking_pokemon_only_leaves_when_beaten_or_caught()
     {
         var table = ScriptCommandTable.Hgss;
