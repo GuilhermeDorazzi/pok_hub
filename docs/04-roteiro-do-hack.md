@@ -415,9 +415,7 @@ Registradas em 01/11/2026. **Valem para o jogo oficial, que ainda não será fei
 | Capturar todas | Todas as espécies, com distribuição proposta para o usuário revisar. Lendários em batalha no mapa, míticos como recompensa de missão, iniciais depois da Elite em missões ou vendedores |
 | Vendedores | Oferta única para raras, repetida para comuns |
 
-**Ainda em aberto:**
-
-- **Evolução paga:** parada por decisão do usuário, inclusive o plano B e o preço.
+**Evolução paga:** substituída pelas trocas de mesma espécie. O desenho antigo fica na Etapa 5, só como registro.
 
 **Interpretações a confirmar quando o jogo oficial começar:**
 
@@ -506,7 +504,9 @@ Eventos de Arceus e Pichu, ainda sem jogar. O Arceus não é mais presente: o Cu
 
 Ginásio opcional de Kanto, ainda sem jogar: o Silph Invitational, na ala direita do saguão da Silph Co., em Saffron, depois da Elite. Um juiz explica as regras: três batalhas em ordem (Koji, Hal e Mori, de níveis 40 a 45), com todo o time até o nível 45. O prêmio é um Lucky Egg, para treinar mais rápido. A escolha do lugar, dos times e do prêmio foi minha, para rever jogando. Os níveis são fixos: não seguem as insígnias de Kanto nem o × 1,3.
 
-Falta: paletas e música da cara nova e evolução paga (parada por decisão). Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
+Evoluções por troca resolvidas sem evolução paga, por ideia do usuário: em cada uma das 17, um NPC pede o mesmo Pokémon a partir de um nível, e o jogador recebe a forma evoluída. O jogo cria o Pokémon recebido direto com a espécie da vaga e no nível do que foi entregue (`_CreateTradeMon`), sem rodar a evolução, então nenhum item, nem a Everstone, atrapalha. Mais 18 trocas por iniciais e raros, com o nível pedido segurando a chegada deles: Treecko, Torchic, Mudkip, Riolu, Eevee, Ralts, Larvitar e Dratini em Johto; Turtwig, Chimchar, Aron, Piplup, Beldum, Chikorita, Cyndaquil, Totodile, Gible e Bagon em Kanto.
+
+Falta: paletas e música da cara nova. Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
 
 ### Mais conteúdo pedido (01/11/2026)
 
