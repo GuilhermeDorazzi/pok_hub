@@ -173,7 +173,11 @@ public static class NewEventService
     public const int HgssTrainerScriptFile = 953, HgssApproachTrainer = 740;
     /// <summary>Banco de texto que o arquivo de scripts de treinador usa (msg_0040): a pergunta da revanche fica nele.</summary>
     public const int HgssTrainerScriptBank = 40;
-    public const string DefaultRematchText = "Want a rematch?";
+    /// <summary>
+    /// A pergunta é invertida: o Sim, que vem marcado, encerra a conversa. Quem aperta A seguido para passar o texto não cai numa batalha sem querer;
+    /// só luta quem escolhe Não.
+    /// </summary>
+    public const string SightRematchText = "Leave the rematch for another time?";
     private const int TrainerIntro = 0, TrainerAfter = 2;
     private const string YesNoPrompt = " {YESNO 0}";
     /// <summary>Flags de treinador começam aqui e vão até o último treinador; as do sistema começam em 0x960.</summary>
@@ -338,12 +342,12 @@ public static class NewEventService
             .Emit("SetTrainerFlag", trainer).Emit("ReleaseAll").Emit("End");
         s.Label("beaten");
         s.Emit("OpenMsg").Emit("TrainerMessage", trainer, TrainerAfter).Emit("WaitButton");
-        AskYesNo(s, askMessage, "no");
-        s.Emit("CloseMsg").Emit("EncounterMusic", trainer)
+        AskYesNo(s, askMessage, "fight");
+        s.Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
+        s.Label("fight").Emit("CloseMsg").Emit("EncounterMusic", trainer)
             .Emit("TrainerBattle", trainer, 0, 0, 0)
             .Emit("CheckBattleWon", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "lost")
             .Emit("ReleaseAll").Emit("End");
-        s.Label("no").Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
         s.Label("after").Emit("OpenMsg").Emit("TrainerMessage", trainer, TrainerAfter).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
         s.Label("lost").Emit("WhiteOut").Emit("ReleaseAll").Emit("End");
         return s.Build();
@@ -356,8 +360,11 @@ public static class NewEventService
         int id = trainer - FirstTrainer + 1;
         var code = BuildTrainerTalk(table, trainer, askMessage);
         int at = editor.File.EntryOffsets[id - 1];
-        bool own = at != editor.File.EntryOffsets[0] && editor.File.Routine(id)!.Instructions.Any(i => i.Name == "CheckTrainerFlag" && i.Args[0].Value == trainer);
-        if (own) editor.Overwrite(at, code);
+        var old = editor.File.Routine(id)!.Instructions;
+        bool own = at != editor.File.EntryOffsets[0] && old.Any(i => i.Name == "CheckTrainerFlag" && i.Args[0].Value == trainer);
+        // só regrava no lugar se couber: o script do treinador seguinte começa logo depois
+        int room = own ? old.Max(i => i.Args.Count == 0 ? i.Offset + 2 : i.Args[^1].At + i.Args[^1].Size) - at : 0;
+        if (own && code.Length <= room) editor.Overwrite(at, code);
         else editor.ReplaceEntry(id, code);
         return editor.Raw;
     }
@@ -403,7 +410,7 @@ public static class NewEventService
         var scripts = Narc.Read(File.ReadAllBytes(game.ScriptsPath));
         foreach (var t in sighted)
             scripts.Files[HgssTrainerScriptFile] = WithTrainerTalk(scripts.Files[HgssTrainerScriptFile], ScriptCommandTable.Hgss, t.Trainer,
-                CommonText(texts, WithYesNo(t.RematchText ?? DefaultRematchText)));
+                CommonText(texts, WithYesNo(SightRematchText)));
         texts.Save();
         File.WriteAllBytes(game.ScriptsPath, scripts.Write());
         return sighted.Count;
@@ -1023,7 +1030,7 @@ public static class NewEventService
             scriptId = TrainerScriptOf(sighted.Trainer);
             if (game.IsHgss)
             {
-                int ask = CommonText(texts, WithYesNo(sighted.RematchText ?? DefaultRematchText));
+                int ask = CommonText(texts, WithYesNo(SightRematchText));
                 scriptsNarc.Files[HgssTrainerScriptFile] = WithTrainerTalk(scriptsNarc.Files[HgssTrainerScriptFile], table, sighted.Trainer, ask);
             }
         }

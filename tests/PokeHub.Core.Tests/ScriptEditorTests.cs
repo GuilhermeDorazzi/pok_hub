@@ -72,6 +72,10 @@ public class ScriptEditorTests
         Assert.Contains(talk, i => i.Name == "SetTrainerFlag" && i.Args[0].Value == 5);
         Assert.Equal(2, talk.Count(i => i.Name == "TrainerBattle" && i.Args[0].Value == 5));
         Assert.Contains(talk, i => i.Name == "NPCMsg" && i.Args[0].Value == 7);
+        // a pergunta é "deixar para depois?": o Sim, que vem marcado, encerra; a revanche só vem pelo Não
+        var ordered = talk.OrderBy(i => i.Offset).ToList();
+        var choice = ordered.FindIndex(i => i.Name == "GetMenuChoice");
+        Assert.Equal("End", ordered.Skip(choice).First(i => i.Name is "End" or "TrainerBattle").Name);
         // nada da agenda do Pokégear
         Assert.DoesNotContain(talk, i => i.Name.Contains("Phone"));
         // as outras entradas novas continuam no script comum
