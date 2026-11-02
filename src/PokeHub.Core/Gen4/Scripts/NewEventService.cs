@@ -174,10 +174,10 @@ public static class NewEventService
     /// <summary>Banco de texto que o arquivo de scripts de treinador usa (msg_0040): a pergunta da revanche fica nele.</summary>
     public const int HgssTrainerScriptBank = 40;
     /// <summary>
-    /// A pergunta é invertida: o Sim, que vem marcado, encerra a conversa. Quem aperta A seguido para passar o texto não cai numa batalha sem querer;
-    /// só luta quem escolhe Não.
+    /// A pergunta é uma provocação em que o Sim, que vem marcado, encerra a conversa ("estou com medo"). Quem aperta A seguido para passar o texto
+    /// não cai numa batalha sem querer; só luta quem escolhe Não.
     /// </summary>
-    public const string SightRematchText = "Leave the rematch for another time?";
+    public const string SightRematchText = "Since our last battle, I’ve gotten\nstronger! Scared to battle me again?";
     private const int TrainerIntro = 0, TrainerAfter = 2;
     private const string YesNoPrompt = " {YESNO 0}";
     /// <summary>Flags de treinador começam aqui e vão até o último treinador; as do sistema começam em 0x960.</summary>
