@@ -370,6 +370,27 @@ public static class NewEventService
         return found >= 0 ? found : texts.AddText(HgssTrainerScriptBank, text);
     }
 
+    /// <summary>O desafio dos treinadores com visão já criados passa a esperar o botão, como nas falas do jogo. Devolve quantos mudaram.</summary>
+    public static int FixSightChallengePause(Project project)
+    {
+        var game = Gen4Game.For(project);
+        if (!game.IsHgss || game.Japanese) return 0;
+        var texts = TextRepository.Load(project);
+        var messages = TrainerMessages.Load(project);
+        int changed = 0;
+        foreach (var id in NewEventLedger.Load(project).Npcs.Select(n => n.ToBehavior()).OfType<TrainerBehavior>().Where(t => t.Sight > 0).Select(t => t.Trainer).Distinct())
+        {
+            var intro = messages.Text(texts, id, TrainerMessages.Intro);
+            if (string.IsNullOrEmpty(intro) || EndWithWait(intro) == intro) continue;
+            messages.Set(texts, id, new Dictionary<int, string> { [TrainerMessages.Intro] = EndWithWait(intro) });
+            changed++;
+        }
+        if (changed == 0) return 0;
+        texts.Save();
+        messages.Save();
+        return changed;
+    }
+
     /// <summary>Dá o script próprio de conversa a todos os treinadores com visão criados pelo hub. Serve para quem os criou antes desta correção.</summary>
     public static int UpdateSightTrainerTalks(Project project)
     {
@@ -957,7 +978,8 @@ public static class NewEventService
             var said = new Dictionary<int, string>();
             if (spoken.Sight > 0)
             {
-                if (!string.IsNullOrWhiteSpace(spoken.ChallengeText)) said[TrainerMessages.Intro] = spoken.ChallengeText;
+                // como nas falas do jogo, o desafio termina esperando o botão: sem isso a batalha começa antes de dar para ler
+                if (!string.IsNullOrWhiteSpace(spoken.ChallengeText)) said[TrainerMessages.Intro] = EndWithWait(spoken.ChallengeText);
                 if (!string.IsNullOrWhiteSpace(spoken.BeatenText)) said[TrainerMessages.Lose] = spoken.BeatenText;
                 if (!string.IsNullOrWhiteSpace(spoken.AfterText)) said[TrainerMessages.After] = spoken.AfterText;
             }
