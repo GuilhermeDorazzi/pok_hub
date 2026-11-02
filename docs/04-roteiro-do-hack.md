@@ -510,7 +510,7 @@ V2, a partir do teste do usuário em 02/11/2026:
 
 - **Travamento ao falar com treinador novo com visão:** o script padrão de treinador tinha entradas só até o 740, e a do 740 é a que roda quando um treinador avista o jogador. A Mia, na Rota 30, era o treinador 740 e travava ao ser chamada para conversar; os de 741 em diante caíam fora da tabela. Cada treinador ganhou a sua entrada, a Mia virou o 790 e o hub não deixa mais o 740 ter visão.
 - **Batalha repetida na Rota 29:** não reproduzida. Ben e Tim são os treinadores 738 e 739, com entradas válidas, e nenhum script apaga as flags deles. Falta conferir jogando na ROM nova.
-- **Espécies de fora da Johto Dex:** na grama de Johto, elas foram para os sons de Hoenn e Sinnoh do rádio, que só funcionam com a National Dex, e a vaga ficou com uma parecida da Johto Dex. Na água, nas pedras e nas árvores, onde não há trava, entrou a parecida (Corphish vira Krabby, Milotic vira Dragonair, Bonsly vira Sudowoodo). Uxie só luta depois da Elite, Azelf e Mesprit foram para Kanto, e o bloqueio das Ruins of Alph virou um Natu. Starly, Shinx, Burmy, Vespiquen, Buneary e Numel perderam lugares em Johto por falta de vaga no rádio, mas seguem capturáveis em outros lugares. A Safari e as trocas de NPC ficaram como estavam.
+- **Espécies de fora da Johto Dex em Johto:** continuam aparecendo antes da National Dex, por decisão do usuário. Uma trava pelo rádio de Hoenn e Sinnoh chegou a ser aplicada e foi desfeita, porque mudava o jogo sem ter sido combinada.
 - **Rota 46:** selvagens de nível 25 a 30, e árvores de 25 a 31.
 
 Falta: paletas e música da cara nova. Phione só sai de ovo do Manaphy, então a tela o mostra como faltando.
