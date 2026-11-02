@@ -166,6 +166,11 @@ public static class NewEventService
     private const int EnigmaStone = 536, EnigmaStoneVar = 0x4043, EnigmaStoneMark = 0x06F2;
     /// <summary>Script padrão de treinador com visão: o jogo tira o número do treinador do número do script (std_trainer na decomp).</summary>
     private const int TrainerStdScript = 3000, FirstTrainer = 1, MaxSight = 15;
+    /// <summary>
+    /// HG/SS: o script padrão dos treinadores com visão fica num arquivo só, com uma entrada por treinador do jogo. A última, a do treinador 740,
+    /// é o script que roda quando um treinador avista o jogador, e o jogo chama esse número direto. Treinador novo depois dela precisa de entrada própria.
+    /// </summary>
+    public const int HgssTrainerScriptFile = 953, HgssApproachTrainer = 740;
     private const string YesNoPrompt = " {YESNO 0}";
     /// <summary>Flags de treinador começam aqui e vão até o último treinador; as do sistema começam em 0x960.</summary>
     private const int TrainerFlagBase = 0x550, SystemFlagBase = 0x960;
@@ -298,6 +303,33 @@ public static class NewEventService
 
     /// <summary>Script padrão do jogo para esse treinador, como nos NPCs com visão do próprio jogo.</summary>
     public static int TrainerScriptOf(int trainer) => trainer - FirstTrainer + TrainerStdScript;
+
+    /// <summary>
+    /// O arquivo de scripts de treinador com entradas até a do treinador pedido; as novas apontam para o script comum de falar com treinador,
+    /// o da primeira entrada. Sem isso, falar com um treinador novo com visão roda o que estiver depois da tabela.
+    /// </summary>
+    public static byte[] WithTrainerScript(byte[] raw, ScriptCommandTable table, int trainer)
+    {
+        if (trainer == HgssApproachTrainer) throw new ArgumentException(Loc.T("core.newev.approachTrainer", HgssApproachTrainer));
+        var editor = new ScriptEditor(raw, table);
+        // cada entrada nova desloca o código em 4 bytes: a posição do script comum é lida de novo a cada volta
+        while (editor.File.EntryOffsets.Count < trainer - FirstTrainer + 1) editor.AddEntryTo(editor.File.EntryOffsets[0]);
+        return editor.Raw;
+    }
+
+    /// <summary>Garante as entradas de todos os treinadores do projeto. Serve para quem criou treinadores com visão antes desta correção.</summary>
+    public static int EnsureTrainerScripts(Project project)
+    {
+        var game = Gen4Game.For(project);
+        if (!game.IsHgss) return 0;
+        int last = Narc.Read(File.ReadAllBytes(game.TrainerDataPath)).Files.Count - 1;
+        var scripts = Narc.Read(File.ReadAllBytes(game.ScriptsPath));
+        int before = new ScriptFile(scripts.Files[HgssTrainerScriptFile], ScriptCommandTable.Hgss).EntryOffsets.Count;
+        scripts.Files[HgssTrainerScriptFile] = WithTrainerScript(scripts.Files[HgssTrainerScriptFile], ScriptCommandTable.Hgss, last == HgssApproachTrainer ? last - 1 : last);
+        if (last == HgssApproachTrainer) return 0;
+        File.WriteAllBytes(game.ScriptsPath, scripts.Write());
+        return new ScriptFile(scripts.Files[HgssTrainerScriptFile], ScriptCommandTable.Hgss).EntryOffsets.Count - before;
+    }
 
     private static void EmitConditionChecks(ScriptBuilder s, NpcCondition? c)
     {
@@ -789,6 +821,7 @@ public static class NewEventService
         foreach (var id in TrainersOf(npc.Behavior))
             if (id < 1 || id >= trainerCount) throw new ArgumentException(Loc.T("core.newev.badTrainer", id, trainerCount - 1));
         if (sighted is not null && events.Objects.Any(o => o.Id != current?.Id && o.ScriptId == TrainerScriptOf(sighted.Trainer))) warnings.Add(Loc.T("core.newev.sharedTrainer"));
+        if (sighted is not null && game.IsHgss && sighted.Trainer == HgssApproachTrainer) throw new ArgumentException(Loc.T("core.newev.approachTrainer", HgssApproachTrainer));
         bool needsFlag = sighted is null && npc.Behavior is GiveItemBehavior or TradeBehavior or PokemonBehavior { Vanish: true } or QuestBehavior or SellBehavior { Once: true } or TrainerBehavior or GroundItemBehavior or SceneBehavior;
         bool vanishes = npc.Behavior is PokemonBehavior { Vanish: true, Blocks: false };
         var taken = new HashSet<int>(ledger.RetiredFlags);
@@ -892,7 +925,11 @@ public static class NewEventService
 
         var editor = new ScriptEditor(scriptsNarc.Files[header.ScriptsBank], table);
         int scriptId = existing?.ScriptId ?? 0;
-        if (sighted is not null) scriptId = TrainerScriptOf(sighted.Trainer);
+        if (sighted is not null)
+        {
+            scriptId = TrainerScriptOf(sighted.Trainer);
+            if (game.IsHgss) scriptsNarc.Files[HgssTrainerScriptFile] = WithTrainerScript(scriptsNarc.Files[HgssTrainerScriptFile], table, sighted.Trainer);
+        }
         else if (existing is null || scriptId >= TrainerStdScript) scriptId = editor.AddEntry(code);
         else editor.ReplaceEntry(scriptId, code);
 

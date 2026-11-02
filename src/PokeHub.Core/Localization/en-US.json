@@ -1332,6 +1332,7 @@
  "postElite.pichu.hint": "With Pichu, Pikachu or Raichu leading the party, the Ilex shrine gives the Spiky-eared Pichu. The original asks for a shiny distribution Pokémon. The flag keeps the event from opening with the first Pichu in the game.",
  "postElite.pichu.flag": "Only after flag (2404 is beating the Elite):",
  "core.postElite.noEvent": "The event was not found on map {0}. Were these scripts changed?",
+ "core.newev.approachTrainer": "Trainer {0} cannot have sight: its script number is the one the game runs when a trainer spots the player. Duplicate it as new and use the copy.",
  "feature.newmaps": "New maps",
  "feature.newmaps.text": "Draw maps from scratch with tiles, with no 3D modeling. Exporting needs g3dcvtr, which is not included.",
  "ev.layout.npc": "NPC",

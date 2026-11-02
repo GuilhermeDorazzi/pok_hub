@@ -42,6 +42,25 @@ public class ScriptEditorTests
     }
 
     [Fact]
+    public void New_trainer_entries_point_to_the_talk_script_and_keep_the_old_ones()
+    {
+        var table = ScriptCommandTable.Hgss;
+        var raw = Sample(table);
+        var before = new ScriptEditor(raw.ToArray(), table);
+        var oldBehavior = Behavior(before, before.Raw);
+
+        var grown = new ScriptEditor(NewEventService.WithTrainerScript(raw, table, 6), table);
+        Assert.Equal(6, grown.File.EntryOffsets.Count);
+        // as entradas antigas continuam no mesmo código, e as novas caem na primeira
+        Assert.Equal(oldBehavior, Behavior(grown, grown.Raw));
+        Assert.All(grown.File.EntryOffsets.Skip(2), o => Assert.Equal(grown.File.EntryOffsets[0], o));
+        Assert.Equal(before.File.Routine(2)!.Instructions.Select(i => i.Name), grown.File.Routine(2)!.Instructions.Select(i => i.Name));
+        // já com entradas suficientes, nada muda
+        Assert.Equal(grown.Raw, NewEventService.WithTrainerScript(grown.Raw, table, 4));
+        Assert.Throws<ArgumentException>(() => NewEventService.WithTrainerScript(raw, table, NewEventService.HgssApproachTrainer));
+    }
+
+    [Fact]
     public void Insert_fixes_entries_and_jumps_and_remove_restores_the_file()
     {
         var table = ScriptCommandTable.Platinum;

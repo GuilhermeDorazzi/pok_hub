@@ -81,6 +81,25 @@ public sealed class ScriptEditor
         return count + 1;
     }
 
+    /// <summary>Acrescenta uma entrada que aponta para um código que já existe no arquivo e devolve o número dela.</summary>
+    public int AddEntryTo(int target)
+    {
+        const int EntrySize = 4;
+        if (target < File.HeaderEnd || target >= Raw.Length) throw new ArgumentException(Loc.T("core.script.badTarget", $"0x{target:X}"));
+        int count = File.EntryOffsets.Count;
+        int tableEnd = count * EntrySize;
+        var output = new byte[Raw.Length + EntrySize];
+        Buffer.BlockCopy(Raw, 0, output, 0, tableEnd);
+        Buffer.BlockCopy(Raw, tableEnd, output, tableEnd + EntrySize, Raw.Length - tableEnd);
+        for (int i = 0; i < count; i++)
+            BitConverter.TryWriteBytes(output.AsSpan(i * EntrySize), BitConverter.ToInt32(Raw, i * EntrySize) + EntrySize);
+        // o código anda 4 bytes, junto com o fim da tabela: a distância relativa fica a mesma
+        BitConverter.TryWriteBytes(output.AsSpan(tableEnd), target - tableEnd);
+        Raw = output;
+        File = new ScriptFile(output, Table);
+        return count + 1;
+    }
+
     /// <summary>Troca o código de um script existente. O número não muda, então eventos e outros scripts continuam certos; o código antigo fica sem uso.</summary>
     public void ReplaceEntry(int id, byte[] code)
     {

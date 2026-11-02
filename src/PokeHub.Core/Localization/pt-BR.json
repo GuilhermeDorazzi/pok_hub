@@ -1332,6 +1332,7 @@
  "postElite.pichu.hint": "Com Pichu, Pikachu ou Raichu na frente do time, o santuário de Ilex entrega o Pichu de orelha espigada. O original pede um Pokémon brilhante de distribuição. A flag evita que o evento abra com o primeiro Pichu do jogo.",
  "postElite.pichu.flag": "Só depois da flag (2404 é vencer a Elite):",
  "core.postElite.noEvent": "O evento não foi encontrado no mapa {0}. Esses scripts foram alterados?",
+ "core.newev.approachTrainer": "O treinador {0} não pode ter visão: o número do script dele é o que o jogo usa quando um treinador avista o jogador. Duplique-o como novo e use a cópia.",
  "feature.newmaps": "Mapas novos",
  "feature.newmaps.text": "Desenhe mapas do zero com tiles, sem modelar em 3D. Para exportar, precisa do g3dcvtr, que não vem junto.",
  "ev.layout.npc": "NPC",
