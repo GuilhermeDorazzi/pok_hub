@@ -947,7 +947,7 @@ public static class NewEventService
             GuideBehavior g => [.. g.Steps.Select(step => step.Text), g.FinalText],
             SceneBehavior scene => [.. scene.Steps.Where(step => step.Action == SceneAction.Say).Select(step => step.Text ?? "")],
             QuestBehavior q => [EndWithWait(q.AskText), q.NotYetText, EndWithWait(q.RewardText), q.DoneText, q.FullText],
-            SellBehavior v => [WithYesNo(v.OfferText), v.ThanksText, v.NoMoneyText, v.DeclineText, v.FullText, v.SoldOutText],
+            SellBehavior v => [WithYesNo(v.OfferText), EndWithWait(v.ThanksText), v.NoMoneyText, v.DeclineText, v.FullText, v.SoldOutText],
             TrainerBehavior { Sight: > 0 } => [],
             TrainerBehavior t => t.Rematch != TrainerRematch.None && !t.Vanish
                 ? [EndWithWait(t.ChallengeText), t.BeatenText, t.AfterText, WithYesNo(t.RematchText ?? "")]
