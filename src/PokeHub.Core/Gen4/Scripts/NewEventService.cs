@@ -171,6 +171,10 @@ public static class NewEventService
     /// é o script que roda quando um treinador avista o jogador, e o jogo chama esse número direto. Treinador novo depois dela precisa de entrada própria.
     /// </summary>
     public const int HgssTrainerScriptFile = 953, HgssApproachTrainer = 740;
+    /// <summary>Banco de texto que o arquivo de scripts de treinador usa (msg_0040): a pergunta da revanche fica nele.</summary>
+    public const int HgssTrainerScriptBank = 40;
+    public const string DefaultRematchText = "Want a rematch?";
+    private const int TrainerIntro = 0, TrainerAfter = 2;
     private const string YesNoPrompt = " {YESNO 0}";
     /// <summary>Flags de treinador começam aqui e vão até o último treinador; as do sistema começam em 0x960.</summary>
     private const int TrainerFlagBase = 0x550, SystemFlagBase = 0x960;
@@ -315,6 +319,73 @@ public static class NewEventService
         // cada entrada nova desloca o código em 4 bytes: a posição do script comum é lida de novo a cada volta
         while (editor.File.EntryOffsets.Count < trainer - FirstTrainer + 1) editor.AddEntryTo(editor.File.EntryOffsets[0]);
         return editor.Raw;
+    }
+
+    /// <summary>
+    /// Falar com um treinador novo com visão roda um script próprio, que confere a vitória pelo número do treinador. O script comum do jogo
+    /// passa pela agenda do Pokégear e, com treinadores novos, deixava lutar de novo a cada conversa. Já vencido, ele pergunta se o jogador quer revanche.
+    /// Ser avistado continua no script do jogo.
+    /// </summary>
+    public static byte[] BuildTrainerTalk(ScriptCommandTable table, int trainer, int askMessage)
+    {
+        var s = new ScriptBuilder(table);
+        s.Emit("PlaySE", SelectSound).Emit("LockAll").Emit("FacePlayer")
+            .Emit("PartyCountNotEgg", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "after")
+            .Emit("CheckTrainerFlag", trainer).Emit("GoToIf", ConditionEqual, "beaten")
+            .Emit("EncounterMusic", trainer).Emit("OpenMsg").Emit("TrainerMessage", trainer, TrainerIntro).Emit("CloseMsg")
+            .Emit("TrainerBattle", trainer, 0, 0, 0)
+            .Emit("CheckBattleWon", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "lost")
+            .Emit("SetTrainerFlag", trainer).Emit("ReleaseAll").Emit("End");
+        s.Label("beaten");
+        s.Emit("OpenMsg").Emit("TrainerMessage", trainer, TrainerAfter).Emit("WaitButton");
+        AskYesNo(s, askMessage, "no");
+        s.Emit("CloseMsg").Emit("EncounterMusic", trainer)
+            .Emit("TrainerBattle", trainer, 0, 0, 0)
+            .Emit("CheckBattleWon", ResultVar).Emit("CompareVarToValue", ResultVar, 0).Emit("GoToIf", ConditionEqual, "lost")
+            .Emit("ReleaseAll").Emit("End");
+        s.Label("no").Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
+        s.Label("after").Emit("OpenMsg").Emit("TrainerMessage", trainer, TrainerAfter).Emit("WaitButton").Emit("CloseMsg").Emit("ReleaseAll").Emit("End");
+        s.Label("lost").Emit("WhiteOut").Emit("ReleaseAll").Emit("End");
+        return s.Build();
+    }
+
+    /// <summary>A entrada do treinador passa a apontar para o script próprio. Na primeira vez ele vai para o fim do arquivo; depois, é regravado no lugar.</summary>
+    public static byte[] WithTrainerTalk(byte[] raw, ScriptCommandTable table, int trainer, int askMessage)
+    {
+        var editor = new ScriptEditor(WithTrainerScript(raw, table, trainer), table);
+        int id = trainer - FirstTrainer + 1;
+        var code = BuildTrainerTalk(table, trainer, askMessage);
+        int at = editor.File.EntryOffsets[id - 1];
+        bool own = at != editor.File.EntryOffsets[0] && editor.File.Routine(id)!.Instructions.Any(i => i.Name == "CheckTrainerFlag" && i.Args[0].Value == trainer);
+        if (own) editor.Overwrite(at, code);
+        else editor.ReplaceEntry(id, code);
+        return editor.Raw;
+    }
+
+    /// <summary>A pergunta da revanche no banco comum: reaproveita a mesma fala em vez de repetir uma por treinador.</summary>
+    private static int CommonText(TextRepository texts, string text)
+    {
+        var bank = texts.Bank(HgssTrainerScriptBank);
+        int found = bank.Texts.IndexOf(text);
+        return found >= 0 ? found : texts.AddText(HgssTrainerScriptBank, text);
+    }
+
+    /// <summary>Dá o script próprio de conversa a todos os treinadores com visão criados pelo hub. Serve para quem os criou antes desta correção.</summary>
+    public static int UpdateSightTrainerTalks(Project project)
+    {
+        var game = Gen4Game.For(project);
+        if (!game.IsHgss) return 0;
+        var sighted = NewEventLedger.Load(project).Npcs.Select(n => n.ToBehavior()).OfType<TrainerBehavior>().Where(t => t.Sight > 0)
+            .GroupBy(t => t.Trainer).Select(g => g.First()).ToList();
+        if (sighted.Count == 0) return 0;
+        var texts = TextRepository.Load(project);
+        var scripts = Narc.Read(File.ReadAllBytes(game.ScriptsPath));
+        foreach (var t in sighted)
+            scripts.Files[HgssTrainerScriptFile] = WithTrainerTalk(scripts.Files[HgssTrainerScriptFile], ScriptCommandTable.Hgss, t.Trainer,
+                CommonText(texts, WithYesNo(t.RematchText ?? DefaultRematchText)));
+        texts.Save();
+        File.WriteAllBytes(game.ScriptsPath, scripts.Write());
+        return sighted.Count;
     }
 
     /// <summary>Garante as entradas de todos os treinadores do projeto. Serve para quem criou treinadores com visão antes desta correção.</summary>
@@ -928,7 +999,11 @@ public static class NewEventService
         if (sighted is not null)
         {
             scriptId = TrainerScriptOf(sighted.Trainer);
-            if (game.IsHgss) scriptsNarc.Files[HgssTrainerScriptFile] = WithTrainerScript(scriptsNarc.Files[HgssTrainerScriptFile], table, sighted.Trainer);
+            if (game.IsHgss)
+            {
+                int ask = CommonText(texts, WithYesNo(sighted.RematchText ?? DefaultRematchText));
+                scriptsNarc.Files[HgssTrainerScriptFile] = WithTrainerTalk(scriptsNarc.Files[HgssTrainerScriptFile], table, sighted.Trainer, ask);
+            }
         }
         else if (existing is null || scriptId >= TrainerStdScript) scriptId = editor.AddEntry(code);
         else editor.ReplaceEntry(scriptId, code);

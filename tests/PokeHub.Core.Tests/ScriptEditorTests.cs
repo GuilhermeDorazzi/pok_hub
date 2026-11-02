@@ -61,6 +61,28 @@ public class ScriptEditorTests
     }
 
     [Fact]
+    public void Trainer_talk_checks_the_trainer_itself_and_is_rewritten_in_place()
+    {
+        var table = ScriptCommandTable.Hgss;
+        var raw = Sample(table);
+        var once = new ScriptEditor(NewEventService.WithTrainerTalk(raw, table, 5, 7), table);
+        Assert.Equal(5, once.File.EntryOffsets.Count);
+        var talk = once.File.Routine(5)!.Instructions;
+        Assert.Contains(talk, i => i.Name == "CheckTrainerFlag" && i.Args[0].Value == 5);
+        Assert.Contains(talk, i => i.Name == "SetTrainerFlag" && i.Args[0].Value == 5);
+        Assert.Equal(2, talk.Count(i => i.Name == "TrainerBattle" && i.Args[0].Value == 5));
+        Assert.Contains(talk, i => i.Name == "NPCMsg" && i.Args[0].Value == 7);
+        // nada da agenda do Pokégear
+        Assert.DoesNotContain(talk, i => i.Name.Contains("Phone"));
+        // as outras entradas novas continuam no script comum
+        Assert.Equal(once.File.EntryOffsets[0], once.File.EntryOffsets[3]);
+        // de novo, com outra pergunta: regrava no lugar, sem crescer
+        var twice = NewEventService.WithTrainerTalk(once.Raw, table, 5, 8);
+        Assert.Equal(once.Raw.Length, twice.Length);
+        Assert.Contains(new ScriptEditor(twice, table).File.Routine(5)!.Instructions, i => i.Name == "NPCMsg" && i.Args[0].Value == 8);
+    }
+
+    [Fact]
     public void Insert_fixes_entries_and_jumps_and_remove_restores_the_file()
     {
         var table = ScriptCommandTable.Platinum;
