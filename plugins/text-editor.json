@@ -1,6 +1,6 @@
 {
   "id": "text-editor",
-  "name": "Editor de texto (PokeHub)",
+  "name": "Editor de texto (PokHub)",
   "description": {
     "pt-BR": "Editor embutido dos bancos de texto do jogo (msg.narc): diálogos, nomes de Pokémon, itens, golpes, locais e treinadores, com busca em todos os bancos.",
     "en-US": "Built-in editor for the game's text banks (msg.narc): dialogue, Pokémon, item, move, location and trainer names, with search across every bank."

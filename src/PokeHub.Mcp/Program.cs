@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Protocol;
 using PokeHub.Mcp;
 
-// Servidor MCP do PokeHub: expõe as operações do Core (projetos, versões, dados do jogo, ferramentas)
+// Servidor MCP do PokHub: expõe as operações do Core (projetos, versões, dados do jogo, ferramentas)
 // para agentes de IA via stdio. Nada de rede: o agente roda este executável como processo filho.
 //
 // Uso: PokeHub.Mcp [--root <pasta do hub>]

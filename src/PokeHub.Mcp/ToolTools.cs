@@ -42,7 +42,7 @@ public static class ToolTools
     {
         var m = hub.GetManifest(id);
         if (m.Source.Type is SourceType.Builtin) return new { note = "Editor embutido no hub: nada a instalar." };
-        if (m.Source.Type is SourceType.System) throw new InvalidOperationException("Esta ferramenta é apontada manualmente pelo usuário no PokeHub (não tem download).");
+        if (m.Source.Type is SourceType.System) throw new InvalidOperationException("Esta ferramenta é apontada manualmente pelo usuário no PokHub (não tem download).");
         if (m.ConfirmInstall && !confirm)
             throw new InvalidOperationException($"Instalação pesada. {m.Purpose?.Value} Custo: {m.Cost?.Value} Repita com confirm=true depois de confirmar com o usuário.");
         var p = project is null ? null : hub.OpenProject(project);
@@ -57,7 +57,7 @@ public static class ToolTools
     {
         var m = hub.GetManifest(id);
         if (m.Launch is null) throw new InvalidOperationException("Ferramenta sem comando de abertura.");
-        if (m.Source.Type is SourceType.Builtin) throw new InvalidOperationException("Editor embutido: abra pelo PokeHub, ou use as ferramentas get_/list_ deste servidor.");
+        if (m.Source.Type is SourceType.Builtin) throw new InvalidOperationException("Editor embutido: abra pelo PokHub, ou use as ferramentas get_/list_ deste servidor.");
         var p = project is null ? null : hub.OpenProject(project);
         var inst = hub.Installer.GetInstalled(m, p) ?? throw new InvalidOperationException("Ferramenta não instalada: use install_tool.");
         var log = new LogCollector();

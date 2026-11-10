@@ -11,7 +11,7 @@ namespace PokeHub.Core.Projects;
 /// </summary>
 public sealed class WorkspaceGit(RuntimeManager runtimes)
 {
-    private static readonly string[] Identity = ["-c", "user.name=PokeHub", "-c", "user.email=pokehub@localhost", "-c", "core.autocrlf=false"];
+    private static readonly string[] Identity = ["-c", "user.name=PokHub", "-c", "user.email=pokehub@localhost", "-c", "core.autocrlf=false"];
 
     public bool IsAvailable => runtimes.ResolveGit() is not null;
 

@@ -8,8 +8,8 @@
     "en-US": "AI agent operating the hub"
   },
   "intro": {
-    "pt-BR": "O PokeHub tem um servidor MCP: um agente como o Claude Code pode listar projetos, ler treinadores e encontros, salvar e restaurar versões, instalar ferramentas e testar no emulador, pela mesma lógica do hub.",
-    "en-US": "PokeHub ships an MCP server: an agent such as Claude Code can list projects, read trainers and encounters, save and restore versions, install tools and test in the emulator, through the hub's own logic."
+    "pt-BR": "O PokHub tem um servidor MCP: um agente como o Claude Code pode listar projetos, ler treinadores e encontros, salvar e restaurar versões, instalar ferramentas e testar no emulador, pela mesma lógica do hub.",
+    "en-US": "PokHub ships an MCP server: an agent such as Claude Code can list projects, read trainers and encounters, save and restore versions, install tools and test in the emulator, through the hub's own logic."
   },
   "steps": [
     {

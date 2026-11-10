@@ -1,6 +1,6 @@
 {
   "id": "pokedex-area-editor",
-  "name": "Editor de áreas da Pokédex (PokeHub)",
+  "name": "Editor de áreas da Pokédex (PokHub)",
   "description": {
     "pt-BR": "Editor embutido: em quais rotas, cidades, cavernas e prédios cada Pokémon aparece na Pokédex, por período do dia. Portado do pk_dex_editor. HeartGold, SoulSilver e Platinum; o mapa clicável só em HG/SS.",
     "en-US": "Built-in editor: which routes, cities, caves and buildings each Pokémon appears in on the Pokédex, by time of day. Ported from pk_dex_editor. HeartGold, SoulSilver and Platinum; the clickable map only on HG/SS."

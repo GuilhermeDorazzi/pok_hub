@@ -1,6 +1,6 @@
 # Créditos e licenças de terceiros
 
-O PokeHub é distribuído sob a GPL-3.0 (ver `LICENSE`). Ele usa dados, formatos e trechos de outros projetos da comunidade, listados abaixo com a licença de cada um.
+O PokHub é distribuído sob a GPL-3.0 (ver `LICENSE`). Ele usa dados, formatos e trechos de outros projetos da comunidade, listados abaixo com a licença de cada um.
 
 ## Incorporados ao código do hub
 
@@ -62,4 +62,4 @@ Nenhuma delas vem com o hub. O usuário escolhe instalar, e o hub baixa a versã
 
 ## Marcas
 
-Pokémon, Nintendo DS, Pokémon HeartGold, Pokémon SoulSilver, Pokémon Diamond, Pearl e Platinum são marcas da Nintendo, da Game Freak, da Creatures e da The Pokémon Company. O PokeHub é um projeto de fã, sem ligação com elas nem apoio delas.
+Pokémon, Nintendo DS, Pokémon HeartGold, Pokémon SoulSilver, Pokémon Diamond, Pearl e Platinum são marcas da Nintendo, da Game Freak, da Creatures e da The Pokémon Company. O PokHub é um projeto de fã, sem ligação com elas nem apoio delas.

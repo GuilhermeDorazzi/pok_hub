@@ -44,7 +44,7 @@ public sealed class HubContext
         var chosen = i >= 0 && i + 1 < args.Length ? args[i + 1] : Environment.GetEnvironmentVariable("POKEHUB_ROOT");
         var root = chosen
             ?? HubBootstrapper.FindConfiguredRoot()
-            ?? throw new InvalidOperationException("Pasta do hub não configurada: abra o PokeHub uma vez, ou passe --root <pasta> / POKEHUB_ROOT.");
+            ?? throw new InvalidOperationException("Pasta do hub não configurada: abra o PokHub uma vez, ou passe --root <pasta> / POKEHUB_ROOT.");
         return new HubContext(root, isConfiguredRoot: chosen is null);
     }
 

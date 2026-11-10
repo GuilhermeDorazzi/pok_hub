@@ -183,7 +183,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             var source = await File.ReadAllBytesAsync(p.Paths.BaseRom);
             var target = await File.ReadAllBytesAsync(output);
-            var patch = await Task.Run(() => Bps.Create(source, target, $"PokeHub {p.Name}"));
+            var patch = await Task.Run(() => Bps.Create(source, target, $"PokHub {p.Name}"));
             await File.WriteAllBytesAsync(patchFile, patch);
             return patch.Length;
         });

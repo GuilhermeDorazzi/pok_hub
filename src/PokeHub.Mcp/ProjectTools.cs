@@ -82,7 +82,7 @@ public static class ProjectTools
     public static async Task<object> SaveVersion(HubContext hub, string project, [Description("Mensagem curta descrevendo o estado")] string message)
     {
         var p = hub.OpenProject(project);
-        if (!hub.Git.IsAvailable) throw new InvalidOperationException("Git não disponível: instale pelo PokeHub (Configurações) ou install_tool.");
+        if (!hub.Git.IsAvailable) throw new InvalidOperationException("Git não disponível: instale pelo PokHub (Configurações) ou install_tool.");
         var log = new LogCollector();
         await hub.Git.EnsureRepoAsync(p, log);
         var changed = await hub.Git.SnapshotAsync(p, message, log);

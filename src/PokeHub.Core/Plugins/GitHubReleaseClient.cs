@@ -14,7 +14,7 @@ public sealed class GitHubReleaseClient
     private static HttpClient CreateClient()
     {
         var c = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
-        c.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("PokeHub", "0.1"));
+        c.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("PokHub", "0.1"));
         c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         return c;
     }

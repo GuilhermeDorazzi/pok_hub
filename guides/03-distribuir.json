@@ -8,8 +8,8 @@
     "en-US": "Distributing your hack: BPS patch"
   },
   "intro": {
-    "pt-BR": "Você não distribui a ROM (é conteúdo da Nintendo), e sim um patch: um arquivo pequeno com só as suas mudanças. Quem joga aplica o patch sobre a própria ROM limpa. O PokeHub gera e aplica patches BPS, o formato mais usado pela comunidade.",
-    "en-US": "You do not distribute the ROM (it is Nintendo's content) but a patch: a small file with only your changes. Players apply the patch to their own clean ROM. PokeHub creates and applies BPS patches, the format the community uses most."
+    "pt-BR": "Você não distribui a ROM (é conteúdo da Nintendo), e sim um patch: um arquivo pequeno com só as suas mudanças. Quem joga aplica o patch sobre a própria ROM limpa. O PokHub gera e aplica patches BPS, o formato mais usado pela comunidade.",
+    "en-US": "You do not distribute the ROM (it is Nintendo's content) but a patch: a small file with only your changes. Players apply the patch to their own clean ROM. PokHub creates and applies BPS patches, the format the community uses most."
   },
   "steps": [
     {
@@ -25,8 +25,8 @@
       "en-US": "To test as a player would: Project > Project from patch, choose the clean ROM, the .bps and where to save. The hub checks the CRCs and offers to create a project from the result."
     },
     {
-      "pt-BR": "Quem não usa o PokeHub aplica com qualquer aplicador BPS (Floating IPS, beat, Rom Patcher JS no navegador).",
-      "en-US": "People without PokeHub can apply it with any BPS tool (Floating IPS, beat, Rom Patcher JS in the browser)."
+      "pt-BR": "Quem não usa o PokHub aplica com qualquer aplicador BPS (Floating IPS, beat, Rom Patcher JS no navegador).",
+      "en-US": "People without PokHub can apply it with any BPS tool (Floating IPS, beat, Rom Patcher JS in the browser)."
     }
   ],
   "tips": [
@@ -35,8 +35,8 @@
       "en-US": "Always create the patch from a saved version, so you know exactly what each published release contains."
     },
     {
-      "pt-BR": "O patch do PokeHub é um pouco maior que o do beat em hacks com arquivos movidos, mas é lido por qualquer aplicador.",
-      "en-US": "PokeHub's patch is a bit larger than beat's for hacks with moved files, but any applier reads it."
+      "pt-BR": "O patch do PokHub é um pouco maior que o do beat em hacks com arquivos movidos, mas é lido por qualquer aplicador.",
+      "en-US": "PokHub's patch is a bit larger than beat's for hacks with moved files, but any applier reads it."
     }
   ],
   "links": [

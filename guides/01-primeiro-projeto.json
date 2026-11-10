@@ -8,8 +8,8 @@
     "en-US": "Getting started: create a project"
   },
   "intro": {
-    "pt-BR": "O PokeHub guarda sua ROM base e trabalha numa cópia extraída (o workspace). Todas as ferramentas apontam para esse workspace, e cada mudança pode ser salva como uma versão.",
-    "en-US": "PokeHub keeps your base ROM and works on an extracted copy (the workspace). Every tool points at that workspace, and each change can be saved as a version."
+    "pt-BR": "O PokHub guarda sua ROM base e trabalha numa cópia extraída (o workspace). Todas as ferramentas apontam para esse workspace, e cada mudança pode ser salva como uma versão.",
+    "en-US": "PokHub keeps your base ROM and works on an extracted copy (the workspace). Every tool points at that workspace, and each change can be saved as a version."
   },
   "steps": [
     {

@@ -141,7 +141,7 @@ public sealed class RuntimeManager(HubPaths hub, HubConfig config)
     {
         log.Report(Loc.T("core.rt.adoptiumQuery", spec.Name));
         using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(2) };
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("PokeHub/0.1");
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("PokHub/0.1");
         var url = $"https://api.adoptium.net/v3/assets/latest/{spec.JavaFeatureVersion}/hotspot?architecture=x64&image_type=jre&os=windows&vendor=eclipse";
         using var doc = JsonDocument.Parse(await http.GetStringAsync(url, ct));
         foreach (var asset in doc.RootElement.EnumerateArray())

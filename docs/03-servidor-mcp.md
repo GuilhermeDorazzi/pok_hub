@@ -1,11 +1,11 @@
 # Servidor MCP: agentes de IA operando o hub
 
-`src/PokeHub.Mcp` é um servidor [MCP](https://modelcontextprotocol.io) (Model Context Protocol) sobre o `PokeHub.Core`. Um agente (Claude Code, Claude Desktop ou qualquer cliente MCP) roda o executável como processo filho e conversa por stdio. Não há porta de rede. Ele usa a mesma pasta do hub e os mesmos serviços da janela principal, então tudo que o agente faz aparece no PokeHub e fica no git do workspace.
+`src/PokeHub.Mcp` é um servidor [MCP](https://modelcontextprotocol.io) (Model Context Protocol) sobre o `PokeHub.Core`. Um agente (Claude Code, Claude Desktop ou qualquer cliente MCP) roda o executável como processo filho e conversa por stdio. Não há porta de rede. Ele usa a mesma pasta do hub e os mesmos serviços da janela principal, então tudo que o agente faz aparece no PokHub e fica no git do workspace.
 
 ## Como ligar
 
 1. `dotnet build src/PokeHub.Mcp`
-2. Pasta do hub: a configurada pelo PokeHub (`%AppData%\PokeHub\settings.json`), ou `--root <pasta>`, ou a variável `POKEHUB_ROOT`.
+2. Pasta do hub: a configurada pelo PokHub (`%AppData%\PokeHub\settings.json`), ou `--root <pasta>`, ou a variável `POKEHUB_ROOT`.
 3. Claude Code: o `.mcp.json` na raiz do repositório já registra o servidor `pokehub`; abrindo o Claude Code nesta pasta ele aparece em `/mcp`. Em outro cliente, aponte o comando para `PokeHub.Mcp.exe`.
 
 Teste manual sem agente: mandar JSON-RPC por stdin, uma mensagem por linha (`initialize`, `notifications/initialized`, `tools/list`, `tools/call`).

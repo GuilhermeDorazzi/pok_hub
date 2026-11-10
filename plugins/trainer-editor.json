@@ -1,6 +1,6 @@
 {
   "id": "trainer-editor",
-  "name": "Editor de treinadores (PokeHub)",
+  "name": "Editor de treinadores (PokHub)",
   "description": {
     "pt-BR": "Editor embutido: nome, classe, itens, IA, tipo de batalha e o time completo de cada treinador, lendo nomes de espécies, itens e golpes do próprio jogo.",
     "en-US": "Built-in editor: name, class, items, AI, battle type and the full party of every trainer, reading species, item and move names from the game itself."

@@ -1,6 +1,6 @@
 {
   "id": "encounter-editor",
-  "name": "Editor de encontros (PokeHub)",
+  "name": "Editor de encontros (PokHub)",
   "description": {
     "pt-BR": "Editor embutido: Pokémon selvagens de cada área (grama por período, surf, rock smash, varas, enxame, sons do PokéGear), com os mapas e nomes de local vindos do jogo.",
     "en-US": "Built-in editor: wild Pokémon of each area (grass by time of day, surf, rock smash, rods, swarm, PokéGear sounds), with map and location names read from the game."

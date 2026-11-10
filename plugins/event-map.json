@@ -1,6 +1,6 @@
 {
   "id": "event-map",
-  "name": "Mapa de eventos (PokeHub)",
+  "name": "Mapa de eventos (PokHub)",
   "description": {
     "pt-BR": "Lista, mapa a mapa, os NPCs, triggers, placas e scripts de entrada com o que cada script faz (flags, variáveis, itens, Pokémon, batalhas, falas) e mostra as flags e variáveis livres para o hack.",
     "en-US": "Lists, map by map, NPCs, triggers, signs and on-enter scripts with what each script does (flags, variables, items, Pokémon, battles, dialogue) and shows the free flags and variables for the hack."

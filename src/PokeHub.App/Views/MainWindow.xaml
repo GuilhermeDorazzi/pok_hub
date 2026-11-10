@@ -7,7 +7,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         d:DataContext="{d:DesignInstance vm:MainViewModel}"
-        Title="PokeHub" Height="760" Width="1240" MinHeight="540" MinWidth="900"
+        Title="PokHub" Height="760" Width="1240" MinHeight="540" MinWidth="900"
         FontSize="13" Background="#1B1D24" Foreground="#E8E9EE">
     <Window.Resources>
         <ResourceDictionary>
@@ -196,7 +196,7 @@
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
                     <TextBlock Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                    <TextBlock Text="PokeHub" FontSize="17" FontWeight="Bold" VerticalAlignment="Center" />
+                    <TextBlock Text="PokHub" FontSize="17" FontWeight="Bold" VerticalAlignment="Center" />
                 </StackPanel>
                 <TextBlock DockPanel.Dock="Left" Text="{loc:T main.project}" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
                 <ComboBox DockPanel.Dock="Left" MinWidth="240" ItemsSource="{Binding Projects}" SelectedItem="{Binding CurrentProject}"

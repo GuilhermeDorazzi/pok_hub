@@ -1,10 +1,10 @@
-# PokeHub
+# PokHub
 
 Hub para ROM hacking de Pokémon no Nintendo DS. Num lugar só, ele cria o projeto a partir da sua ROM, abre as ferramentas da comunidade apontando para esse projeto, edita os dados do jogo, guarda versões e gera a ROM e o patch para distribuir.
 
 *English: a Windows hub for Nintendo DS Pokémon ROM hacking (Generation IV). It sets up a project from your own ROM, launches the community tools on it, edits game data directly, keeps versions, and builds the ROM and a BPS patch. The interface is available in Portuguese and English.*
 
-> **Aviso.** O PokeHub não vem com nenhum jogo, e não ajuda a conseguir um. Você precisa ter a sua própria cópia do jogo. Não é um produto da Nintendo, da Game Freak, da Creatures ou da The Pokémon Company, e não tem ligação com elas.
+> **Aviso.** O PokHub não vem com nenhum jogo, e não ajuda a conseguir um. Você precisa ter a sua própria cópia do jogo. Não é um produto da Nintendo, da Game Freak, da Creatures ou da The Pokémon Company, e não tem ligação com elas.
 
 ## O que dá para fazer
 
@@ -42,6 +42,8 @@ dotnet test tests/PokeHub.Core.Tests
 
 ## Estrutura
 
+O projeto se chamava PokeHub. Por dentro, o código, os executáveis e a pasta de configuração (`%AppData%\PokeHub`) ainda usam esse nome, para não quebrar instalações e projetos já existentes.
+
 ```
 src/PokeHub.Core   lógica: projetos, formatos do jogo, editores, patch, injeção de código
 src/PokeHub.App    interface WPF
@@ -54,4 +56,4 @@ tests/             testes automáticos
 
 ## Licença e créditos
 
-O PokeHub é software livre, sob a GPL-3.0 (ver `LICENSE`). Ele usa dados e formatos do DSPRE (AGPL-3.0) e das decomps da pret, entre outros projetos. A lista completa, com a licença de cada um, está em [`THIRD_PARTY.md`](THIRD_PARTY.md).
+O PokHub é software livre, sob a GPL-3.0 (ver `LICENSE`). Ele usa dados e formatos do DSPRE (AGPL-3.0) e das decomps da pret, entre outros projetos. A lista completa, com a licença de cada um, está em [`THIRD_PARTY.md`](THIRD_PARTY.md).
