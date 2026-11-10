@@ -172,7 +172,7 @@ Fase 2 concluída em 2026-10-30.
 
 37. **Conteúdo novo.** `TrainerMessages` lê e grava as falas de treinador: `trtbl` (a/0/5/7) e o banco 728 têm uma entrada por mensagem, e `trtblofs` (a/1/3/1) diz onde cada treinador começa. Entrada nova vai para o fim, então nenhum número antigo muda. Treinador com visão grava as falas escritas no registro; sem visão, só preenche a fala de derrota que faltar. `TrainerCensus` conta treinadores por mapa. No Novo evento: troca com nível mínimo (`MonGetLevel`), item em bola ou escondido (evento de tile, com número negativo do script no registro) e guia, que diz a fala da primeira flag desligada.
 
-Publicado em github.com/GuilhermeDorazzi/pok_hub (privado por enquanto).
+Publicado em github.com/GuilhermeDorazzi/pok_hub (público).
 
 ## Pontos marcados para Gen 5 (`// GEN5:` no código)
 
