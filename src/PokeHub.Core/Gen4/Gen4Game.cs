@@ -1,3 +1,15 @@
+// Portions of this file are derived from DSPRE (DS Pokémon ROM Editor, DSPRE Reloaded):
+//   https://github.com/DS-Pokemon-Rom-Editor/DSPRE
+//   Source: DS_Map/RomInfo.cs
+//   Copyright (C) Nømura and the DSPRE / DSPRE Reloaded contributors.
+//
+// Modified by Guilherme Dorazzi for PokHub, 2026: ROM file paths and header table offsets per game and language, adapted for PokHub.
+//
+// This file is free software: you can redistribute it and/or modify it under the terms of the
+// GNU Affero General Public License as published by the Free Software Foundation, version 3.
+// It is distributed WITHOUT ANY WARRANTY; see LICENSES/AGPL-3.0.txt for the full license text.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 using PokeHub.Core.Localization;
 using PokeHub.Core.Projects;
 using PokeHub.Core.Rom;

@@ -10,8 +10,13 @@ O PokHub é distribuído sob a GPL-3.0 (ver `LICENSE`). Ele usa dados, formatos 
 - O que o hub usa:
   - a tabela de caracteres dos jogos de Gen 4 (`src/PokeHub.Core/Gen4/charmap.json`, lida por `CharMap.cs`);
   - o formato dos arquivos de encontros de Diamond, Pearl e Platinum (`Encounters.cs`, a partir do `EncounterFileDPPt`);
-  - a expansão do ARM9 do ROM Toolbox: endereços, tamanhos e a rotina de carga (`CodeInjection/Arm9Expansion.cs`, a partir do `ToolboxDB.cs`). O hub grava o mesmo patch para que as ROMs continuem compatíveis com os patches do DSPRE.
+  - a expansão do ARM9 do ROM Toolbox: endereços, tamanhos e a rotina de carga (`CodeInjection/Arm9Expansion.cs`, a partir do `ToolboxDB.cs`). O hub grava o mesmo patch para que as ROMs continuem compatíveis com os patches do DSPRE;
+  - os caminhos dos arquivos da ROM e os offsets da tabela de cabeçalhos de mapa por jogo e idioma (`Gen4/Gen4Game.cs`, a partir do `RomInfo.cs`);
+  - os offsets da tabela de sprites de campo (`Gen4/OverworldSprites.cs`, a partir do `SetOWtable` do `RomInfo.cs`).
+- Copyright (C) Nømura e os contribuidores do DSPRE / DSPRE Reloaded.
+- Cada um desses arquivos traz no topo o aviso de copyright do DSPRE, o que foi modificado e a declaração de que está sob a AGPL-3.0 (no `charmap.json`, nos campos `copyright` e `license` de `metadata`). O texto completo da licença está em [`LICENSES/AGPL-3.0.txt`](LICENSES/AGPL-3.0.txt).
 - Essas partes continuam sob a AGPL-3.0. A seção 13 da GPL-3.0 permite combiná-las com o restante do hub.
+- Os editores do hub (treinadores, encontros, textos, scripts e os demais) não são uma cópia dos editores do DSPRE. Para os editores do DSPRE, o hub abre o próprio DSPRE.
 
 ### pret: pokeheartgold e pokeplatinum
 - Repositórios: <https://github.com/pret/pokeheartgold> e <https://github.com/pret/pokeplatinum>

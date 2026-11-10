@@ -2,7 +2,10 @@
  "metadata": {
   "description": "Character mapping for Gen IV Pokémon games",
   "version": "2025.12.18",
-  "source": "DSPRE Reloaded (DS-Pokemon-Rom-Editor/DSPRE, AGPL-3.0), Tools/charmap.json. Reutilizado no PokHub (GPL-3.0)."
+  "source": "DSPRE Reloaded, https://github.com/DS-Pokemon-Rom-Editor/DSPRE, DS_Map/Tools/charmap.json",
+  "copyright": "Copyright (C) Nømura and the DSPRE / DSPRE Reloaded contributors.",
+  "license": "AGPL-3.0-only. This file is covered by the GNU Affero General Public License v3.0; see LICENSES/AGPL-3.0.txt.",
+  "modified": "Embedded unchanged in PokHub by Guilherme Dorazzi, 2026."
  },
  "char_map": {
   "0000": {

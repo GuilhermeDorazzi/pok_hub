@@ -64,12 +64,6 @@ docs/              levantamento de ferramentas, arquitetura e servidor MCP
 tests/             testes automáticos
 ```
 
-## Apoie o projeto
-
-O PokHub é gratuito e vai continuar sendo. Se ele te ajudou e você quiser apoiar o desenvolvimento, pode me pagar um café no [Ko-fi](https://ko-fi.com/pokhub). As doações são pela ferramenta: o PokHub não inclui nem distribui jogos.
-
-*English: PokHub is free and always will be. If it helps you, you can support it on [Ko-fi](https://ko-fi.com/pokhub).*
-
 ## Licença e créditos
 
 O PokHub é software livre, sob a GPL-3.0 (ver `LICENSE`). Ele usa dados e formatos do DSPRE (AGPL-3.0) e das decomps da pret, entre outros projetos. A lista completa, com a licença de cada um, está em [`THIRD_PARTY.md`](THIRD_PARTY.md).
