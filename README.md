@@ -6,6 +6,8 @@ Hub para ROM hacking de Pokémon no Nintendo DS. Num lugar só, ele cria o proje
 
 > **Aviso.** O PokHub não vem com nenhum jogo, e não ajuda a conseguir um. Você precisa ter a sua própria cópia do jogo. Não é um produto da Nintendo, da Game Freak, da Creatures ou da The Pokémon Company, e não tem ligação com elas.
 
+![Tela inicial do PokHub](docs/images/inicio.jpg)
+
 ## O que dá para fazer
 
 - **Projeto e versões:** extrair a ROM, salvar versões, ver o que mudou entre elas, voltar a uma versão anterior.
@@ -21,10 +23,18 @@ Hub para ROM hacking de Pokémon no Nintendo DS. Num lugar só, ele cria o proje
 
 Foco atual: Geração IV (Diamond, Pearl, Platinum, HeartGold e SoulSilver). A maior parte dos recursos foi feita e testada no HeartGold e SoulSilver em inglês.
 
+| Novo evento, com o mapa real do jogo | Editor de encontros selvagens |
+|---|---|
+| ![Novo evento](docs/images/novo-evento.jpg) | ![Encontros](docs/images/encontros.jpg) |
+
+## Baixar
+
+A versão pronta para Windows fica em [Releases](https://github.com/GuilhermeDorazzi/pok_hub/releases). Baixe o zip, extraia e abra o `PokeHub.exe`. Não precisa instalar o .NET.
+
 ## Requisitos
 
 - Windows 10 ou 11
-- .NET 9 (SDK para compilar; o runtime basta para usar uma versão pronta)
+- .NET 9 SDK, só para compilar (a versão pronta já traz o .NET)
 - A sua própria ROM de um jogo de Pokémon de Gen 4
 
 ## Como compilar
